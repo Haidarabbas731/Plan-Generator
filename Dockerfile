@@ -18,6 +18,7 @@ COPY . .
 RUN DATABASE_URL=postgres://build:build@localhost:5432/build \
     BETTER_AUTH_SECRET=build-time-placeholder-secret-0000000000 \
     BETTER_AUTH_URL=http://localhost:3000 \
+    REDIS_URL=redis://localhost:6379 \
     ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
     bun run build
 

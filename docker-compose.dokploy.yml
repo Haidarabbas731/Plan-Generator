@@ -4,7 +4,7 @@
 # "Environment" tab (see .env.dokploy.example for the full list) rather than
 # committing a .env file. Attach the domain in Dokploy to the `app` service, port 3000.
 #
-# Run a single replica: generation runs in the app process and its progress is kept in memory.
+# Plan generation runs as queued jobs in Redis (BullMQ); progress events travel through Redis too.
 
 services:
   postgres:
@@ -22,6 +22,18 @@ services:
       retries: 5
     restart: unless-stopped
 
+  redis:
+    image: redis:8-alpine
+    command: ['redis-server', '--appendonly', 'yes']
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   app:
     build:
       context: .
@@ -31,6 +43,7 @@ services:
       PORT: 3000
       ORIGIN: ${BETTER_AUTH_URL}
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
@@ -60,7 +73,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:

@@ -1,6 +1,6 @@
-# Local development compose: Postgres and the app.
-# Run only the database and use `bun run dev` on your machine:
-#   docker compose up postgres
+# Local development compose: Postgres, Redis and the app.
+# Run only the services and use `bun run dev` on your machine:
+#   docker compose up postgres redis
 # Or run everything in containers:
 #   docker compose up --build
 #   docker compose down -v           # stop and wipe volumes
@@ -23,6 +23,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:8-alpine
+    container_name: plan_generator_redis
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   app:
     build:
       context: .
@@ -33,6 +47,7 @@ services:
         required: false
     environment:
       DATABASE_URL: postgres://postgres:password@postgres:5432/plan_generator
+      REDIS_URL: redis://redis:6379
       BETTER_AUTH_URL: http://localhost:5173
     ports:
       - '5173:5173'
@@ -43,7 +58,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     restart: 'unless-stopped'
 
 volumes:
   postgres_data:
+  redis_data:

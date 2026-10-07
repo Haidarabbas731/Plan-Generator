@@ -14,6 +14,10 @@ export const variables = defineEnvVars({
 		schema: requiredString,
 		description: 'PostgreSQL connection string'
 	},
+	REDIS_URL: {
+		schema: requiredString,
+		description: 'Redis connection string for the generation queue and live events'
+	},
 	BETTER_AUTH_SECRET: {
 		schema: secretString(32),
 		description: 'Secret used to sign sessions'
