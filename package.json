@@ -66,6 +66,7 @@
 		"@ai-sdk/anthropic": "^4.0.74",
 		"@ai-sdk/google": "^4.0.90",
 		"@ai-sdk/openai": "^4.0.86",
+		"@ai-sdk/svelte": "^5.0.130",
 		"@fontsource-variable/plus-jakarta-sans": "^5.3.0",
 		"@openrouter/ai-sdk-provider": "^3.1.0",
 		"@shikijs/themes": "^4.5.0",

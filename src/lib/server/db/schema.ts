@@ -1,3 +1,4 @@
+import type { UIMessage } from 'ai';
 import {
 	date,
 	index,
@@ -143,10 +144,45 @@ export const planRevisions = pgTable(
 		number: integer('number').notNull(),
 		snapshot: jsonb('snapshot').notNull(),
 		source: revisionSourceEnum('source').notNull(),
+		summary: text('summary'),
 		messageId: uuid('message_id'),
 		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 	},
 	(table) => [unique('plan_revisions_plan_number_unique').on(table.planId, table.number)]
+);
+
+export const messageRoleEnum = pgEnum('message_role', ['user', 'assistant']);
+
+export const conversations = pgTable(
+	'conversations',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		planId: uuid('plan_id')
+			.notNull()
+			.references(() => plans.id, { onDelete: 'cascade' }),
+		userId: text('user_id')
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(table) => [unique('conversations_plan_unique').on(table.planId)]
+);
+
+export const messages = pgTable(
+	'messages',
+	{
+		id: uuid('id').primaryKey().defaultRandom(),
+		conversationId: uuid('conversation_id')
+			.notNull()
+			.references(() => conversations.id, { onDelete: 'cascade' }),
+		role: messageRoleEnum('role').notNull(),
+		parts: jsonb('parts').$type<UIMessage['parts']>().notNull(),
+		provider: providerEnum('provider'),
+		model: text('model'),
+		revisionId: uuid('revision_id').references(() => planRevisions.id, { onDelete: 'set null' }),
+		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
+	},
+	(table) => [index('messages_conversation_created_idx').on(table.conversationId, table.createdAt)]
 );
 
 export const usageEvents = pgTable(

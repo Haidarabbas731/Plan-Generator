@@ -26,20 +26,29 @@ function pick(text: string, pattern: RegExp): string {
 	return pattern.exec(text)?.[1] ?? '';
 }
 
+function revisionOf(text: string): string {
+	return pick(text, /<revision_request>(.*?)<\/revision_request>/s);
+}
+
 function outline(text: string, dropLast: boolean) {
+	const revision = revisionOf(text);
 	const blocks = [...text.matchAll(/<block index="(\d+)" start="(\d+)" end="(\d+)" \/>/g)].map(
 		(m) => ({ index: Number(m[1]), startDay: Number(m[2]), endDay: Number(m[3]) })
 	);
 	const used = dropLast ? blocks.slice(0, -1) : blocks;
 	return {
 		title: `Fake plan: ${pick(text, /<goal>(.*?)<\/goal>/s)}`.slice(0, 70),
-		overview: 'A deterministic plan for tests.',
+		overview: revision
+			? `A deterministic plan for tests. Revised: ${revision}`
+			: 'A deterministic plan for tests.',
 		finalOutcome: 'The learner can do the thing.',
 		topicTag: 'fake',
 		blocks: used.map((block) => ({
 			...block,
 			theme: `Theme ${block.index + 1}`,
-			objective: `Learn the topics of block ${block.index + 1}.`,
+			objective: revision
+				? `Learn the topics of block ${block.index + 1}. Revised: ${revision}`
+				: `Learn the topics of block ${block.index + 1}.`,
 			covers: [`topic ${block.index}a`, `topic ${block.index}b`],
 			notCovers: [],
 			milestone: {
@@ -52,6 +61,7 @@ function outline(text: string, dropLast: boolean) {
 }
 
 function block(text: string, fault: BlockFault | undefined) {
+	const revision = revisionOf(text);
 	const tag = /<this_block index="(\d+)" start="(\d+)" end="(\d+)">/.exec(text);
 	const start = Number(tag?.[2]);
 	const end = Number(tag?.[3]);
@@ -61,7 +71,9 @@ function block(text: string, fault: BlockFault | undefined) {
 		days.push({
 			day,
 			title: `Lesson ${day}`,
-			learn: `Study material for day ${day}.`,
+			learn: revision
+				? `Study material for day ${day}. Revised: ${revision}`
+				: `Study material for day ${day}.`,
 			practice: `Do the exercise for day ${day} and check the result.`,
 			review: `Recall what you learned before day ${day}.`,
 			minutes,

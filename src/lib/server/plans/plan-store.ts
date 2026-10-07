@@ -12,19 +12,14 @@ import type {
 import type { Provider } from '#lib/providers.js';
 import type { DayOutput, Outline } from '../ai/types.js';
 import * as schema from '../db/schema.js';
+import { writeRevision } from './revisions.js';
 
-const { plans, planBlocks, planDays, planRevisions, usageEvents } = schema;
+const { plans, planBlocks, planDays, usageEvents } = schema;
 
 export type Db = PostgresJsDatabase<typeof schema>;
 export type PlanRow = typeof plans.$inferSelect;
 export type BlockRow = typeof planBlocks.$inferSelect;
 export type DayRow = typeof planDays.$inferSelect;
-
-export interface PlanSnapshot {
-	plan: Pick<PlanRow, 'title' | 'overview' | 'finalOutcome' | 'topicTag' | 'ledger'>;
-	blocks: Omit<BlockRow, 'id' | 'planId'>[];
-	days: Omit<DayRow, 'id' | 'planId' | 'blockId' | 'completedAt'>[];
-}
 
 export function createPlanStore(db: Db) {
 	return {
@@ -111,6 +106,20 @@ export function createPlanStore(db: Db) {
 		async deleteOwnedPlan(userId: string, planId: string): Promise<boolean> {
 			const rows = await db
 				.delete(plans)
+				.where(and(eq(plans.id, planId), eq(plans.userId, userId)))
+				.returning({ id: plans.id });
+			return rows.length > 0;
+		},
+
+		async setPlanModel(
+			userId: string,
+			planId: string,
+			provider: Provider,
+			model: string
+		): Promise<boolean> {
+			const rows = await db
+				.update(plans)
+				.set({ provider, model })
 				.where(and(eq(plans.id, planId), eq(plans.userId, userId)))
 				.returning({ id: plans.id });
 			return rows.length > 0;
@@ -229,54 +238,8 @@ export function createPlanStore(db: Db) {
 		},
 
 		async saveRevision(planId: string, source: RevisionSource): Promise<number> {
-			return db.transaction(async (tx) => {
-				const [plan] = await tx.select().from(plans).where(eq(plans.id, planId)).limit(1);
-				const blocks = await tx
-					.select()
-					.from(planBlocks)
-					.where(eq(planBlocks.planId, planId))
-					.orderBy(asc(planBlocks.idx));
-				const days = await tx
-					.select()
-					.from(planDays)
-					.where(eq(planDays.planId, planId))
-					.orderBy(asc(planDays.day));
-
-				const snapshot: PlanSnapshot = {
-					plan: {
-						title: plan.title,
-						overview: plan.overview,
-						finalOutcome: plan.finalOutcome,
-						topicTag: plan.topicTag,
-						ledger: plan.ledger
-					},
-					blocks: blocks.map((block) => ({
-						idx: block.idx,
-						startDay: block.startDay,
-						endDay: block.endDay,
-						theme: block.theme,
-						objective: block.objective,
-						covers: block.covers,
-						notCovers: block.notCovers,
-						milestone: block.milestone,
-						status: block.status,
-						error: block.error
-					})),
-					days: days.map((day) => ({
-						day: day.day,
-						title: day.title,
-						learn: day.learn,
-						practice: day.practice,
-						review: day.review,
-						minutes: day.minutes
-					}))
-				};
-
-				const number = plan.currentRevision + 1;
-				await tx.insert(planRevisions).values({ planId, number, snapshot, source });
-				await tx.update(plans).set({ currentRevision: number }).where(eq(plans.id, planId));
-				return number;
-			});
+			const revision = await db.transaction((tx) => writeRevision(tx, planId, { source }));
+			return revision.number;
 		},
 
 		async recordUsage(userId: string, kind: UsageKind): Promise<void> {

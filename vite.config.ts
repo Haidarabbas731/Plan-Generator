@@ -28,7 +28,8 @@ export default defineConfig({
 					environment: 'jsdom',
 					setupFiles: ['./vitest-setup.ts'],
 					include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-					exclude: ['src/lib/server/**']
+					exclude: ['src/lib/server/**'],
+					server: { deps: { inline: [/streamdown/, /katex/, /shiki/] } }
 				}
 			},
 

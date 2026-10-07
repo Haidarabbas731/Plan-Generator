@@ -35,6 +35,20 @@ export function appendToLedger(ledger: LedgerEntry[], days: DayOutput[]): Ledger
 	return [...ledger, ...fresh].sort((a, b) => a.day - b.day);
 }
 
+export function replaceLedgerRange(
+	ledger: LedgerEntry[],
+	fromDay: number,
+	toDay: number,
+	entries: LedgerEntry[]
+): LedgerEntry[] {
+	const kept = ledger.filter((entry) => entry.day < fromDay || entry.day > toDay);
+	return [...kept, ...entries].sort((a, b) => a.day - b.day);
+}
+
+export function ledgerBefore(ledger: LedgerEntry[], day: number): LedgerEntry[] {
+	return ledger.filter((entry) => entry.day < day);
+}
+
 export function windowLedger(
 	ledger: LedgerEntry[],
 	verbatimDays = LEDGER_VERBATIM_DAYS

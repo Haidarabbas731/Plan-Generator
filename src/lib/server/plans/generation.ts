@@ -12,7 +12,7 @@ import type { BlockRow, DayRow, PlanStore } from './plan-store.js';
 
 export type RunOutcome = 'ready' | 'paused' | 'failed';
 
-const toBlockOutput = (days: DayRow[]): BlockOutput => ({
+export const toBlockOutput = (days: DayRow[]): BlockOutput => ({
 	days: days.map((day) => ({
 		day: day.day,
 		title: day.title,
@@ -24,7 +24,7 @@ const toBlockOutput = (days: DayRow[]): BlockOutput => ({
 	}))
 });
 
-function outlineFromRows(
+export function outlineFromRows(
 	plan: {
 		title: string;
 		overview: string | null;

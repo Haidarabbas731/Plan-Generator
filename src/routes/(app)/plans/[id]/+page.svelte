@@ -11,5 +11,5 @@
 </svelte:head>
 
 {#key data.plan.id}
-	<PlanView plan={data.plan} blocks={data.blocks} days={data.days} />
+	<PlanView plan={data.plan} blocks={data.blocks} days={data.days} providers={data.providers} />
 {/key}

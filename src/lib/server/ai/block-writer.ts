@@ -14,6 +14,7 @@ export function runBlockWriter(args: {
 	block: OutlineBlock;
 	ledger: LedgerEntry[];
 	previous: BlockOutput | null;
+	revision?: { instruction: string; currentDays: BlockOutput['days'] };
 	abortSignal?: AbortSignal;
 }): Promise<BlockOutput> {
 	const { block, ledger, inputs } = args;

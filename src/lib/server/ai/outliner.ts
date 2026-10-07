@@ -11,12 +11,13 @@ export function runOutliner(args: {
 	model: LanguageModel;
 	inputs: PlanInputs;
 	ranges: BlockRange[];
+	revision?: { instruction: string; current: Outline };
 	abortSignal?: AbortSignal;
 }): Promise<Outline> {
 	return generateValidated<Outline>({
 		model: args.model,
 		instructions: OUTLINER_INSTRUCTIONS,
-		prompt: outlinerPrompt(args.inputs, args.ranges),
+		prompt: outlinerPrompt(args.inputs, args.ranges, args.revision),
 		schema: outlineSchema,
 		validate: (outline) => validateOutline(outline, args.ranges),
 		abortSignal: args.abortSignal

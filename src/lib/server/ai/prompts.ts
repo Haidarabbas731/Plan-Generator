@@ -73,7 +73,11 @@ function studyDaysLabel(studyDays: number[]): string {
 	return studyDays.map((d) => WEEKDAYS[d]).join(', ');
 }
 
-export function outlinerPrompt(inputs: PlanInputs, ranges: BlockRange[]): string {
+export function outlinerPrompt(
+	inputs: PlanInputs,
+	ranges: BlockRange[],
+	revision?: { instruction: string; current: Outline }
+): string {
 	const blocks = ranges
 		.map((r) => `<block index="${r.index}" start="${r.startDay}" end="${r.endDay}" />`)
 		.join('\n');
@@ -93,7 +97,26 @@ Rules:
 - The last block ends at the outcome in done_looks_like, or at a sensible real-world outcome of the goal when it is not given.
 - Be concrete and specific.
 
-Also give: title (under 70 characters, naming the goal), overview (two sentences: what the learner will do and what they get), finalOutcome (what the learner can do on the last day) and topicTag (one or two words).`;
+Also give: title (under 70 characters, naming the goal), overview (two sentences: what the learner will do and what they get), finalOutcome (what the learner can do on the last day) and topicTag (one or two words).${revision ? revisionOutlineText(revision) : ''}`;
+}
+
+function revisionOutlineText(revision: { instruction: string; current: Outline }): string {
+	const current = revision.current.blocks
+		.map(
+			(b) =>
+				`Block ${b.index}: ${asData(b.theme)} | ${asData(b.objective)} | covers: ${asData(b.covers.join('; '))} | milestone: ${asData(b.milestone.title)}`
+		)
+		.join('\n');
+	return `
+
+<revision_request>${asData(revision.instruction)}</revision_request>
+<current_outline>
+Title: ${asData(revision.current.title)}
+Overview: ${asData(revision.current.overview)}
+${current}
+</current_outline>
+
+This is a revision of an existing plan. Apply the revision request to the current outline and keep everything it does not touch as it is, with the same block indexes and day ranges as in <blocks>. Return the whole updated outline.`;
 }
 
 function formatLedger(ledger: LedgerEntry[]): string {
@@ -123,8 +146,9 @@ export function blockWriterPrompt(args: {
 	block: OutlineBlock;
 	ledger: LedgerEntry[];
 	previous: BlockOutput | null;
+	revision?: { instruction: string; currentDays: BlockOutput['days'] };
 }): string {
-	const { inputs, outline, block, ledger, previous } = args;
+	const { inputs, outline, block, ledger, previous, revision } = args;
 	const days = block.endDay - block.startDay + 1;
 	return `<task>block</task>
 ${context(inputs)}
@@ -148,7 +172,28 @@ Write exactly days ${block.startDay} to ${block.endDay} (${days} days), one entr
 
 Each day has: title (different from every title in already_taught), learn, practice, review, minutes (about ${inputs.minutesPerDay}; together about ${days * inputs.minutesPerDay}) and topics (1 to 3 short labels for what the day newly teaches).
 
-Follow the day-writing rules from your instructions. Check before answering: every day from ${block.startDay} to ${block.endDay} is present once, no title repeats one in already_taught, and nothing from not_covers is taught.`;
+Follow the day-writing rules from your instructions. Check before answering: every day from ${block.startDay} to ${block.endDay} is present once, no title repeats one in already_taught, and nothing from not_covers is taught.${revision ? revisionBlockText(revision) : ''}`;
+}
+
+function revisionBlockText(revision: {
+	instruction: string;
+	currentDays: BlockOutput['days'];
+}): string {
+	const current = revision.currentDays
+		.map((d) =>
+			asData(
+				`Day ${d.day}: ${d.title} | Learn: ${d.learn} | Practice: ${d.practice} | Review: ${d.review} | ${d.minutes} min`
+			)
+		)
+		.join('\n');
+	return `
+
+<revision_request>${asData(revision.instruction)}</revision_request>
+<current_days>
+${current}
+</current_days>
+
+This is a revision of days that already exist. Rewrite the days so the revision request is fully satisfied, keeping the same day numbers and anything the request does not touch. Titles may stay the same when the day still teaches the same thing.`;
 }
 
 export function withFeedback(prompt: string, issues: string[]): string {

@@ -29,3 +29,12 @@ export const MODEL_COMPAT = {
 	timeoutMs: 30_000,
 	maxEntries: 500
 } as const;
+
+export const CHAT = {
+	historyMessages: 20,
+	maxSteps: 6,
+	maxReviseBlocks: 3,
+	maxMessageChars: 2000
+} as const;
+
+export const REVISION_KEEP = 30;

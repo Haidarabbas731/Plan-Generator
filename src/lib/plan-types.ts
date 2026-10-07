@@ -69,6 +69,7 @@ export interface PlanDetail {
 	model: string;
 	overview: string | null;
 	finalOutcome: string | null;
+	currentRevision: number;
 	inputs: PlanInputs;
 }
 
