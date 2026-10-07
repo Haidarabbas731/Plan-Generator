@@ -79,6 +79,25 @@ describe('BlockSection', () => {
 		expect(screen.queryByText('Day 4 · Lesson 4')).not.toBeInTheDocument();
 	});
 
+	it('shows the milestone only after the days of the block are written', () => {
+		for (const status of ['pending', 'writing', 'failed'] as const) {
+			const { unmount } = render(BlockSection, {
+				props: {
+					block: { ...block, status, error: status === 'failed' ? 'x' : null },
+					days,
+					dates,
+					open: true,
+					ontoggle: vi.fn(),
+					onretry: vi.fn()
+				}
+			});
+			expect(screen.queryByText(/milestone · Word counter/)).not.toBeInTheDocument();
+			unmount();
+		}
+		setup({ status: 'stale' });
+		expect(screen.getByText(/milestone · Word counter/)).toBeInTheDocument();
+	});
+
 	it('says a pending block is waiting', () => {
 		setup({ status: 'pending' });
 		expect(screen.getByText('Waiting')).toBeInTheDocument();

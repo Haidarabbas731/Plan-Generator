@@ -141,18 +141,20 @@
 					</p>
 				{/if}
 
-				<div
-					class="flex items-start gap-3 rounded-lg border border-highlight/30 bg-highlight/5 p-4 text-sm"
-				>
-					<FlagIcon class="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden="true" />
-					<div class="flex flex-col gap-1">
-						<p class="font-medium">Day {block.endDay} milestone · {block.milestone.title}</p>
-						<p class="text-foreground/85">{block.milestone.description}</p>
-						<p class="text-muted-foreground">
-							You are done when: {block.milestone.successCriteria}
-						</p>
+				{#if isWritten}
+					<div
+						class="flex items-start gap-3 rounded-lg border border-highlight/30 bg-highlight/5 p-4 text-sm"
+					>
+						<FlagIcon class="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden="true" />
+						<div class="flex flex-col gap-1">
+							<p class="font-medium">Day {block.endDay} milestone · {block.milestone.title}</p>
+							<p class="text-foreground/85">{block.milestone.description}</p>
+							<p class="text-muted-foreground">
+								You are done when: {block.milestone.successCriteria}
+							</p>
+						</div>
 					</div>
-				</div>
+				{/if}
 			</div>
 		</CollapsibleContent>
 	</Collapsible>
