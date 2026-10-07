@@ -9,6 +9,9 @@ if (!building) {
 	void planQueue.recoverInterruptedPlans().catch((error) => {
 		logger.error({ err: error }, 'Could not recover interrupted plans');
 	});
+	process.on('sveltekit:shutdown' as NodeJS.Signals, async () => {
+		await planQueue.close(true);
+	});
 }
 
 export const handle: Handle = async ({ event, resolve }) => {

@@ -1,3 +1,4 @@
+import { spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -49,15 +50,26 @@ describe.skipIf(!databaseUrl || !redisUrl)(
 			await client.end();
 		});
 
-		function setup(delayMs = 0) {
-			const bus = createRedisEventBus(redisUrl!, `${name}-events`);
+		function setup(
+			delayMs = 0,
+			timings: { lockDurationMs?: number; stalledIntervalMs?: number } = {}
+		) {
+			const queueName = `${name}-${randomBytes(3).toString('hex')}`;
+			const bus = createRedisEventBus(redisUrl!, `${queueName}-events`);
 			const worker = createPlanWorker({
 				client,
 				store,
 				bus,
 				resolveModel: async () => createFakeModel({ delayMs })
 			});
-			const queue = createPlanQueue({ url: redisUrl!, worker, store, bus, name });
+			const queue = createPlanQueue({
+				url: redisUrl!,
+				worker,
+				store,
+				bus,
+				name: queueName,
+				...timings
+			});
 			closers.push(async () => {
 				await queue.close();
 				await bus.close();
@@ -109,5 +121,60 @@ describe.skipIf(!databaseUrl || !redisUrl)(
 			expect(await queue.recoverInterruptedPlans()).toBeGreaterThanOrEqual(1);
 			expect((await store.getPlan(orphan))!.status).toBe('paused');
 		});
+
+		it('finishes a plan on another worker after the first process is killed', async () => {
+			const crashName = `${name}-crash`;
+			const child = spawn('bun', ['src/lib/server/plans/testing/queue-child.ts'], {
+				env: {
+					...process.env,
+					DATABASE_URL: databaseUrl,
+					REDIS_URL: redisUrl,
+					QUEUE_NAME: crashName,
+					DELAY_MS: '250'
+				},
+				stdio: ['ignore', 'pipe', 'inherit']
+			});
+			await new Promise<void>((resolve) => child.stdout.on('data', () => resolve()));
+
+			const bus = createRedisEventBus(redisUrl!, `${crashName}-events`);
+			const producer = createPlanQueue({
+				url: redisUrl!,
+				worker: createPlanWorker({
+					client,
+					store,
+					bus,
+					resolveModel: async () => createFakeModel()
+				}),
+				store,
+				bus,
+				name: crashName,
+				concurrency: 1,
+				lockDurationMs: 1500,
+				stalledIntervalMs: 500
+			});
+			closers.push(async () => {
+				await producer.close(true);
+				await bus.close();
+			});
+
+			const planId = await newPlan();
+			await producer.enqueue(planId);
+
+			for (let i = 0; i < 100; i++) {
+				const blocks = await store.listBlocks(planId);
+				if (blocks.some((block) => block.status === 'ready')) break;
+				await new Promise((resolve) => setTimeout(resolve, 50));
+			}
+			child.kill('SIGKILL');
+			expect((await store.getPlan(planId))!.status).toBe('generating');
+
+			await waitForStatus(planId, 'ready');
+			expect(await store.listDays(planId)).toHaveLength(15);
+			const usage = await db
+				.select()
+				.from(schema.usageEvents)
+				.where(eq(schema.usageEvents.userId, userId));
+			expect(usage.length).toBeGreaterThanOrEqual(1);
+		}, 30_000);
 	}
 );

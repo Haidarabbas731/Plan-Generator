@@ -11,3 +11,10 @@ export const LEDGER_VERBATIM_DAYS = 120;
 
 export const GENERATION_ATTEMPTS = 2;
 export const SSE_HEARTBEAT_MS = 15_000;
+
+export const PLAN_QUEUE = {
+	concurrency: 2,
+	lockDurationMs: 30_000,
+	stalledIntervalMs: 30_000,
+	maxStalledCount: 3
+} as const;

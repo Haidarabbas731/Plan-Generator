@@ -25,7 +25,10 @@ export function createPlanWorker(deps: WorkerDeps) {
 	const { client, store, bus, resolveModel } = deps;
 	const running = new Map<string, { controller: AbortController; done: Promise<RunOutcome> }>();
 
-	async function start(planId: string): Promise<StartResult> {
+	async function start(
+		planId: string,
+		options: { countUsage?: boolean } = {}
+	): Promise<StartResult> {
 		if (running.has(planId)) return 'already-running';
 
 		const plan = await store.getPlan(planId);
@@ -60,7 +63,7 @@ export function createPlanWorker(deps: WorkerDeps) {
 			return 'no-key';
 		}
 
-		await store.recordUsage(plan.userId, 'generation');
+		if (options.countUsage ?? true) await store.recordUsage(plan.userId, 'generation');
 
 		const controller = new AbortController();
 		const done = runGeneration({
@@ -85,8 +88,11 @@ export function createPlanWorker(deps: WorkerDeps) {
 		return 'started';
 	}
 
-	async function run(planId: string): Promise<StartResult | RunOutcome> {
-		const result = await start(planId);
+	async function run(
+		planId: string,
+		options: { countUsage?: boolean } = {}
+	): Promise<StartResult | RunOutcome> {
+		const result = await start(planId, options);
 		if (result !== 'started') return result;
 		return (await running.get(planId)?.done) ?? result;
 	}

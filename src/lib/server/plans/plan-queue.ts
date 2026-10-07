@@ -1,5 +1,6 @@
 import { Queue, Worker } from 'bullmq';
 import { Redis } from 'ioredis';
+import { PLAN_QUEUE } from '../config.js';
 import { logger } from '../logger.js';
 import type { EventBus } from './events.js';
 import type { PlanStore } from './plan-store.js';
@@ -12,6 +13,8 @@ export interface PlanQueueDeps {
 	bus: EventBus;
 	name?: string;
 	concurrency?: number;
+	lockDurationMs?: number;
+	stalledIntervalMs?: number;
 }
 
 const ACTIVE_STATES = new Set(['waiting', 'active', 'delayed', 'prioritized', 'waiting-children']);
@@ -29,11 +32,26 @@ export function createPlanQueue(deps: PlanQueueDeps) {
 	const processor = new Worker<{ planId: string }>(
 		name,
 		async (job) => {
-			await worker.run(job.data.planId);
+			await worker.run(job.data.planId, { countUsage: job.stalledCounter === 0 });
 		},
-		{ connection: connect(), concurrency: deps.concurrency ?? 2 }
+		{
+			connection: connect(),
+			concurrency: deps.concurrency ?? PLAN_QUEUE.concurrency,
+			lockDuration: deps.lockDurationMs ?? PLAN_QUEUE.lockDurationMs,
+			stalledInterval: deps.stalledIntervalMs ?? PLAN_QUEUE.stalledIntervalMs,
+			maxStalledCount: PLAN_QUEUE.maxStalledCount
+		}
 	);
 	processor.on('error', (error) => logger.error({ err: error }, 'Plan queue worker error'));
+	processor.on('failed', (job, error) => {
+		const planId = job?.data.planId;
+		if (!planId) return;
+		logger.error({ err: error, planId }, 'Plan job failed');
+		void store
+			.setPlanStatus(planId, 'paused')
+			.then(() => bus.emit({ type: 'paused', planId }))
+			.catch((err) => logger.error({ err, planId }, 'Could not pause a plan after a failed job'));
+	});
 
 	subscriber.on('message', (_channel, planId) => {
 		worker.cancel(planId);
@@ -82,8 +100,8 @@ export function createPlanQueue(deps: PlanQueueDeps) {
 		enqueue,
 		cancel,
 		recoverInterruptedPlans,
-		async close() {
-			await processor.close();
+		async close(force = false) {
+			await processor.close(force);
 			await queue.close();
 			subscriber.disconnect();
 			publisher.disconnect();
