@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type {
 	BlockStatus,
@@ -18,6 +18,21 @@ export type Db = PostgresJsDatabase<typeof schema>;
 export type PlanRow = typeof plans.$inferSelect;
 export type BlockRow = typeof planBlocks.$inferSelect;
 export type DayRow = typeof planDays.$inferSelect;
+
+export interface PlanSummary {
+	id: string;
+	title: string;
+	topicTag: string | null;
+	status: PlanStatus;
+	provider: Provider;
+	model: string;
+	startDate: string;
+	updatedAt: Date;
+	daysDone: number;
+	daysWritten: number;
+	daysTotal: number;
+	studyDays: number[];
+}
 
 export interface PlanSnapshot {
 	plan: Pick<PlanRow, 'title' | 'overview' | 'finalOutcome' | 'topicTag' | 'ledger'>;
@@ -58,6 +73,61 @@ export function createPlanStore(db: Db) {
 				.where(and(eq(plans.id, planId), eq(plans.userId, userId)))
 				.limit(1);
 			return row;
+		},
+
+		async listPlanSummaries(userId: string): Promise<PlanSummary[]> {
+			const rows = await db
+				.select({
+					id: plans.id,
+					title: plans.title,
+					topicTag: plans.topicTag,
+					status: plans.status,
+					provider: plans.provider,
+					model: plans.model,
+					startDate: plans.startDate,
+					inputs: plans.inputs,
+					updatedAt: plans.updatedAt,
+					daysDone: sql<number>`count(${planDays.id}) filter (where ${planDays.completedAt} is not null)::int`,
+					daysWritten: sql<number>`count(${planDays.id})::int`
+				})
+				.from(plans)
+				.leftJoin(planDays, eq(planDays.planId, plans.id))
+				.where(eq(plans.userId, userId))
+				.groupBy(plans.id)
+				.orderBy(desc(plans.updatedAt));
+			return rows.map(({ inputs, ...row }) => ({
+				...row,
+				daysTotal: inputs.daysTotal,
+				studyDays: inputs.studyDays
+			}));
+		},
+
+		async setDayCompleted(
+			userId: string,
+			planId: string,
+			day: number,
+			completed: boolean
+		): Promise<boolean> {
+			const owned = await db
+				.select({ id: plans.id })
+				.from(plans)
+				.where(and(eq(plans.id, planId), eq(plans.userId, userId)))
+				.limit(1);
+			if (owned.length === 0) return false;
+			const rows = await db
+				.update(planDays)
+				.set({ completedAt: completed ? new Date() : null })
+				.where(and(eq(planDays.planId, planId), eq(planDays.day, day)))
+				.returning({ id: planDays.id });
+			return rows.length > 0;
+		},
+
+		async deleteOwnedPlan(userId: string, planId: string): Promise<boolean> {
+			const rows = await db
+				.delete(plans)
+				.where(and(eq(plans.id, planId), eq(plans.userId, userId)))
+				.returning({ id: plans.id });
+			return rows.length > 0;
 		},
 
 		async countPlans(userId: string): Promise<number> {
