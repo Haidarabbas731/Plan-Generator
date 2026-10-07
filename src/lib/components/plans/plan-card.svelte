@@ -1,7 +1,13 @@
 <script lang="ts">
+	import CalendarIcon from '@lucide/svelte/icons/calendar';
+	import DownloadIcon from '@lucide/svelte/icons/download';
+	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
+	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import { Badge } from '#lib/components/ui/badge/index.js';
-	import { PROVIDER_INFO } from '#lib/providers.js';
+	import { buttonVariants } from '#lib/components/ui/button/index.js';
+	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import type { PlanSummary } from '#lib/plan-types.js';
+	import { PROVIDER_INFO } from '#lib/providers.js';
 	import ProgressRing from './progress-ring.svelte';
 
 	interface Props {
@@ -17,9 +23,10 @@
 			| 'daysDone'
 			| 'daysTotal'
 		>;
+		ondelete: () => void;
 	}
 
-	let { plan }: Props = $props();
+	let { plan, ondelete }: Props = $props();
 
 	const ratio = $derived(plan.daysTotal === 0 ? 0 : plan.daysDone / plan.daysTotal);
 	const updated = $derived(
@@ -36,13 +43,19 @@
 	);
 </script>
 
-<a
-	href="/plans/{plan.id}"
-	class="flex min-h-11 pressable items-center gap-4 rounded-lg border bg-card p-4 text-card-foreground outline-none hover:border-ring/50 focus-visible:ring-3 focus-visible:ring-ring/40"
+<div
+	class="relative flex min-h-11 pressable-within items-center gap-4 rounded-lg border bg-card p-4 text-card-foreground hover:border-ring/50"
 >
 	<ProgressRing value={ratio} label="{plan.title} progress" />
 	<div class="flex min-w-0 flex-1 flex-col gap-1.5">
-		<h2 class="truncate text-heading">{plan.title}</h2>
+		<h2 class="truncate text-heading">
+			<a
+				href="/plans/{plan.id}"
+				class="outline-none after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:after:ring-3 focus-visible:after:ring-ring/40"
+			>
+				{plan.title}
+			</a>
+		</h2>
 		<p class="truncate text-caption text-muted-foreground">
 			<span class="tabular-nums">{plan.daysDone} of {plan.daysTotal} days</span>
 			· {PROVIDER_INFO[plan.provider].name} · {plan.model} · {updated}
@@ -60,4 +73,40 @@
 			</div>
 		{/if}
 	</div>
-</a>
+
+	<DropdownMenu.Root>
+		<DropdownMenu.Trigger
+			aria-label="Actions for {plan.title}"
+			class={buttonVariants({
+				variant: 'ghost',
+				size: 'icon',
+				class: 'relative z-10 size-11 shrink-0'
+			})}
+		>
+			<EllipsisIcon aria-hidden="true" />
+		</DropdownMenu.Trigger>
+		<DropdownMenu.Content align="end" class="min-w-56">
+			<DropdownMenu.Item>
+				{#snippet child({ props })}
+					<a {...props} href="/plans/{plan.id}/export/markdown" download>
+						<DownloadIcon aria-hidden="true" />
+						Export Markdown
+					</a>
+				{/snippet}
+			</DropdownMenu.Item>
+			<DropdownMenu.Item>
+				{#snippet child({ props })}
+					<a {...props} href="/plans/{plan.id}/export/ics" download>
+						<CalendarIcon aria-hidden="true" />
+						Export calendar (ICS)
+					</a>
+				{/snippet}
+			</DropdownMenu.Item>
+			<DropdownMenu.Separator />
+			<DropdownMenu.Item variant="destructive" onSelect={ondelete}>
+				<TrashIcon aria-hidden="true" />
+				Delete plan
+			</DropdownMenu.Item>
+		</DropdownMenu.Content>
+	</DropdownMenu.Root>
+</div>

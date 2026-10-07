@@ -213,6 +213,13 @@
 	}
 }
 
+@utility pressable-within {
+	transition: transform var(--dur-press) var(--ease-out);
+	&:has(a:active) {
+		transform: scale(0.98);
+	}
+}
+
 @keyframes reveal {
 	from {
 		opacity: 0;
@@ -311,7 +318,8 @@
 		scroll-behavior: auto !important;
 		transition-property: opacity, color, background-color, border-color, box-shadow !important;
 	}
-	.pressable:active {
+	.pressable:active,
+	.pressable-within:has(a:active) {
 		transform: none;
 	}
 }

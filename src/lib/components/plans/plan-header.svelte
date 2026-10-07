@@ -1,17 +1,15 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import CalendarIcon from '@lucide/svelte/icons/calendar';
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
 	import FlameIcon from '@lucide/svelte/icons/flame';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
-	import * as AlertDialog from '#lib/components/ui/alert-dialog/index.js';
 	import { Badge } from '#lib/components/ui/badge/index.js';
-	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
+	import { buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { formatDate } from '#lib/format.js';
 	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
+	import DeletePlanDialog from './delete-plan-dialog.svelte';
 	import ProgressRing from './progress-ring.svelte';
 
 	interface Props {
@@ -31,7 +29,6 @@
 		$props();
 
 	let deleteOpen = $state(false);
-	let deleting = $state(false);
 
 	const ratio = $derived(total === 0 ? 0 : done / total);
 </script>
@@ -68,7 +65,7 @@
 		>
 			<EllipsisIcon aria-hidden="true" />
 		</DropdownMenu.Trigger>
-		<DropdownMenu.Content align="end">
+		<DropdownMenu.Content align="end" class="min-w-56">
 			<DropdownMenu.Item>
 				{#snippet child({ props })}
 					<a {...props} href="/plans/{id}/export/markdown" download>
@@ -94,32 +91,4 @@
 	</DropdownMenu.Root>
 </header>
 
-<AlertDialog.Root bind:open={deleteOpen}>
-	<AlertDialog.Content>
-		<AlertDialog.Header>
-			<AlertDialog.Title>Delete this plan?</AlertDialog.Title>
-			<AlertDialog.Description>
-				“{title}” and your progress will be removed. This cannot be undone.
-			</AlertDialog.Description>
-		</AlertDialog.Header>
-		<form
-			method="POST"
-			action="?/delete"
-			use:enhance={() => {
-				deleting = true;
-				return async ({ update }) => {
-					await update();
-					deleting = false;
-				};
-			}}
-		>
-			<AlertDialog.Footer>
-				<AlertDialog.Cancel type="button" disabled={deleting}>Keep plan</AlertDialog.Cancel>
-				<Button type="submit" variant="destructive" disabled={deleting}>
-					{#if deleting}<Spinner data-icon="inline-start" />{/if}
-					Delete plan
-				</Button>
-			</AlertDialog.Footer>
-		</form>
-	</AlertDialog.Content>
-</AlertDialog.Root>
+<DeletePlanDialog bind:open={deleteOpen} {title} />

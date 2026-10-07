@@ -3,6 +3,8 @@
 	import KeyRoundIcon from '@lucide/svelte/icons/key-round';
 	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SearchIcon from '@lucide/svelte/icons/search';
+	import { toast } from 'svelte-sonner';
+	import DeletePlanDialog from '#lib/components/plans/delete-plan-dialog.svelte';
 	import PlanCard from '#lib/components/plans/plan-card.svelte';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
@@ -20,6 +22,8 @@
 	let { data }: PageProps = $props();
 
 	let query = $state('');
+	let pendingDelete = $state<{ id: string; title: string } | null>(null);
+	let deleteOpen = $state(false);
 
 	const filtered = $derived.by(() => {
 		const needle = query.trim().toLowerCase();
@@ -97,9 +101,26 @@
 		{:else}
 			<ul class="flex flex-col gap-3">
 				{#each filtered as plan, i (plan.id)}
-					<li class="reveal" style="--reveal-i: {Math.min(i, 5)}"><PlanCard {plan} /></li>
+					<li class="reveal" style="--reveal-i: {Math.min(i, 5)}">
+						<PlanCard
+							{plan}
+							ondelete={() => {
+								pendingDelete = { id: plan.id, title: plan.title };
+								deleteOpen = true;
+							}}
+						/>
+					</li>
 				{/each}
 			</ul>
 		{/if}
 	{/if}
 </div>
+
+{#if pendingDelete}
+	<DeletePlanDialog
+		bind:open={deleteOpen}
+		title={pendingDelete.title}
+		planId={pendingDelete.id}
+		ondeleted={() => toast.success('Plan deleted')}
+	/>
+{/if}
