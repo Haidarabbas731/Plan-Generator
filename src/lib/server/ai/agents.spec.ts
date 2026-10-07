@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { LIMITS } from '#lib/limits.js';
 import type { LedgerEntry, PlanInputs } from '#lib/plan-types.js';
 import { planBlockRanges } from '#lib/plan-blocks.js';
+import { GENERATION_ATTEMPTS } from '../config.js';
 import { runBlockWriter } from './block-writer.js';
 import { createFakeModel } from './fake-model.js';
 import { GenerationError } from './generate.js';
@@ -58,7 +59,7 @@ describe('runOutliner', () => {
 	it('gives up with a clear error after the allowed attempts', async () => {
 		const model = createFakeModel({ outlineAlwaysFails: true });
 		await expect(runOutliner({ model, inputs, ranges })).rejects.toBeInstanceOf(GenerationError);
-		expect(model.doGenerateCalls).toHaveLength(2);
+		expect(model.doGenerateCalls).toHaveLength(GENERATION_ATTEMPTS);
 	});
 
 	it('stops when cancelled', async () => {
