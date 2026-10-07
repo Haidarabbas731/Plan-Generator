@@ -1,26 +1,15 @@
+import type { auth } from '#lib/server/auth.js';
+
 declare global {
 	namespace App {
-		interface AuthUser {
-			id: string;
-			name: string;
-			email: string;
-			image?: string | null;
-		}
-
-		interface AuthSession {
-			id: string;
-			userId: string;
-			expiresAt: Date;
-		}
-
 		interface Error {
 			message: string;
 			code?: string;
 		}
 
 		interface Locals {
-			user: AuthUser | null;
-			session: AuthSession | null;
+			user: typeof auth.$Infer.Session.user | null;
+			session: typeof auth.$Infer.Session.session | null;
 		}
 	}
 }

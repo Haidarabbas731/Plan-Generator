@@ -5,7 +5,9 @@ import {
 	httpUrl,
 	optionalString,
 	positiveInt,
-	requiredString
+	requiredHttpUrl,
+	requiredString,
+	secretString
 } from './env-validators.js';
 
 describe('optionalString', () => {
@@ -93,5 +95,29 @@ describe('requiredString', () => {
 	it('throws when missing or blank', () => {
 		expect(() => requiredString(undefined)).toThrow();
 		expect(() => requiredString('   ')).toThrow();
+	});
+});
+
+describe('requiredHttpUrl', () => {
+	it('accepts a valid URL', () => {
+		expect(requiredHttpUrl('https://plans.example.com')).toBe('https://plans.example.com');
+	});
+
+	it('throws when missing or not http(s)', () => {
+		expect(() => requiredHttpUrl(undefined)).toThrow();
+		expect(() => requiredHttpUrl('ftp://example.com')).toThrow();
+	});
+});
+
+describe('secretString', () => {
+	const secret = secretString(32);
+
+	it('accepts a long enough secret', () => {
+		expect(secret('x'.repeat(32))).toBe('x'.repeat(32));
+	});
+
+	it('rejects missing or short secrets', () => {
+		expect(() => secret(undefined)).toThrow();
+		expect(() => secret('short')).toThrow();
 	});
 });

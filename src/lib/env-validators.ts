@@ -47,3 +47,19 @@ export function httpUrl(value: string | undefined): string | undefined {
 	}
 	return trimmed;
 }
+
+export function requiredHttpUrl(value: string | undefined): string {
+	const url = httpUrl(value);
+	if (!url) throw new Error('This variable is required');
+	return url;
+}
+
+export function secretString(minLength: number) {
+	return (value: string | undefined): string => {
+		const trimmed = requiredString(value);
+		if (trimmed.length < minLength) {
+			throw new Error(`Expected at least ${minLength} characters`);
+		}
+		return trimmed;
+	};
+}

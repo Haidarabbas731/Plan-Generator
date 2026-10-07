@@ -2,10 +2,11 @@ import { defineEnvVars } from '@sveltejs/kit/env';
 import {
 	base64Key32,
 	booleanFlag,
-	httpUrl,
 	optionalString,
 	positiveInt,
-	requiredString
+	requiredHttpUrl,
+	requiredString,
+	secretString
 } from '#lib/env-validators.js';
 
 export const variables = defineEnvVars({
@@ -14,11 +15,11 @@ export const variables = defineEnvVars({
 		description: 'PostgreSQL connection string'
 	},
 	BETTER_AUTH_SECRET: {
-		schema: optionalString,
+		schema: secretString(32),
 		description: 'Secret used to sign sessions'
 	},
 	BETTER_AUTH_URL: {
-		schema: httpUrl,
+		schema: requiredHttpUrl,
 		description: 'Public base URL of the app'
 	},
 	ENCRYPTION_KEY: {
