@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test';
+import { open } from './helpers.js';
 
 test('landing page shows the headline, example plan and sign up link', async ({ page }) => {
-	await page.goto('/');
+	await open(page, '/');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText(
 		'Turn a goal into a day-by-day plan'
 	);
@@ -10,7 +11,7 @@ test('landing page shows the headline, example plan and sign up link', async ({ 
 });
 
 test('theme toggle switches between light and dark', async ({ page }) => {
-	await page.goto('/');
+	await open(page, '/');
 	const html = page.locator('html');
 	const toggle = page.getByRole('button', { name: 'Toggle light and dark theme' });
 	const wasDark = await html.evaluate((el) => el.classList.contains('dark'));
@@ -21,7 +22,7 @@ test('theme toggle switches between light and dark', async ({ page }) => {
 });
 
 test('unknown route shows the error page with a way home', async ({ page }) => {
-	const response = await page.goto('/does-not-exist');
+	const response = await open(page, '/does-not-exist');
 	expect(response?.status()).toBe(404);
 	await expect(page.getByRole('heading', { name: 'Page not found' })).toBeVisible();
 	await page.getByRole('link', { name: 'Back to home' }).click();
@@ -29,7 +30,7 @@ test('unknown route shows the error page with a way home', async ({ page }) => {
 });
 
 test('skip link moves focus to the main content', async ({ page }) => {
-	await page.goto('/');
+	await open(page, '/');
 	await page.keyboard.press('Tab');
 	const skip = page.getByRole('link', { name: 'Skip to content' });
 	await expect(skip).toBeFocused();

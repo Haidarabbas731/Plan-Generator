@@ -1,17 +1,18 @@
 import { defineConfig } from '@playwright/test';
 
+const baseURL = 'http://localhost:5173';
+
 export default defineConfig({
 	testDir: 'e2e',
+	workers: 1,
 	webServer: {
-		command: 'bun run build && bun run preview --port 4173',
-		port: 4173,
-		reuseExistingServer: !process.env.CI
+		command: 'bun run dev',
+		url: baseURL,
+		reuseExistingServer: true
 	},
-	// Use the Google Chrome installed on this machine, so no Chromium download is needed.
 	use: {
-		baseURL: 'http://localhost:4173',
+		baseURL,
 		channel: 'chrome',
-		// SLOWMO=800 makes each step visible when running headed.
 		launchOptions: { slowMo: Number(process.env.SLOWMO ?? 0) }
 	}
 });
