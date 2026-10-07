@@ -1,11 +1,6 @@
-export type PlanEvent =
-	| { type: 'outline_ready'; planId: string }
-	| { type: 'block_started'; planId: string; index: number }
-	| { type: 'block_ready'; planId: string; index: number }
-	| { type: 'block_failed'; planId: string; index: number; message: string }
-	| { type: 'paused'; planId: string }
-	| { type: 'failed'; planId: string; message: string }
-	| { type: 'done'; planId: string };
+import type { PlanEvent } from '#lib/plan-live.js';
+
+export type { PlanEvent };
 
 export type PlanListener = (event: PlanEvent) => void;
 
