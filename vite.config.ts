@@ -1,4 +1,5 @@
 import tailwindcss from '@tailwindcss/vite';
+import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
 import adapter from '@sveltejs/adapter-node';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -16,6 +17,7 @@ export default defineConfig({
 		})
 	],
 	test: {
+		env: loadEnv('test', process.cwd(), ''),
 		expect: { requireAssertions: true },
 		projects: [
 			{
