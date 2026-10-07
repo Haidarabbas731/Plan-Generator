@@ -29,3 +29,6 @@ CLAUDE.md
 .claude/
 .agents/
 skills-lock.json
+
+# Dokploy env (secrets)
+.env.dokploy

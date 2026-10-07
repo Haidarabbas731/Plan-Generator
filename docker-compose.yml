@@ -1,0 +1,49 @@
+# Local development compose: Postgres and the app.
+# Run only the database and use `bun run dev` on your machine:
+#   docker compose up postgres
+# Or run everything in containers:
+#   docker compose up --build
+#   docker compose down -v           # stop and wipe volumes
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: plan_generator_postgres
+    environment:
+      POSTGRES_DB: plan_generator
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d plan_generator']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: plan_generator_app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgres://postgres:password@postgres:5432/plan_generator
+      BETTER_AUTH_URL: http://localhost:5173
+    ports:
+      - '5173:5173'
+    volumes:
+      - ./src:/app/src
+      - ./static:/app/static
+      - ./drizzle:/app/drizzle
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'unless-stopped'
+
+volumes:
+  postgres_data:
