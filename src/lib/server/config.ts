@@ -24,3 +24,8 @@ export const MODEL_LIST = {
 	maxEntries: 500,
 	timeoutMs: 10_000
 } as const;
+
+export const MODEL_COMPAT = {
+	timeoutMs: 30_000,
+	maxEntries: 500
+} as const;
