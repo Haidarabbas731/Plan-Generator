@@ -6,6 +6,7 @@
 		CollapsibleContent,
 		CollapsibleTrigger
 	} from '#lib/components/ui/collapsible/index.js';
+	import { formatDate } from '#lib/format.js';
 
 	interface Props {
 		day: number;
@@ -37,16 +38,7 @@
 	let instant = $state(false);
 	let touched = $state(false);
 
-	const dateLabel = $derived(
-		date
-			? new Intl.DateTimeFormat('en', {
-					weekday: 'short',
-					month: 'short',
-					day: 'numeric',
-					timeZone: 'UTC'
-				}).format(new Date(`${date}T00:00:00Z`))
-			: null
-	);
+	const dateLabel = $derived(date ? formatDate(date) : null);
 
 	const tasks = $derived([
 		{ label: 'Learn', text: learn },

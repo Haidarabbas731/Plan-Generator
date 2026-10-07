@@ -19,6 +19,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { ToggleGroup, ToggleGroupItem } from '#lib/components/ui/toggle-group/index.js';
+	import { formatDate, localToday } from '#lib/format.js';
 	import { planBlockRanges } from '#lib/plan-blocks.js';
 	import { endDate, weeksSpanned } from '#lib/schedule.js';
 	import type { PageProps } from './$types';
@@ -77,12 +78,7 @@
 		return {
 			totalHours: Math.round(days * hours * 10) / 10,
 			weeks: weeksSpanned(startDate, weekdays, days),
-			end: new Intl.DateTimeFormat('en', {
-				month: 'short',
-				day: 'numeric',
-				year: 'numeric',
-				timeZone: 'UTC'
-			}).format(new Date(`${end}T00:00:00Z`)),
+			end: formatDate(end, 'date'),
 			blocks,
 			calls: blocks + 1
 		};
@@ -93,10 +89,7 @@
 	);
 
 	onMount(() => {
-		if (startDate !== data.today) return;
-		const now = new Date();
-		const local = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-		startDate = local;
+		if (startDate === data.today) startDate = localToday();
 	});
 </script>
 
