@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	applyLiveEvent,
+	liveFromData,
 	needsRefetch,
 	writingLabel,
 	type LiveEvent,
@@ -78,6 +79,29 @@ describe('applyLiveEvent', () => {
 		const before = structuredClone(base);
 		applyLiveEvent(base, { type: 'block_started', planId, index: 0 });
 		expect(base).toEqual(before);
+	});
+});
+
+describe('liveFromData', () => {
+	it('builds the live state from loaded plan data', () => {
+		expect(
+			liveFromData({ status: 'paused', error: null }, [
+				{ idx: 0, status: 'ready', error: null },
+				{ idx: 1, status: 'failed', error: 'bad' }
+			])
+		).toEqual({
+			status: 'paused',
+			error: null,
+			blocks: { 0: { status: 'ready', error: null }, 1: { status: 'failed', error: 'bad' } }
+		});
+	});
+
+	it('handles a plan without blocks', () => {
+		expect(liveFromData({ status: 'generating', error: null }, [])).toEqual({
+			status: 'generating',
+			error: null,
+			blocks: {}
+		});
 	});
 });
 

@@ -40,7 +40,7 @@ function setup(overrides: Partial<PlanBlockView> = {}, extra: Record<string, unk
 			block: { ...block, ...overrides },
 			days,
 			dates,
-			defaultOpen: true,
+			open: true,
 			ontoggle,
 			onretry,
 			...extra
@@ -103,8 +103,8 @@ describe('BlockSection', () => {
 		expect(screen.getByText('Day 5 · Lesson 5')).toBeInTheDocument();
 	});
 
-	it('starts collapsed when it is not the default open block', () => {
-		setup({}, { defaultOpen: false });
+	it('starts collapsed when the page leaves it closed', () => {
+		setup({}, { open: false });
 		const trigger = screen.getByRole('button', { name: /Ownership and borrowing/ });
 		expect(trigger).toHaveAttribute('aria-expanded', 'false');
 		expect(screen.getByText(/It counts a 1 MB file/)).not.toBeVisible();

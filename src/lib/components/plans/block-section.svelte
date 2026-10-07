@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import FlagIcon from '@lucide/svelte/icons/flag';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
@@ -20,7 +19,7 @@
 		days: PlanDayView[];
 		dates: string[];
 		todayDay?: number | null;
-		defaultOpen?: boolean;
+		open?: boolean;
 		retrying?: boolean;
 		ontoggle: (day: number, completed: boolean) => void;
 		onretry: () => void;
@@ -31,13 +30,12 @@
 		days,
 		dates,
 		todayDay = null,
-		defaultOpen = false,
+		open = $bindable(false),
 		retrying = false,
 		ontoggle,
 		onretry
 	}: Props = $props();
 
-	let open = $state(untrack(() => defaultOpen));
 	let instant = $state(false);
 
 	const span = $derived(block.endDay - block.startDay + 1);

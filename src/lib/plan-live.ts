@@ -76,6 +76,19 @@ export function applyLiveEvent(state: LiveState, event: LiveEvent): LiveState {
 	}
 }
 
+export function liveFromData(
+	plan: { status: PlanStatus; error: string | null },
+	blocks: { idx: number; status: BlockStatus; error: string | null }[]
+): LiveState {
+	return {
+		status: plan.status,
+		error: plan.error,
+		blocks: Object.fromEntries(
+			blocks.map((block) => [block.idx, { status: block.status, error: block.error }])
+		)
+	};
+}
+
 export function needsRefetch(event: LiveEvent): boolean {
 	return event.type !== 'block_started';
 }

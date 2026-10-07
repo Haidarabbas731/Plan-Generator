@@ -57,6 +57,21 @@ export interface PlanDayView {
 	completed: boolean;
 }
 
+export interface PlanDetail {
+	id: string;
+	title: string;
+	goal: string;
+	topicTag: string | null;
+	status: PlanStatus;
+	error: string | null;
+	startDate: string;
+	provider: Provider;
+	model: string;
+	overview: string | null;
+	finalOutcome: string | null;
+	inputs: PlanInputs;
+}
+
 export interface PlanSummary {
 	id: string;
 	title: string;
