@@ -56,5 +56,11 @@
 	"imports": {
 		"#lib": "./src/lib/index.js",
 		"#lib/*": "./src/lib/*"
+	},
+	"dependencies": {
+		"@shikijs/themes": "^4.5.0",
+		"ai": "^6",
+		"runed": "^0.37.1",
+		"streamdown-svelte": "^3.0.6"
 	}
 }
