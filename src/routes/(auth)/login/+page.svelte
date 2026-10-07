@@ -17,6 +17,7 @@
 
 <svelte:head>
 	<title>Sign in · Plan Generator</title>
+	<meta name="description" content="Sign in to Plan Generator to continue your plans." />
 </svelte:head>
 
 <AuthCard title="Sign in" description="Welcome back. Pick up where your plan left off.">

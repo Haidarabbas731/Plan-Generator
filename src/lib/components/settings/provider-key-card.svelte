@@ -60,12 +60,12 @@
 <Card.Root>
 	<Card.Header>
 		<div class="flex flex-col gap-1">
-			<Card.Title class="text-heading">{provider.name}</Card.Title>
+			<Card.Title class="text-heading"><h3>{provider.name}</h3></Card.Title>
 			<a
 				href={provider.keyUrl}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="inline-flex w-fit items-center gap-1 text-caption text-primary underline-offset-4 hover:underline"
+				class="-my-3 inline-flex w-fit items-center gap-1 py-3 text-caption text-primary underline-offset-4 hover:underline"
 			>
 				Get a key
 				<ExternalLinkIcon class="size-3" aria-hidden="true" />

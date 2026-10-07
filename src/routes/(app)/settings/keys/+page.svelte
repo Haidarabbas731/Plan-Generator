@@ -9,6 +9,10 @@
 
 <svelte:head>
 	<title>AI keys · Plan Generator</title>
+	<meta
+		name="description"
+		content="Add and manage the AI provider keys used to write your plans."
+	/>
 </svelte:head>
 
 <div class="flex flex-col gap-6">

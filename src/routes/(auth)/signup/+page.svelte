@@ -23,6 +23,10 @@
 
 <svelte:head>
 	<title>Create an account · Plan Generator</title>
+	<meta
+		name="description"
+		content="Create a Plan Generator account and bring your own AI key to write day-by-day plans."
+	/>
 </svelte:head>
 
 <AuthCard

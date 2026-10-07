@@ -16,6 +16,7 @@
 
 <svelte:head>
 	<title>Your plans · Plan Generator</title>
+	<meta name="description" content="Your saved study plans and progress." />
 </svelte:head>
 
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-10 sm:px-6">
