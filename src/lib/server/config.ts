@@ -18,3 +18,9 @@ export const PLAN_QUEUE = {
 	stalledIntervalMs: 30_000,
 	maxStalledCount: 3
 } as const;
+
+export const MODEL_LIST = {
+	ttlMs: 60 * 60 * 1000,
+	maxEntries: 500,
+	timeoutMs: 10_000
+} as const;
