@@ -1,0 +1,33 @@
+export interface PlanInputs {
+	goal: string;
+	level: 'beginner' | 'some' | 'returning' | null;
+	studyDays: number[];
+	doneLooksLike: string | null;
+	daysTotal: number;
+	minutesPerDay: number;
+	blockSize: number;
+}
+
+export interface Milestone {
+	title: string;
+	description: string;
+	successCriteria: string;
+}
+
+export interface LedgerEntry {
+	day: number;
+	title: string;
+	topics: string[];
+}
+
+export const PLAN_STATUSES = ['generating', 'paused', 'ready', 'failed'] as const;
+export type PlanStatus = (typeof PLAN_STATUSES)[number];
+
+export const BLOCK_STATUSES = ['pending', 'writing', 'ready', 'failed', 'stale'] as const;
+export type BlockStatus = (typeof BLOCK_STATUSES)[number];
+
+export const REVISION_SOURCES = ['generation', 'chat', 'restore'] as const;
+export type RevisionSource = (typeof REVISION_SOURCES)[number];
+
+export const USAGE_KINDS = ['generation', 'chat'] as const;
+export type UsageKind = (typeof USAGE_KINDS)[number];
