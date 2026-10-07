@@ -1,3 +1,4 @@
+import type { PlanEvent } from '#lib/plan-live.js';
 import { validatePlanRequest } from '#lib/plan-validation.js';
 import type { Provider } from '#lib/providers.js';
 import type { PlanStore } from './plan-store.js';
@@ -15,11 +16,12 @@ export interface PlanServiceDeps {
 	store: PlanStore;
 	queue: Pick<PlanQueue, 'enqueue' | 'cancel'>;
 	hasKey: (userId: string, provider: Provider) => Promise<boolean>;
+	emit?: (event: PlanEvent) => void;
 	planLimit?: number;
 }
 
 export function createPlanService(deps: PlanServiceDeps) {
-	const { store, queue, hasKey, planLimit } = deps;
+	const { store, queue, hasKey, emit, planLimit } = deps;
 
 	async function createAndStartPlan(
 		userId: string,
@@ -51,7 +53,11 @@ export function createPlanService(deps: PlanServiceDeps) {
 	async function cancelPlan(userId: string, planId: string): Promise<boolean> {
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return false;
-		return queue.cancel(planId);
+		if (await queue.cancel(planId)) return true;
+		if (plan.status !== 'generating') return false;
+		await store.setPlanStatus(planId, 'paused');
+		emit?.({ type: 'paused', planId });
+		return true;
 	}
 
 	return { createAndStartPlan, resumePlan, cancelPlan };

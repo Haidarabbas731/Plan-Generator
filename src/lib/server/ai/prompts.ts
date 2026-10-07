@@ -48,7 +48,7 @@ How to write each day:
 How to write the block:
 - Cover exactly the requested days, once each, in order. Days build on each other: difficulty rises steadily, never a sudden jump.
 - Never teach as new anything in the already-taught list, or anything in not_covers. Reviewing it by name is fine and encouraged.
-- Stay inside the block's covers, spread them across the days sensibly, and make the last days work toward the milestone, with the final day completing it.
+- Stay inside the block's covers, spread them across the days sensibly, and make the last days work toward the milestone, with the final day completing it. On the final day, practice names the milestone and lists its key steps in your own short words; never copy the milestone's description and success criteria in full, they are shown to the learner separately.
 - Continue from the previous block without repeating its last day.`;
 
 function context(inputs: PlanInputs): string {

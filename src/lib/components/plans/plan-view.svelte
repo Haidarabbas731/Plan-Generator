@@ -3,7 +3,7 @@
 	import { toast } from 'svelte-sonner';
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
-	import { PlanStream, setPlanStream } from '#lib/client/plan-stream.svelte.js';
+	import { LIVE_POLL_MS, PlanStream, setPlanStream } from '#lib/client/plan-stream.svelte.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { localToday } from '#lib/format.js';
 	import { liveFromData } from '#lib/plan-live.js';
@@ -83,8 +83,14 @@
 	});
 
 	$effect(() => {
-		if (plan.status !== 'generating') return;
+		if (plan.status === 'ready') return;
 		return stream.open();
+	});
+
+	$effect(() => {
+		if (status === 'ready' || stream.connected) return;
+		const timer = setInterval(() => invalidate(`plan:${plan.id}`), LIVE_POLL_MS);
+		return () => clearInterval(timer);
 	});
 
 	$effect(() => {

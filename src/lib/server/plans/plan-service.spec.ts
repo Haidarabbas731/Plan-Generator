@@ -22,6 +22,7 @@ function setup(
 		owned?: boolean;
 		limit?: number;
 		status?: string;
+		cancelResult?: boolean;
 	} = {}
 ) {
 	const store = {
@@ -34,15 +35,17 @@ function setup(
 	} as unknown as PlanStore;
 	const queue = {
 		enqueue: vi.fn(async () => undefined),
-		cancel: vi.fn(async () => true)
+		cancel: vi.fn(async () => options.cancelResult ?? true)
 	};
+	const emit = vi.fn();
 	const service = createPlanService({
 		store,
 		queue,
+		emit,
 		hasKey: async () => options.hasKey ?? true,
 		planLimit: options.limit
 	});
-	return { store, queue, service };
+	return { store, queue, service, emit };
 }
 
 describe('plan service', () => {
@@ -92,5 +95,19 @@ describe('plan service', () => {
 		const { service, queue } = setup({ status: 'generating' });
 		expect(await service.resumePlan('u1', 'plan-1')).toBe('already-running');
 		expect(queue.enqueue).not.toHaveBeenCalled();
+	});
+
+	it('pauses a plan that says it is generating but has no job', async () => {
+		const { service, store, emit } = setup({ cancelResult: false, status: 'generating' });
+		expect(await service.cancelPlan('u1', 'plan-1')).toBe(true);
+		expect(store.setPlanStatus).toHaveBeenCalledWith('plan-1', 'paused');
+		expect(emit).toHaveBeenCalledWith({ type: 'paused', planId: 'plan-1' });
+	});
+
+	it('refuses to pause a plan that is not generating and has no job', async () => {
+		const { service, store, emit } = setup({ cancelResult: false, status: 'ready' });
+		expect(await service.cancelPlan('u1', 'plan-1')).toBe(false);
+		expect(store.setPlanStatus).not.toHaveBeenCalled();
+		expect(emit).not.toHaveBeenCalled();
 	});
 });

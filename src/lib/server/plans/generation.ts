@@ -90,6 +90,11 @@ export async function runGeneration(args: {
 			emit({ type: 'outline_ready', planId });
 		} catch (error) {
 			if (signal.aborted) return pausePlan();
+			if (error instanceof GenerationError) {
+				logger.warn({ planId, issues: error.issues }, 'Outline failed validation');
+			} else {
+				logger.error({ err: error, planId }, 'Outline generation failed');
+			}
 			return failPlan(
 				error instanceof GenerationError
 					? 'The model could not design the plan. Try again or pick another model.'
@@ -137,6 +142,8 @@ export async function runGeneration(args: {
 			}
 			if (error instanceof GenerationError) {
 				logger.warn({ planId, block: block.idx, issues: error.issues }, 'Block failed validation');
+			} else {
+				logger.error({ err: error, planId, block: block.idx }, 'Block generation failed');
 			}
 			const message =
 				error instanceof GenerationError

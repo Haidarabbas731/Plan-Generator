@@ -34,5 +34,6 @@ export const planQueue = createPlanQueue({
 export const planService = createPlanService({
 	store: planStore,
 	queue: planQueue,
+	emit: (event) => planBus.emit(event),
 	hasKey: async (userId, provider) => AI_FAKE || (await getKey(userId, provider)) !== null
 });

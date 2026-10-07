@@ -1,8 +1,16 @@
-import { APICallError } from 'ai';
+import { APICallError, RetryError } from 'ai';
+
+const isTimeout = (error: unknown) =>
+	error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError');
+
+export function rootAiError(error: unknown): unknown {
+	return RetryError.isInstance(error) ? error.lastError : error;
+}
 
 export function describeAiError(error: unknown): string {
-	if (APICallError.isInstance(error)) {
-		const status = error.statusCode;
+	const root = rootAiError(error);
+	if (APICallError.isInstance(root)) {
+		const status = root.statusCode;
 		if (status === 401 || status === 403) {
 			return 'The provider rejected your key. Check it in Settings.';
 		}
@@ -16,6 +24,9 @@ export function describeAiError(error: unknown): string {
 			return 'The provider had a problem. Resume in a moment.';
 		}
 		return 'The provider could not complete the request.';
+	}
+	if (isTimeout(root)) {
+		return 'The provider took too long to answer. Resume in a moment.';
 	}
 	return 'Something went wrong while writing the plan. Resume to try again.';
 }

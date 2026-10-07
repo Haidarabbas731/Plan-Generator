@@ -7,6 +7,8 @@ import {
 	type LiveState
 } from '#lib/plan-live.js';
 
+export const LIVE_POLL_MS = 5000;
+
 export class PlanStream {
 	live = $state.raw<LiveState>({ status: 'generating', error: null, blocks: {} });
 	connected = $state(false);
