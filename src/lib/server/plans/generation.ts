@@ -1,5 +1,5 @@
 import type { LanguageModel } from 'ai';
-import { planBlockRanges } from '../ai/blocks.js';
+import { planBlockRanges } from '#lib/plan-blocks.js';
 import { runBlockWriter } from '../ai/block-writer.js';
 import { describeAiError } from '../ai/errors.js';
 import { GenerationError } from '../ai/generate.js';

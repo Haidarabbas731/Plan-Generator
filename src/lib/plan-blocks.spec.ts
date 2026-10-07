@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planBlockRanges } from './blocks.js';
+import { planBlockRanges } from './plan-blocks.js';
 
 const sizes = (ranges: ReturnType<typeof planBlockRanges>) =>
 	ranges.map((r) => r.endDay - r.startDay + 1);

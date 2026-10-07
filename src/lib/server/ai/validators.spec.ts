@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { planBlockRanges } from './blocks.js';
+import { planBlockRanges } from '#lib/plan-blocks.js';
 import { blockOutputSchema, outlineSchema } from './schemas.js';
 import type { BlockOutput, DayOutput, Outline, OutlineBlock } from './types.js';
 import { validateBlock, validateOutline } from './validators.js';

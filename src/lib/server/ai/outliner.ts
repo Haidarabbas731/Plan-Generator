@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
 import type { PlanInputs } from '#lib/plan-types.js';
-import type { BlockRange } from './blocks.js';
+import type { BlockRange } from '#lib/plan-blocks.js';
 import { generateValidated } from './generate.js';
 import { OUTLINER_INSTRUCTIONS, outlinerPrompt } from './prompts.js';
 import { outlineSchema } from './schemas.js';

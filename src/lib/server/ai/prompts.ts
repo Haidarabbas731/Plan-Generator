@@ -1,5 +1,5 @@
 import type { LedgerEntry, PlanInputs } from '#lib/plan-types.js';
-import type { BlockRange } from './blocks.js';
+import type { BlockRange } from '#lib/plan-blocks.js';
 import { windowLedger } from './ledger.js';
 import type { BlockOutput, Outline, OutlineBlock } from './types.js';
 

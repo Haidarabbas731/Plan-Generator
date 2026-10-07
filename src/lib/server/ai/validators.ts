@@ -1,4 +1,4 @@
-import type { BlockRange } from './blocks.js';
+import type { BlockRange } from '#lib/plan-blocks.js';
 import { normalizeText } from './ledger.js';
 import type { BlockOutput, Outline } from './types.js';
 
