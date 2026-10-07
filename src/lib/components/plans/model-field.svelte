@@ -47,17 +47,6 @@
 	const providerName = $derived(providers.find((option) => option.id === provider)?.name);
 	const selectedName = $derived(models.find((option) => option.id === model)?.name ?? model);
 
-	let placed = $state(false);
-
-	$effect(() => {
-		if (!open) return;
-		const timer = setTimeout(() => (placed = true), 150);
-		return () => {
-			clearTimeout(timer);
-			placed = false;
-		};
-	});
-
 	$effect(() => {
 		const current = provider;
 		const refresh = reloads > 0;
@@ -181,8 +170,6 @@
 				<Popover.Content
 					class="w-(--bits-popover-anchor-width) min-w-72 p-0"
 					align="start"
-					strategy="absolute"
-					data-glide={placed ? '' : undefined}
 					onOpenAutoFocus={(event) => {
 						event.preventDefault();
 						searchInput?.focus({ preventScroll: true });

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Select as SelectPrimitive } from 'bits-ui';
+	import { useGlide } from '#lib/glide.svelte.js';
 	import { cn, type WithoutChild } from '#lib/utils.js';
 	import type { WithoutChildrenOrChild } from '#lib/utils.js';
 	import SelectPortal from './select-portal.svelte';
@@ -11,6 +12,7 @@
 		ref = $bindable(null),
 		class: className,
 		sideOffset = 4,
+		strategy = 'absolute',
 		portalProps,
 		children,
 		preventScroll = true,
@@ -18,12 +20,15 @@
 	}: WithoutChild<SelectPrimitive.ContentProps> & {
 		portalProps?: WithoutChildrenOrChild<ComponentProps<typeof SelectPortal>>;
 	} = $props();
+
+	useGlide(() => ref);
 </script>
 
 <SelectPortal {...portalProps}>
 	<SelectPrimitive.Content
 		bind:ref
 		{sideOffset}
+		{strategy}
 		{preventScroll}
 		data-slot="select-content"
 		class={cn(

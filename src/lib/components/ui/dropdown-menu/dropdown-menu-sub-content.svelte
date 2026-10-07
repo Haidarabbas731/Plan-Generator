@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { DropdownMenu as DropdownMenuPrimitive } from 'bits-ui';
+	import { useGlide } from '#lib/glide.svelte.js';
 	import { cn, type WithoutChildrenOrChild } from '#lib/utils.js';
 	import DropdownMenuPortal from './dropdown-menu-portal.svelte';
 	import type { ComponentProps } from 'svelte';
@@ -9,11 +10,14 @@
 		class: className,
 		align = 'start',
 		alignOffset = -3,
+		strategy = 'absolute',
 		portalProps,
 		...restProps
 	}: DropdownMenuPrimitive.SubContentProps & {
 		portalProps?: WithoutChildrenOrChild<ComponentProps<typeof DropdownMenuPortal>>;
 	} = $props();
+
+	useGlide(() => ref);
 </script>
 
 <DropdownMenuPortal {...portalProps}>
@@ -22,6 +26,7 @@
 		data-slot="dropdown-menu-sub-content"
 		{align}
 		{alignOffset}
+		{strategy}
 		class={cn(
 			'z-50 min-w-36 origin-(--bits-dropdown-menu-content-transform-origin) overflow-hidden rounded-xl bg-popover p-1.5 text-popover-foreground shadow-lg ring-1 ring-foreground/5 duration-100 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:ring-foreground/10 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95',
 			className
