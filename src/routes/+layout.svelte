@@ -28,7 +28,7 @@
 <Tooltip.Provider delayDuration={400}>
 	<AppHeader>
 		{#snippet actions()}
-			<a href="/login" class={buttonVariants({ variant: 'ghost', size: 'sm' })}>Sign in</a>
+			<a href="/login" class={buttonVariants({ variant: 'ghost', class: 'h-11 px-4' })}>Sign in</a>
 		{/snippet}
 	</AppHeader>
 

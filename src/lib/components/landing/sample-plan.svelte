@@ -58,9 +58,9 @@
 		</ul>
 
 		<section class="reveal rounded-lg bg-accent p-4" style="--reveal-i: 3">
-			<h3 class="text-sm font-semibold text-accent-foreground">
+			<p class="text-sm font-semibold text-accent-foreground">
 				Today · Day {today.day} · {today.title}
-			</h3>
+			</p>
 			<dl class="mt-3 grid grid-cols-[4.25rem_1fr] gap-x-3 gap-y-2.5 text-sm">
 				{#each today.tasks as task (task.label)}
 					<dt class="font-medium text-accent-foreground">{task.label}</dt>
