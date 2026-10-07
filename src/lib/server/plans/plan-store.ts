@@ -5,6 +5,7 @@ import type {
 	LedgerEntry,
 	PlanInputs,
 	PlanStatus,
+	PlanSummary,
 	RevisionSource,
 	UsageKind
 } from '#lib/plan-types.js';
@@ -18,21 +19,6 @@ export type Db = PostgresJsDatabase<typeof schema>;
 export type PlanRow = typeof plans.$inferSelect;
 export type BlockRow = typeof planBlocks.$inferSelect;
 export type DayRow = typeof planDays.$inferSelect;
-
-export interface PlanSummary {
-	id: string;
-	title: string;
-	topicTag: string | null;
-	status: PlanStatus;
-	provider: Provider;
-	model: string;
-	startDate: string;
-	updatedAt: Date;
-	daysDone: number;
-	daysWritten: number;
-	daysTotal: number;
-	studyDays: number[];
-}
 
 export interface PlanSnapshot {
 	plan: Pick<PlanRow, 'title' | 'overview' | 'finalOutcome' | 'topicTag' | 'ledger'>;

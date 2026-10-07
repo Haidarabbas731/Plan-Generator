@@ -1,3 +1,5 @@
+import type { Provider } from './providers.js';
+
 export interface PlanInputs {
 	goal: string;
 	level: 'beginner' | 'some' | 'returning' | null;
@@ -31,3 +33,18 @@ export type RevisionSource = (typeof REVISION_SOURCES)[number];
 
 export const USAGE_KINDS = ['generation', 'chat'] as const;
 export type UsageKind = (typeof USAGE_KINDS)[number];
+
+export interface PlanSummary {
+	id: string;
+	title: string;
+	topicTag: string | null;
+	status: PlanStatus;
+	provider: Provider;
+	model: string;
+	startDate: string;
+	updatedAt: Date;
+	daysDone: number;
+	daysWritten: number;
+	daysTotal: number;
+	studyDays: number[];
+}
