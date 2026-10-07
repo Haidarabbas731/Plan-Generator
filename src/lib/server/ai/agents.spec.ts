@@ -42,7 +42,7 @@ describe('runOutliner', () => {
 		await runOutliner({ model, inputs, ranges });
 		const prompt = promptsOf(model)[0];
 		expect(prompt).toContain('<goal>Learn Rust well enough to build a CLI</goal>');
-		expect(prompt).toContain('<time>30 days, 90 minutes per day</time>');
+		expect(prompt).toContain('<time>30 study days, 90 minutes per day</time>');
 		expect(prompt).toContain('<block index="0" start="1" end="5" />');
 	});
 
