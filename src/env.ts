@@ -4,12 +4,13 @@ import {
 	booleanFlag,
 	httpUrl,
 	optionalString,
-	positiveInt
+	positiveInt,
+	requiredString
 } from '#lib/env-validators.js';
 
 export const variables = defineEnvVars({
 	DATABASE_URL: {
-		schema: optionalString,
+		schema: requiredString,
 		description: 'PostgreSQL connection string'
 	},
 	BETTER_AUTH_SECRET: {

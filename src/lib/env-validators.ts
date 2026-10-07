@@ -3,6 +3,12 @@ export function optionalString(value: string | undefined): string | undefined {
 	return trimmed ? trimmed : undefined;
 }
 
+export function requiredString(value: string | undefined): string {
+	const trimmed = value?.trim();
+	if (!trimmed) throw new Error('This variable is required');
+	return trimmed;
+}
+
 export function positiveInt(fallback: number) {
 	return (value: string | undefined): number => {
 		const trimmed = value?.trim();

@@ -4,7 +4,8 @@ import {
 	booleanFlag,
 	httpUrl,
 	optionalString,
-	positiveInt
+	positiveInt,
+	requiredString
 } from './env-validators.js';
 
 describe('optionalString', () => {
@@ -81,5 +82,16 @@ describe('httpUrl', () => {
 	it('rejects other protocols and invalid URLs', () => {
 		expect(() => httpUrl('ftp://example.com')).toThrow();
 		expect(() => httpUrl('example.com')).toThrow();
+	});
+});
+
+describe('requiredString', () => {
+	it('returns the trimmed value', () => {
+		expect(requiredString('  postgres://x  ')).toBe('postgres://x');
+	});
+
+	it('throws when missing or blank', () => {
+		expect(() => requiredString(undefined)).toThrow();
+		expect(() => requiredString('   ')).toThrow();
 	});
 });
