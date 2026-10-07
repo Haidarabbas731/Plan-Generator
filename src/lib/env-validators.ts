@@ -63,3 +63,9 @@ export function secretString(minLength: number) {
 		return trimmed;
 	};
 }
+
+export function requiredBase64Key32(value: string | undefined): string {
+	const key = base64Key32(value);
+	if (!key) throw new Error('This variable is required');
+	return key;
+}

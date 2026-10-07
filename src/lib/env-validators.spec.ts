@@ -5,6 +5,7 @@ import {
 	httpUrl,
 	optionalString,
 	positiveInt,
+	requiredBase64Key32,
 	requiredHttpUrl,
 	requiredString,
 	secretString
@@ -119,5 +120,13 @@ describe('secretString', () => {
 	it('rejects missing or short secrets', () => {
 		expect(() => secret(undefined)).toThrow();
 		expect(() => secret('short')).toThrow();
+	});
+});
+
+describe('requiredBase64Key32', () => {
+	it('accepts a valid key and rejects a missing one', () => {
+		const valid = Buffer.alloc(32, 9).toString('base64');
+		expect(requiredBase64Key32(valid)).toBe(valid);
+		expect(() => requiredBase64Key32(undefined)).toThrow();
 	});
 });

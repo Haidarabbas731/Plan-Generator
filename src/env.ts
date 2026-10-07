@@ -1,9 +1,9 @@
 import { defineEnvVars } from '@sveltejs/kit/env';
 import {
-	base64Key32,
 	booleanFlag,
 	optionalString,
 	positiveInt,
+	requiredBase64Key32,
 	requiredHttpUrl,
 	requiredString,
 	secretString
@@ -23,7 +23,7 @@ export const variables = defineEnvVars({
 		description: 'Public base URL of the app'
 	},
 	ENCRYPTION_KEY: {
-		schema: base64Key32,
+		schema: requiredBase64Key32,
 		description: '32 bytes, base64. Encrypts saved provider API keys'
 	},
 	GOOGLE_CLIENT_ID: { schema: optionalString },
