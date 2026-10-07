@@ -44,3 +44,12 @@ export function safeRedirectPath(value: string | null | undefined, fallback: str
 	if (!value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return fallback;
 	return value;
 }
+
+export function normalizeApiKey(raw: string): { key: string } | { error: string } {
+	const key = raw.trim();
+	if (!key) return { error: 'Paste your API key.' };
+	if (/\s/.test(key)) return { error: 'The key cannot contain spaces or line breaks.' };
+	if (key.length < 8) return { error: 'That key looks too short.' };
+	if (key.length > 400) return { error: 'That key looks too long.' };
+	return { key };
+}

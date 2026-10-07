@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	normalizeApiKey,
 	safeRedirectPath,
 	validateEmail,
 	validatePassword,
@@ -63,5 +64,24 @@ describe('safeRedirectPath', () => {
 		expect(safeRedirectPath('https://evil.example', '/plans')).toBe('/plans');
 		expect(safeRedirectPath('//evil.example', '/plans')).toBe('/plans');
 		expect(safeRedirectPath('/\\evil.example', '/plans')).toBe('/plans');
+	});
+});
+
+describe('normalizeApiKey', () => {
+	it('trims and accepts a normal key', () => {
+		expect(normalizeApiKey('  AIzaSy-example-key-123  ')).toEqual({
+			key: 'AIzaSy-example-key-123'
+		});
+	});
+
+	it('rejects empty, spaced, short and huge keys', () => {
+		expect(normalizeApiKey('   ')).toHaveProperty('error');
+		expect(normalizeApiKey('abc def ghi jkl')).toHaveProperty('error');
+		expect(normalizeApiKey('short')).toHaveProperty('error');
+		expect(normalizeApiKey('k'.repeat(401))).toHaveProperty('error');
+	});
+
+	it('rejects keys with line breaks from a bad paste', () => {
+		expect(normalizeApiKey('sk-abcdefgh\nsk-ijklmnop')).toHaveProperty('error');
 	});
 });
