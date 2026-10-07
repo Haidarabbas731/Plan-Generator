@@ -249,6 +249,59 @@
 	}
 }
 
+@keyframes check-draw {
+	from {
+		stroke-dasharray: 24;
+		stroke-dashoffset: 24;
+	}
+	to {
+		stroke-dasharray: 24;
+		stroke-dashoffset: 0;
+	}
+}
+
+[data-slot='checkbox'][data-animate] [data-slot='checkbox-indicator'] path {
+	animation: check-draw 160ms var(--ease-out) both;
+}
+
+@keyframes disclosure-open {
+	from {
+		height: 0;
+		opacity: 0;
+	}
+	to {
+		height: var(--bits-collapsible-content-height);
+		opacity: 1;
+	}
+}
+
+@keyframes disclosure-close {
+	from {
+		height: var(--bits-collapsible-content-height);
+		opacity: 1;
+	}
+	to {
+		height: 0;
+		opacity: 0;
+	}
+}
+
+[data-slot='collapsible-content'] {
+	overflow: hidden;
+}
+
+[data-slot='collapsible-content'][data-state='open']:not([data-instant]) {
+	animation: disclosure-open var(--dur-base) var(--ease-out);
+}
+
+[data-slot='collapsible-content'][data-state='closed']:not([data-instant]) {
+	animation: disclosure-close var(--dur-fast) var(--ease-out);
+}
+
+[data-bits-floating-content-wrapper]:has(> [data-glide]) {
+	transition: transform var(--dur-base) var(--ease-out);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,

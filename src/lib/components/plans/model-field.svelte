@@ -38,6 +38,7 @@
 	}: Props = $props();
 
 	let open = $state(false);
+	let searchInput = $state<HTMLElement | null>(null);
 	let models = $state.raw<ModelOption[]>([]);
 	let status = $state<'idle' | 'loading' | 'ready' | 'error'>('idle');
 	let message = $state('');
@@ -45,6 +46,17 @@
 
 	const providerName = $derived(providers.find((option) => option.id === provider)?.name);
 	const selectedName = $derived(models.find((option) => option.id === model)?.name ?? model);
+
+	let placed = $state(false);
+
+	$effect(() => {
+		if (!open) return;
+		const timer = setTimeout(() => (placed = true), 150);
+		return () => {
+			clearTimeout(timer);
+			placed = false;
+		};
+	});
 
 	$effect(() => {
 		const current = provider;
@@ -166,9 +178,18 @@
 					</span>
 					<ChevronsUpDownIcon class="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
 				</Popover.Trigger>
-				<Popover.Content class="w-(--bits-popover-anchor-width) min-w-72 p-0" align="start">
-					<Command.Root>
-						<Command.Input placeholder="Search models" />
+				<Popover.Content
+					class="w-(--bits-popover-anchor-width) min-w-72 p-0"
+					align="start"
+					strategy="absolute"
+					data-glide={placed ? '' : undefined}
+					onOpenAutoFocus={(event) => {
+						event.preventDefault();
+						searchInput?.focus({ preventScroll: true });
+					}}
+				>
+					<Command.Root disableInitialScroll>
+						<Command.Input bind:ref={searchInput} placeholder="Search models" />
 						<Command.List class="max-h-64">
 							<Command.Empty>No model found.</Command.Empty>
 							{#each models as option (option.id)}
