@@ -3,6 +3,6 @@ import postgres from 'postgres';
 import { DATABASE_URL } from '$app/env/private';
 import * as schema from './schema.js';
 
-const client = postgres(DATABASE_URL);
+export const client = postgres(DATABASE_URL);
 
 export const db = drizzle(client, { schema });
