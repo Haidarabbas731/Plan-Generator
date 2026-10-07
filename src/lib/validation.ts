@@ -1,3 +1,5 @@
+import { LIMITS } from './limits.js';
+
 export interface SignUpInput {
 	name: string;
 	email: string;
@@ -10,20 +12,27 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateEmail(email: string): string | undefined {
 	if (!email) return 'Enter your email address.';
-	if (email.length > 254 || !EMAIL_PATTERN.test(email)) return 'Enter a valid email address.';
+	if (email.length > LIMITS.emailMax || !EMAIL_PATTERN.test(email))
+		return 'Enter a valid email address.';
 }
 
 export function validatePassword(password: string): string | undefined {
 	if (!password) return 'Enter a password.';
-	if (password.length < 8) return 'Use at least 8 characters.';
-	if (password.length > 128) return 'Use at most 128 characters.';
+	if (password.length < LIMITS.passwordMin) {
+		return `Use at least ${LIMITS.passwordMin} characters.`;
+	}
+	if (password.length > LIMITS.passwordMax) {
+		return `Use at most ${LIMITS.passwordMax} characters.`;
+	}
 }
 
 export function validateSignUp(input: SignUpInput): FieldErrors<SignUpInput> {
 	const errors: FieldErrors<SignUpInput> = {};
 	const name = input.name.trim();
 	if (!name) errors.name = 'Enter your name.';
-	else if (name.length > 80) errors.name = 'Use at most 80 characters.';
+	else if (name.length > LIMITS.nameMax) {
+		errors.name = `Use at most ${LIMITS.nameMax} characters.`;
+	}
 	const email = validateEmail(input.email.trim());
 	if (email) errors.email = email;
 	const password = validatePassword(input.password);
@@ -49,7 +58,7 @@ export function normalizeApiKey(raw: string): { key: string } | { error: string 
 	const key = raw.trim();
 	if (!key) return { error: 'Paste your API key.' };
 	if (/\s/.test(key)) return { error: 'The key cannot contain spaces or line breaks.' };
-	if (key.length < 8) return { error: 'That key looks too short.' };
-	if (key.length > 400) return { error: 'That key looks too long.' };
+	if (key.length < LIMITS.apiKeyMin) return { error: 'That key looks too short.' };
+	if (key.length > LIMITS.apiKeyMax) return { error: 'That key looks too long.' };
 	return { key };
 }

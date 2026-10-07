@@ -10,6 +10,8 @@ import {
 	GOOGLE_CLIENT_ID,
 	GOOGLE_CLIENT_SECRET
 } from '$app/env/private';
+import { LIMITS } from '#lib/limits.js';
+import { AUTH_RATE_LIMIT } from './config.js';
 import { db } from './db/index.js';
 import * as schema from './db/schema.js';
 
@@ -24,8 +26,8 @@ export const auth = betterAuth({
 	database: drizzleAdapter(db, { provider: 'pg', schema }),
 	emailAndPassword: {
 		enabled: true,
-		minPasswordLength: 8,
-		maxPasswordLength: 128
+		minPasswordLength: LIMITS.passwordMin,
+		maxPasswordLength: LIMITS.passwordMax
 	},
 	socialProviders: {
 		...(oauthProviders.google && {
@@ -37,11 +39,17 @@ export const auth = betterAuth({
 	},
 	rateLimit: {
 		enabled: true,
-		window: 60,
-		max: 100,
+		window: AUTH_RATE_LIMIT.windowSeconds,
+		max: AUTH_RATE_LIMIT.maxRequests,
 		customRules: {
-			'/sign-in/email': { window: 60, max: 10 },
-			'/sign-up/email': { window: 60, max: 10 }
+			'/sign-in/email': {
+				window: AUTH_RATE_LIMIT.signIn.windowSeconds,
+				max: AUTH_RATE_LIMIT.signIn.maxRequests
+			},
+			'/sign-up/email': {
+				window: AUTH_RATE_LIMIT.signUp.windowSeconds,
+				max: AUTH_RATE_LIMIT.signUp.maxRequests
+			}
 		}
 	},
 	plugins: [sveltekitCookies(getRequestEvent)]

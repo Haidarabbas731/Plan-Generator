@@ -1,4 +1,5 @@
 import type { Provider } from '#lib/providers.js';
+import { KEY_CHECK_TIMEOUT_MS } from '../config.js';
 
 export type KeyCheckResult =
 	| { ok: true }
@@ -10,8 +11,6 @@ interface Probe {
 	url: string;
 	headers: Record<string, string>;
 }
-
-const TIMEOUT_MS = 8000;
 
 function probeFor(provider: Provider, apiKey: string): Probe {
 	switch (provider) {
@@ -50,7 +49,7 @@ export async function checkKey(
 		response = await fetchImpl(url, {
 			method: 'GET',
 			headers,
-			signal: AbortSignal.timeout(TIMEOUT_MS)
+			signal: AbortSignal.timeout(KEY_CHECK_TIMEOUT_MS)
 		});
 	} catch {
 		return {

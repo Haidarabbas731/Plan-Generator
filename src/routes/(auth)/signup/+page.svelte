@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { LIMITS } from '#lib/limits.js';
 	import AuthCard from '#lib/components/auth/auth-card.svelte';
 	import OauthButtons from '#lib/components/auth/oauth-buttons.svelte';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
@@ -91,7 +92,9 @@
 					invalid={Boolean(form?.errors?.password)}
 					describedBy="password-hint{form?.errors?.password ? ' password-error' : ''}"
 				/>
-				<FieldDescription id="password-hint">Use at least 8 characters.</FieldDescription>
+				<FieldDescription id="password-hint">
+					Use at least {LIMITS.passwordMin} characters.
+				</FieldDescription>
 				{#if form?.errors?.password}
 					<FieldError id="password-error">{form.errors.password}</FieldError>
 				{/if}
