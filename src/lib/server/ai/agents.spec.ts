@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { LIMITS } from '#lib/limits.js';
 import type { LedgerEntry, PlanInputs } from '#lib/plan-types.js';
 import { planBlockRanges } from '#lib/plan-blocks.js';
 import { runBlockWriter } from './block-writer.js';
@@ -152,6 +153,36 @@ describe('runBlockWriter', () => {
 		});
 		expect(result.days).toHaveLength(5);
 		expect(promptsOf(model)[1]).toContain('Day 5 is missing');
+	});
+
+	it('retries and names the field when a day is longer than allowed', async () => {
+		const { model, outline } = await setup({ blockFirstAttemptFails: { 0: 'too-long' } });
+		const result = await runBlockWriter({
+			model,
+			inputs,
+			outline,
+			block: outline.blocks[0],
+			ledger: [],
+			previous: null
+		});
+		expect(result.days).toHaveLength(5);
+		const retryPrompt = promptsOf(model)[1];
+		expect(retryPrompt).toContain('days.1.practice');
+		expect(retryPrompt).toContain(String(LIMITS.dayPracticeMax));
+	});
+
+	it('tells the model the length limits up front', async () => {
+		const { model, outline } = await setup();
+		await runBlockWriter({
+			model,
+			inputs,
+			outline,
+			block: outline.blocks[0],
+			ledger: [],
+			previous: null
+		});
+		const instructions = JSON.stringify(model.doGenerateCalls[0].prompt);
+		expect(instructions).toContain(`At most ${LIMITS.dayPracticeMax} characters`);
 	});
 
 	it('retries when the answer is not valid JSON', async () => {

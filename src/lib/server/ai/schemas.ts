@@ -31,9 +31,9 @@ export const outlineSchema = z.object({
 export const daySchema = z.object({
 	day: z.number().int().min(1).max(LIMITS.maxPlanDays),
 	title: text(120),
-	learn: text(600),
-	practice: text(600),
-	review: text(400),
+	learn: text(LIMITS.dayLearnMax),
+	practice: text(LIMITS.dayPracticeMax),
+	review: text(LIMITS.dayReviewMax),
 	minutes: z.number().int().min(LIMITS.minDayMinutes).max(LIMITS.maxMinutesPerDay),
 	topics: z.array(text(80)).min(1).max(3)
 });

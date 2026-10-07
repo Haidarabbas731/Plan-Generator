@@ -1,3 +1,4 @@
+import { LIMITS } from '#lib/limits.js';
 import type { LedgerEntry, PlanInputs } from '#lib/plan-types.js';
 import type { BlockRange } from '#lib/plan-blocks.js';
 import { windowLedger } from './ledger.js';
@@ -38,9 +39,9 @@ ${SHARED_PRINCIPLES}
 
 How to write each day:
 - title: specific to that day's content and different from every title already used.
-- learn: what to study today, named precisely, with the key idea or rule in a sentence or two. Only new material from this block's scope.
-- practice: the main work of the day. A concrete exercise with a measurable result, for example "write 10 sentences using X and check them against Y" or "build Z until it does W". Include enough detail (inputs, size, success check) that the learner cannot misread it. It takes most of the day's minutes.
-- review: recall of specific earlier topics, named, taken from the already-taught list or the previous block. Use a quick check such as explaining it aloud or redoing a small item. On the first day of the plan write a short warm-up instead.
+- learn: what to study today, named precisely, with the key idea or rule in a sentence or two. Only new material from this block's scope. At most ${LIMITS.dayLearnMax} characters.
+- practice: the main work of the day. A concrete exercise with a measurable result, for example "write 10 sentences using X and check them against Y" or "build Z until it does W". Include enough detail (inputs, size, success check) that the learner cannot misread it, in a few tight sentences rather than a long list. It takes most of the day's minutes. At most ${LIMITS.dayPracticeMax} characters.
+- review: recall of specific earlier topics, named, taken from the already-taught list or the previous block. Use a quick check such as explaining it aloud or redoing a small item. On the first day of the plan write a short warm-up instead. At most ${LIMITS.dayReviewMax} characters.
 - minutes: the realistic total for the day, close to the learner's minutes per day.
 - topics: 1 to 3 short labels naming exactly what the day newly teaches. These are recorded so later days do not repeat them.
 

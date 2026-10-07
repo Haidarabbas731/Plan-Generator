@@ -23,6 +23,23 @@ export interface GenerateValidatedArgs<T> {
 	attempts?: number;
 }
 
+const NOT_JSON = 'The answer was not valid JSON in the required format.';
+const MAX_REPORTED_ISSUES = 8;
+
+interface SchemaIssue {
+	path: (string | number)[];
+	message: string;
+}
+
+export function schemaIssues(error: NoObjectGeneratedError): string[] {
+	const validation = error.cause as { cause?: { issues?: SchemaIssue[] } } | undefined;
+	const issues = validation?.cause?.issues;
+	if (!Array.isArray(issues) || issues.length === 0) return [NOT_JSON];
+	return issues
+		.slice(0, MAX_REPORTED_ISSUES)
+		.map((issue) => `${issue.path.join('.') || 'answer'}: ${issue.message}`);
+}
+
 export async function generateValidated<T>(args: GenerateValidatedArgs<T>): Promise<T> {
 	const { model, instructions, schema, validate, abortSignal } = args;
 	const attempts = args.attempts ?? GENERATION_ATTEMPTS;
@@ -43,7 +60,7 @@ export async function generateValidated<T>(args: GenerateValidatedArgs<T>): Prom
 			if (issues.length === 0) return result.output;
 		} catch (error) {
 			if (!NoObjectGeneratedError.isInstance(error)) throw error;
-			issues = ['The answer was not valid JSON in the required format.'];
+			issues = schemaIssues(error);
 		}
 		prompt = withFeedback(args.prompt, issues);
 	}

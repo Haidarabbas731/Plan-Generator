@@ -6,6 +6,7 @@ import { GenerationError } from '../ai/generate.js';
 import { appendToLedger } from '../ai/ledger.js';
 import { runOutliner } from '../ai/outliner.js';
 import type { BlockOutput, Outline, OutlineBlock } from '../ai/types.js';
+import { logger } from '../logger.js';
 import type { PlanEvent } from './events.js';
 import type { BlockRow, DayRow, PlanStore } from './plan-store.js';
 
@@ -133,6 +134,9 @@ export async function runGeneration(args: {
 			if (signal.aborted) {
 				await store.setBlockStatus(planId, block.idx, 'pending');
 				return pausePlan();
+			}
+			if (error instanceof GenerationError) {
+				logger.warn({ planId, block: block.idx, issues: error.issues }, 'Block failed validation');
 			}
 			const message =
 				error instanceof GenerationError

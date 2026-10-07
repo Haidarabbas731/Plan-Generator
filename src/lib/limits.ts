@@ -16,5 +16,8 @@ export const LIMITS = {
 	modelIdMax: 200,
 	maxBlocks: 200,
 	maxDaysPerBlock: 60,
+	dayLearnMax: 600,
+	dayPracticeMax: 900,
+	dayReviewMax: 400,
 	minDayMinutes: 5
 } as const;

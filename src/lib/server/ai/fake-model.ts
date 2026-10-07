@@ -1,6 +1,7 @@
 import { MockLanguageModelV4 } from 'ai/test';
+import { LIMITS } from '#lib/limits.js';
 
-export type BlockFault = 'duplicate-title' | 'missing-day' | 'invalid-json';
+export type BlockFault = 'duplicate-title' | 'missing-day' | 'invalid-json' | 'too-long';
 
 export interface FakeModelOptions {
 	outlineFirstAttemptFails?: boolean;
@@ -69,6 +70,7 @@ function block(text: string, fault: BlockFault | undefined) {
 	}
 	if (fault === 'duplicate-title') days[0].title = 'Lesson 1';
 	if (fault === 'missing-day') days.pop();
+	if (fault === 'too-long') days[1].practice = 'x'.repeat(LIMITS.dayPracticeMax + 1);
 	return { days };
 }
 
