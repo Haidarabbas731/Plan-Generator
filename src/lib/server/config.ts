@@ -8,3 +8,5 @@ export const AUTH_RATE_LIMIT = {
 export const KEY_CHECK_TIMEOUT_MS = 8000;
 
 export const LEDGER_VERBATIM_DAYS = 120;
+
+export const GENERATION_ATTEMPTS = 2;
