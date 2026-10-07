@@ -58,6 +58,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"@fontsource-variable/plus-jakarta-sans": "^5.3.0",
 		"@shikijs/themes": "^4.5.0",
 		"ai": "^6",
 		"runed": "^0.37.1",

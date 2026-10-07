@@ -1,51 +1,42 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn-svelte/tailwind.css';
+@import '@fontsource-variable/plus-jakarta-sans';
 
 @custom-variant dark (&:is(.dark *));
-
-/*
- * Design tokens. Direction: quiet, soft, refined. One soft-indigo accent on a warm
- * off-white surface; hairline borders; two-layer soft shadows; calm, short motion.
- * Not brutalist: no thick borders, no hard offset shadows, no clashing flat blocks.
- */
 
 :root {
 	color-scheme: light;
 
-	/* Surfaces and text */
-	--background: oklch(0.985 0.004 85);
-	--foreground: oklch(0.21 0.02 275);
-	--card: oklch(1 0 0);
+	--background: #f2fbf9;
+	--foreground: #12403c;
+	--card: #ffffff;
 	--card-foreground: var(--foreground);
-	--popover: oklch(1 0 0);
+	--popover: #ffffff;
 	--popover-foreground: var(--foreground);
 
-	/* Accent: soft indigo */
-	--primary: oklch(0.52 0.18 277);
-	--primary-foreground: oklch(0.99 0.004 277);
-	--accent: oklch(0.955 0.025 277);
-	--accent-foreground: oklch(0.32 0.1 277);
-	--ring: oklch(0.6 0.15 277);
-
-	/* Neutrals */
-	--secondary: oklch(0.955 0.006 85);
+	--primary: #0f766e;
+	--primary-foreground: #ffffff;
+	--secondary: #e4f3f0;
 	--secondary-foreground: var(--foreground);
-	--muted: oklch(0.96 0.005 85);
-	--muted-foreground: oklch(0.5 0.015 270);
-	--border: oklch(0.92 0.006 85);
-	--input: oklch(0.9 0.008 85);
+	--muted: #e8f2f1;
+	--muted-foreground: #43615e;
+	--accent: #cdf3ec;
+	--accent-foreground: #0f4a45;
+	--border: #cbe6e1;
+	--input: #779491;
+	--ring: #0f766e;
 
-	/* Semantic, kept low in chroma */
-	--destructive: oklch(0.55 0.2 27);
-	--success: oklch(0.55 0.12 160);
-	--warning: oklch(0.7 0.13 75);
+	--destructive: #b91c1c;
+	--success: #15803d;
+	--warning: #b45309;
+	--highlight: #b9410e;
 
-	--chart-1: oklch(0.52 0.18 277);
-	--chart-2: oklch(0.62 0.13 250);
-	--chart-3: oklch(0.7 0.1 200);
-	--chart-4: oklch(0.72 0.12 150);
-	--chart-5: oklch(0.78 0.12 90);
+	--chart-1: #0f766e;
+	--chart-2: #14b8a6;
+	--chart-3: #0ea5e9;
+	--chart-4: #65a30d;
+	--chart-5: #b9410e;
 
 	--sidebar: var(--background);
 	--sidebar-foreground: var(--foreground);
@@ -56,13 +47,9 @@
 	--sidebar-border: var(--border);
 	--sidebar-ring: var(--ring);
 
-	/* Shape */
-	--radius: 0.75rem;
+	--radius: 0.5rem;
+	--shadow-ink: 0.3 0.05 190;
 
-	/* Shadow ink: tinted, never pure black, so shadows stay soft */
-	--shadow-ink: 0.25 0.02 275;
-
-	/* Motion durations (UI stays under 300ms; the sheet is the exception) */
 	--dur-press: 140ms;
 	--dur-fast: 180ms;
 	--dur-base: 240ms;
@@ -72,40 +59,36 @@
 .dark {
 	color-scheme: dark;
 
-	--background: oklch(0.18 0.012 275);
-	--foreground: oklch(0.96 0.006 85);
-	--card: oklch(0.22 0.014 275);
-	--card-foreground: var(--foreground);
-	--popover: oklch(0.25 0.015 275);
-	--popover-foreground: var(--foreground);
+	--background: #0a1d1c;
+	--foreground: #e4f6f3;
+	--card: #102927;
+	--popover: #143230;
 
-	--primary: oklch(0.72 0.14 277);
-	--primary-foreground: oklch(0.18 0.02 277);
-	--accent: oklch(0.3 0.04 277);
-	--accent-foreground: oklch(0.9 0.04 277);
-	--ring: oklch(0.65 0.13 277);
+	--primary: #2dd4bf;
+	--primary-foreground: #04302c;
+	--secondary: #16322f;
+	--muted: #16302e;
+	--muted-foreground: #9ebdb8;
+	--accent: #14423e;
+	--accent-foreground: #c9f4ec;
+	--border: #ffffff1f;
+	--input: #5b6d6c;
+	--ring: #2dd4bf;
 
-	--secondary: oklch(0.27 0.014 275);
-	--secondary-foreground: var(--foreground);
-	--muted: oklch(0.27 0.014 275);
-	--muted-foreground: oklch(0.7 0.015 275);
-	--border: oklch(1 0 0 / 9%);
-	--input: oklch(1 0 0 / 13%);
+	--destructive: #f87171;
+	--success: #4ade80;
+	--warning: #fbbf24;
+	--highlight: #fb923c;
 
-	--destructive: oklch(0.7 0.18 22);
-	--success: oklch(0.72 0.12 160);
-	--warning: oklch(0.8 0.12 80);
-
-	--chart-1: oklch(0.72 0.14 277);
-	--chart-2: oklch(0.7 0.12 250);
-	--chart-3: oklch(0.75 0.1 200);
-	--chart-4: oklch(0.78 0.12 150);
-	--chart-5: oklch(0.82 0.12 90);
+	--chart-1: #2dd4bf;
+	--chart-2: #5eead4;
+	--chart-3: #38bdf8;
+	--chart-4: #a3e635;
+	--chart-5: #fb923c;
 
 	--shadow-ink: 0 0 0;
 }
 
-/* Easing curves. Static so they are always emitted and usable from plain CSS. */
 @theme static {
 	--ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 	--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
@@ -113,10 +96,9 @@
 }
 
 @theme inline {
-	/* System font for UI (platform optical sizing and tracking), serif for page titles */
 	--font-sans:
-		system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
-	--font-serif: ui-serif, 'New York', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+		'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+		Arial, 'Noto Sans', sans-serif;
 
 	--color-background: var(--background);
 	--color-foreground: var(--foreground);
@@ -135,6 +117,7 @@
 	--color-destructive: var(--destructive);
 	--color-success: var(--success);
 	--color-warning: var(--warning);
+	--color-highlight: var(--highlight);
 	--color-border: var(--border);
 	--color-input: var(--input);
 	--color-ring: var(--ring);
@@ -160,7 +143,6 @@
 	--radius-3xl: calc(var(--radius) * 2.2);
 	--radius-4xl: calc(var(--radius) * 2.6);
 
-	/* Two-layer soft shadows; bigger surfaces get more blur and a deeper layer */
 	--shadow-xs: 0 1px 1px oklch(var(--shadow-ink) / 0.04);
 	--shadow-sm:
 		0 1px 2px oklch(var(--shadow-ink) / 0.05), 0 2px 6px -1px oklch(var(--shadow-ink) / 0.05);
@@ -189,25 +171,19 @@
 	}
 }
 
-/*
- * Type scale. Large type gets tighter tracking and leading, small type slightly looser;
- * body stays near neutral. Page titles use the serif.
- */
 @utility text-display {
-	font-family: var(--font-serif);
 	font-size: clamp(2.25rem, 5vw, 3.5rem);
-	font-weight: 500;
+	font-weight: 700;
 	line-height: 1.08;
-	letter-spacing: -0.025em;
+	letter-spacing: -0.035em;
 	text-wrap: balance;
 }
 
 @utility text-title {
-	font-family: var(--font-serif);
 	font-size: clamp(1.75rem, 3.5vw, 2.25rem);
-	font-weight: 500;
+	font-weight: 700;
 	line-height: 1.15;
-	letter-spacing: -0.02em;
+	letter-spacing: -0.03em;
 	text-wrap: balance;
 }
 
@@ -230,7 +206,6 @@
 	letter-spacing: 0.005em;
 }
 
-/* Pressable: instant feedback on press, never on hover alone */
 @utility pressable {
 	transition: transform var(--dur-press) var(--ease-out);
 	&:active {
@@ -254,7 +229,6 @@
 	animation-delay: calc(var(--reveal-i, 0) * 60ms);
 }
 
-/* Translucent layer (header, chat sheet). Never stack one glass layer on another. */
 @utility glass {
 	background: color-mix(in oklab, var(--background) 72%, transparent);
 	backdrop-filter: blur(20px) saturate(180%);
@@ -275,10 +249,6 @@
 	}
 }
 
-/*
- * Reduced motion means fewer and gentler animations, not none: opacity and colour
- * transitions stay, movement goes.
- */
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,

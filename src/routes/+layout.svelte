@@ -15,7 +15,7 @@
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
-<ModeWatcher themeColors={{ light: '#fbfaf8', dark: '#17151d' }} />
+<ModeWatcher themeColors={{ light: '#f2fbf9', dark: '#0a1d1c' }} />
 <Toaster position="bottom-right" />
 
 <a

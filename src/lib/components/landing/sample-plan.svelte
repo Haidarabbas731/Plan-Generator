@@ -29,7 +29,7 @@
 <Card.Root class="w-full max-w-md" aria-label="Example plan">
 	<Card.Header class="reveal" style="--reveal-i: 0">
 		<p class="text-caption text-muted-foreground">Example plan</p>
-		<Card.Title class="font-serif text-xl font-medium tracking-tight">
+		<Card.Title class="text-xl font-bold tracking-tight">
 			Learn Rust well enough to build a CLI
 		</Card.Title>
 		<Card.Description>30 days · 90 minutes a day</Card.Description>
@@ -70,7 +70,7 @@
 		</section>
 
 		<p class="flex reveal items-start gap-2.5 text-sm" style="--reveal-i: 4">
-			<FlagIcon class="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+			<FlagIcon class="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden="true" />
 			<span>
 				<span class="font-medium">Day 10 milestone.</span>
 				<span class="text-muted-foreground">
