@@ -238,6 +238,22 @@
 	}
 }
 
+@keyframes reveal {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@utility reveal {
+	animation: reveal var(--dur-base) var(--ease-out) both;
+	animation-delay: calc(var(--reveal-i, 0) * 60ms);
+}
+
 /* Translucent layer (header, chat sheet). Never stack one glass layer on another. */
 @utility glass {
 	background: color-mix(in oklab, var(--background) 72%, transparent);
