@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { planService, planStore } from '#lib/server/plans/runtime.js';
+import { toBlockView, toDayView } from '#lib/server/plans/views.js';
 import { requireUser } from '#lib/server/require-user.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -30,27 +31,8 @@ export const load: PageServerLoad = async ({ locals, params, depends }) => {
 			finalOutcome: plan.finalOutcome,
 			inputs: plan.inputs
 		},
-		blocks: blocks.map((block) => ({
-			id: block.id,
-			idx: block.idx,
-			startDay: block.startDay,
-			endDay: block.endDay,
-			theme: block.theme,
-			objective: block.objective,
-			milestone: block.milestone,
-			status: block.status,
-			error: block.error
-		})),
-		days: days.map((day) => ({
-			day: day.day,
-			blockId: day.blockId,
-			title: day.title,
-			learn: day.learn,
-			practice: day.practice,
-			review: day.review,
-			minutes: day.minutes,
-			completed: day.completedAt !== null
-		}))
+		blocks: blocks.map(toBlockView),
+		days: days.map(toDayView)
 	};
 };
 
