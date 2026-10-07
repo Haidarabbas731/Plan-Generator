@@ -3,12 +3,15 @@
 	import favicon from '#lib/assets/favicon.svg';
 	import { ModeWatcher } from 'mode-watcher';
 	import AppHeader from '#lib/components/shared/app-header.svelte';
-	import { buttonVariants } from '#lib/components/ui/button/index.js';
 	import { Toaster } from '#lib/components/ui/sonner/index.js';
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { children, data }: LayoutProps = $props();
+
+	$effect(() => {
+		document.documentElement.setAttribute('data-hydrated', '');
+	});
 </script>
 
 <svelte:head>
@@ -26,11 +29,7 @@
 </a>
 
 <Tooltip.Provider delayDuration={400}>
-	<AppHeader>
-		{#snippet actions()}
-			<a href="/login" class={buttonVariants({ variant: 'ghost', class: 'h-11 px-4' })}>Sign in</a>
-		{/snippet}
-	</AppHeader>
+	<AppHeader user={data.user} />
 
 	<main id="main">
 		{@render children()}
