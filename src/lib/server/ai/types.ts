@@ -1,34 +1,7 @@
-import type { Milestone } from '#lib/plan-types.js';
+import type { z } from 'zod';
+import type { blockOutputSchema, daySchema, outlineBlockSchema, outlineSchema } from './schemas.js';
 
-export interface OutlineBlock {
-	index: number;
-	startDay: number;
-	endDay: number;
-	theme: string;
-	objective: string;
-	covers: string[];
-	notCovers: string[];
-	milestone: Milestone;
-}
-
-export interface Outline {
-	title: string;
-	overview: string;
-	finalOutcome: string;
-	topicTag: string;
-	blocks: OutlineBlock[];
-}
-
-export interface DayOutput {
-	day: number;
-	title: string;
-	learn: string;
-	practice: string;
-	review: string;
-	minutes: number;
-	topics: string[];
-}
-
-export interface BlockOutput {
-	days: DayOutput[];
-}
+export type OutlineBlock = z.infer<typeof outlineBlockSchema>;
+export type Outline = z.infer<typeof outlineSchema>;
+export type DayOutput = z.infer<typeof daySchema>;
+export type BlockOutput = z.infer<typeof blockOutputSchema>;

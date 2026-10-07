@@ -13,5 +13,8 @@ export const LIMITS = {
 	maxPlanDays: 365,
 	minMinutesPerDay: 15,
 	maxMinutesPerDay: 720,
-	modelIdMax: 200
+	modelIdMax: 200,
+	maxBlocks: 200,
+	maxDaysPerBlock: 60,
+	minDayMinutes: 5
 } as const;
