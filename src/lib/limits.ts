@@ -5,5 +5,13 @@ export const LIMITS = {
 	emailMax: 254,
 	apiKeyMin: 8,
 	apiKeyMax: 400,
-	minBlockDays: 3
+	minBlockDays: 3,
+	maxBlockDays: 30,
+	goalMin: 3,
+	goalMax: 2000,
+	doneLooksLikeMax: 300,
+	maxPlanDays: 365,
+	minMinutesPerDay: 15,
+	maxMinutesPerDay: 720,
+	modelIdMax: 200
 } as const;
