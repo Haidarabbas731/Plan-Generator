@@ -13,7 +13,13 @@ RUN --mount=type=cache,target=/root/.bun/install/cache \
 
 COPY . .
 
-RUN bun run build
+# Placeholder values so SvelteKit's environment validation passes during the build.
+# Real values are read at runtime and are never part of the image.
+RUN DATABASE_URL=postgres://build:build@localhost:5432/build \
+    BETTER_AUTH_SECRET=build-time-placeholder-secret-0000000000 \
+    BETTER_AUTH_URL=http://localhost:3000 \
+    ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
+    bun run build
 
 # Keep only production dependencies for the runtime image
 RUN rm -rf node_modules

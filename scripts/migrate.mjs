@@ -9,7 +9,7 @@ if (!url) {
 	process.exit(1);
 }
 
-const client = postgres(url, { max: 1 });
+const client = postgres(url, { max: 1, onnotice: () => {} });
 
 try {
 	await migrate(drizzle(client), { migrationsFolder: 'drizzle' });
