@@ -53,12 +53,16 @@ How to write the block:
 function context(inputs: PlanInputs): string {
 	const days = studyDaysLabel(inputs.studyDays);
 	return [
-		`<goal>${inputs.goal}</goal>`,
+		`<goal>${asData(inputs.goal)}</goal>`,
 		`<level>${inputs.level ? LEVEL_LABEL[inputs.level] : 'not given'}</level>`,
-		`<done_looks_like>${inputs.doneLooksLike ?? 'not given'}</done_looks_like>`,
+		`<done_looks_like>${inputs.doneLooksLike ? asData(inputs.doneLooksLike) : 'not given'}</done_looks_like>`,
 		`<time>${inputs.daysTotal} study days, ${inputs.minutesPerDay} minutes per day</time>`,
 		`<preferred_weekdays>${days}</preferred_weekdays>`
 	].join('\n');
+}
+
+export function asData(text: string): string {
+	return text.replace(/</g, '‹').replace(/>/g, '›');
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -94,9 +98,9 @@ Also give: title (under 70 characters, naming the goal), overview (two sentences
 function formatLedger(ledger: LedgerEntry[]): string {
 	const { recent, earlierTopics } = windowLedger(ledger);
 	const lines: string[] = [];
-	if (earlierTopics.length > 0) lines.push(`Earlier topics: ${earlierTopics.join('; ')}`);
+	if (earlierTopics.length > 0) lines.push(`Earlier topics: ${asData(earlierTopics.join('; '))}`);
 	for (const entry of recent) {
-		lines.push(`Day ${entry.day}: ${entry.title} [${entry.topics.join('; ')}]`);
+		lines.push(`Day ${entry.day}: ${asData(entry.title)} [${asData(entry.topics.join('; '))}]`);
 	}
 	return lines.length > 0 ? lines.join('\n') : 'Nothing yet. This is the first block.';
 }
@@ -104,9 +108,10 @@ function formatLedger(ledger: LedgerEntry[]): string {
 function formatPreviousBlock(previous: BlockOutput | null): string {
 	if (!previous) return 'None. This is the first block.';
 	return previous.days
-		.map(
-			(d) =>
+		.map((d) =>
+			asData(
 				`Day ${d.day}: ${d.title} | Learn: ${d.learn} | Practice: ${d.practice} | Review: ${d.review}`
+			)
 		)
 		.join('\n');
 }
@@ -122,13 +127,13 @@ export function blockWriterPrompt(args: {
 	const days = block.endDay - block.startDay + 1;
 	return `<task>block</task>
 ${context(inputs)}
-<plan_overview>${outline.overview}</plan_overview>
+<plan_overview>${asData(outline.overview)}</plan_overview>
 <this_block index="${block.index}" start="${block.startDay}" end="${block.endDay}">
-<theme>${block.theme}</theme>
-<objective>${block.objective}</objective>
-<covers>${block.covers.join('; ')}</covers>
-<not_covers>${block.notCovers.join('; ')}</not_covers>
-<milestone>${block.milestone.title}: ${block.milestone.description} (success: ${block.milestone.successCriteria})</milestone>
+<theme>${asData(block.theme)}</theme>
+<objective>${asData(block.objective)}</objective>
+<covers>${asData(block.covers.join('; '))}</covers>
+<not_covers>${asData(block.notCovers.join('; '))}</not_covers>
+<milestone>${asData(`${block.milestone.title}: ${block.milestone.description} (success: ${block.milestone.successCriteria})`)}</milestone>
 </this_block>
 <minutes_per_day>${inputs.minutesPerDay}</minutes_per_day>
 <already_taught>
