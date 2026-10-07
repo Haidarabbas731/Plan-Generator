@@ -7,5 +7,11 @@ export default defineConfig({
 		port: 4173,
 		reuseExistingServer: !process.env.CI
 	},
-	use: { baseURL: 'http://localhost:4173' }
+	// Use the Google Chrome installed on this machine, so no Chromium download is needed.
+	use: {
+		baseURL: 'http://localhost:4173',
+		channel: 'chrome',
+		// SLOWMO=800 makes each step visible when running headed.
+		launchOptions: { slowMo: Number(process.env.SLOWMO ?? 0) }
+	}
 });

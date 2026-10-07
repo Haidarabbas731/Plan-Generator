@@ -15,7 +15,8 @@
 		"test:watch": "vitest",
 		"test": "vitest --run",
 		"format:check": "prettier --check .",
-		"test:e2e": "playwright test"
+		"test:e2e": "playwright test",
+		"test:e2e:headed": "playwright test --headed"
 	},
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
