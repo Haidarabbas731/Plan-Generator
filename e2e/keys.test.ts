@@ -1,17 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { open } from './helpers.js';
+import { open, signUp as signUpUser } from './helpers.js';
 
-const PASSWORD = 'correct-horse-battery';
-
-async function signUp(page: Page) {
-	const email = `e2e+${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
-	await open(page, '/signup');
-	await page.getByLabel('Name').fill('Keys User');
-	await page.getByLabel('Email').fill(email);
-	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
-	await page.getByRole('button', { name: 'Create account' }).click();
-	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
-}
+const signUp = (page: Page) => signUpUser(page, 'Keys User');
 
 function card(page: Page, name: string) {
 	return page.locator('[data-slot="card"]').filter({ hasText: name });
