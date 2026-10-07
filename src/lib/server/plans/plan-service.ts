@@ -1,7 +1,7 @@
 import { validatePlanRequest } from '#lib/plan-validation.js';
 import type { Provider } from '#lib/providers.js';
 import type { PlanStore } from './plan-store.js';
-import type { PlanWorker, StartResult } from './worker.js';
+import type { PlanQueue } from './plan-queue.js';
 
 export type CreatePlanResult =
 	| { ok: true; planId: string }
@@ -9,17 +9,17 @@ export type CreatePlanResult =
 	| { ok: false; reason: 'no-key'; provider: Provider }
 	| { ok: false; reason: 'limit' };
 
-export type ControlResult = 'started' | 'already-running' | 'not-found' | 'no-key' | 'locked';
+export type ControlResult = 'queued' | 'already-running' | 'not-found';
 
 export interface PlanServiceDeps {
 	store: PlanStore;
-	worker: PlanWorker;
+	queue: Pick<PlanQueue, 'enqueue' | 'cancel'>;
 	hasKey: (userId: string, provider: Provider) => Promise<boolean>;
 	planLimit?: number;
 }
 
 export function createPlanService(deps: PlanServiceDeps) {
-	const { store, worker, hasKey, planLimit } = deps;
+	const { store, queue, hasKey, planLimit } = deps;
 
 	async function createAndStartPlan(
 		userId: string,
@@ -35,21 +35,23 @@ export function createPlanService(deps: PlanServiceDeps) {
 		}
 
 		const planId = await store.createPlan(userId, { inputs, provider, model, startDate });
-		await worker.start(planId);
+		await queue.enqueue(planId);
 		return { ok: true, planId };
 	}
 
 	async function resumePlan(userId: string, planId: string): Promise<ControlResult> {
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return 'not-found';
-		const result: StartResult = await worker.start(planId);
-		return result;
+		if (plan.status === 'generating') return 'already-running';
+		await store.setPlanStatus(planId, 'generating');
+		await queue.enqueue(planId);
+		return 'queued';
 	}
 
 	async function cancelPlan(userId: string, planId: string): Promise<boolean> {
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return false;
-		return worker.cancel(planId);
+		return queue.cancel(planId);
 	}
 
 	return { createAndStartPlan, resumePlan, cancelPlan };

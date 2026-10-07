@@ -2,11 +2,12 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/env';
 import { auth } from '#lib/server/auth.js';
-import { planStore } from '#lib/server/plans/runtime.js';
+import { logger } from '#lib/server/logger.js';
+import { planQueue } from '#lib/server/plans/runtime.js';
 
 if (!building) {
-	void planStore.markGeneratingPlansPaused().catch((error) => {
-		console.error('Could not recover interrupted plans', error);
+	void planQueue.recoverInterruptedPlans().catch((error) => {
+		logger.error({ err: error }, 'Could not recover interrupted plans');
 	});
 }
 

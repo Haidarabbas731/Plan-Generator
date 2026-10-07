@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createPlanService } from './plan-service.js';
 import type { PlanStore } from './plan-store.js';
-import type { PlanWorker } from './worker.js';
 
 const request = {
 	goal: 'Learn Rust basics',
@@ -17,31 +16,40 @@ const request = {
 };
 
 function setup(
-	options: { hasKey?: boolean; count?: number; owned?: boolean; limit?: number } = {}
+	options: {
+		hasKey?: boolean;
+		count?: number;
+		owned?: boolean;
+		limit?: number;
+		status?: string;
+	} = {}
 ) {
 	const store = {
 		createPlan: vi.fn(async () => 'plan-1'),
 		countPlans: vi.fn(async () => options.count ?? 0),
-		getOwnedPlan: vi.fn(async () => (options.owned === false ? undefined : { id: 'plan-1' }))
+		getOwnedPlan: vi.fn(async () =>
+			options.owned === false ? undefined : { id: 'plan-1', status: options.status ?? 'paused' }
+		),
+		setPlanStatus: vi.fn(async () => undefined)
 	} as unknown as PlanStore;
-	const worker = {
-		start: vi.fn(async () => 'started'),
-		cancel: vi.fn(() => true)
-	} as unknown as PlanWorker;
+	const queue = {
+		enqueue: vi.fn(async () => undefined),
+		cancel: vi.fn(async () => true)
+	};
 	const service = createPlanService({
 		store,
-		worker,
+		queue,
 		hasKey: async () => options.hasKey ?? true,
 		planLimit: options.limit
 	});
-	return { store, worker, service };
+	return { store, queue, service };
 }
 
 describe('plan service', () => {
 	it('creates the plan and starts the worker', async () => {
-		const { service, worker } = setup();
+		const { service, queue } = setup();
 		expect(await service.createAndStartPlan('u1', request)).toEqual({ ok: true, planId: 'plan-1' });
-		expect(worker.start).toHaveBeenCalledWith('plan-1');
+		expect(queue.enqueue).toHaveBeenCalledWith('plan-1');
 	});
 
 	it('returns field errors for an invalid request without creating anything', async () => {
@@ -67,16 +75,22 @@ describe('plan service', () => {
 	});
 
 	it('only lets the owner resume or cancel', async () => {
-		const { service, worker } = setup({ owned: false });
+		const { service, queue } = setup({ owned: false });
 		expect(await service.resumePlan('u2', 'plan-1')).toBe('not-found');
 		expect(await service.cancelPlan('u2', 'plan-1')).toBe(false);
-		expect(worker.start).not.toHaveBeenCalled();
-		expect(worker.cancel).not.toHaveBeenCalled();
+		expect(queue.enqueue).not.toHaveBeenCalled();
+		expect(queue.cancel).not.toHaveBeenCalled();
 	});
 
 	it('resumes and cancels for the owner', async () => {
 		const { service } = setup();
-		expect(await service.resumePlan('u1', 'plan-1')).toBe('started');
+		expect(await service.resumePlan('u1', 'plan-1')).toBe('queued');
 		expect(await service.cancelPlan('u1', 'plan-1')).toBe(true);
+	});
+
+	it('does not queue a plan that is already generating', async () => {
+		const { service, queue } = setup({ status: 'generating' });
+		expect(await service.resumePlan('u1', 'plan-1')).toBe('already-running');
+		expect(queue.enqueue).not.toHaveBeenCalled();
 	});
 });

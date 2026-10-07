@@ -85,8 +85,15 @@ export function createPlanWorker(deps: WorkerDeps) {
 		return 'started';
 	}
 
+	async function run(planId: string): Promise<StartResult | RunOutcome> {
+		const result = await start(planId);
+		if (result !== 'started') return result;
+		return (await running.get(planId)?.done) ?? result;
+	}
+
 	return {
 		start,
+		run,
 
 		cancel(planId: string): boolean {
 			const entry = running.get(planId);

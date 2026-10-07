@@ -227,6 +227,14 @@ export function createPlanStore(db: Db) {
 			await db.insert(usageEvents).values({ userId, kind });
 		},
 
+		async listGeneratingPlanIds(): Promise<string[]> {
+			const rows = await db
+				.select({ id: plans.id })
+				.from(plans)
+				.where(eq(plans.status, 'generating'));
+			return rows.map((row) => row.id);
+		},
+
 		async markGeneratingPlansPaused(onlyPlanIds?: string[]): Promise<number> {
 			const scope = onlyPlanIds ? inArray(plans.id, onlyPlanIds) : undefined;
 			const rows = await db
