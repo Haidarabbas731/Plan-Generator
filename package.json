@@ -62,13 +62,18 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"dependencies": {
+		"@ai-sdk/anthropic": "^4.0.74",
+		"@ai-sdk/google": "^4.0.90",
+		"@ai-sdk/openai": "^4.0.86",
 		"@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+		"@openrouter/ai-sdk-provider": "^3.1.0",
 		"@shikijs/themes": "^4.5.0",
-		"ai": "^6",
+		"ai": "^7.0.130",
 		"better-auth": "^1.7.7",
 		"drizzle-orm": "^0.45.3",
 		"postgres": "^3.4.9",
 		"runed": "^0.37.1",
-		"streamdown-svelte": "^3.0.6"
+		"streamdown-svelte": "^3.0.6",
+		"zod": "^4.6.5"
 	}
 }
