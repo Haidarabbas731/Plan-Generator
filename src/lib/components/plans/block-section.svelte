@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createDisclosureMode } from '#lib/disclosure.svelte.js';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import FlagIcon from '@lucide/svelte/icons/flag';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
@@ -36,7 +37,7 @@
 		onretry
 	}: Props = $props();
 
-	let instant = $state(false);
+	const mode = createDisclosureMode();
 
 	const span = $derived(block.endDay - block.startDay + 1);
 	const done = $derived(days.filter((day) => day.completed).length);
@@ -53,7 +54,8 @@
 	<Collapsible bind:open>
 		<CollapsibleTrigger
 			class="group flex min-h-16 w-full items-center gap-3 rounded-lg p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-			onclick={(event: MouseEvent) => (instant = event.detail === 0)}
+			onkeydown={mode.onkeydown}
+			onpointerdown={mode.onpointerdown}
 		>
 			<span class="flex min-w-0 flex-1 flex-col gap-0.5">
 				<span class="text-caption text-muted-foreground">Block {block.idx + 1}</span>
@@ -83,7 +85,7 @@
 			/>
 		</CollapsibleTrigger>
 
-		<CollapsibleContent data-instant={instant ? '' : undefined}>
+		<CollapsibleContent data-instant={mode.instant ? '' : undefined}>
 			<div class="flex flex-col gap-4 px-4 pt-1 pb-4">
 				<p class="text-sm text-muted-foreground">{block.objective}</p>
 

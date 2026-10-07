@@ -70,6 +70,7 @@
 			const blockDays = daysView.filter((day) => day.blockId === block.id);
 			let blockStatus = live?.status ?? block.status;
 			if (blockStatus === 'ready' && blockDays.length === 0) blockStatus = 'writing';
+			if (blockStatus === 'writing' && status !== 'generating') blockStatus = 'pending';
 			return {
 				block: { ...block, status: blockStatus, error: live?.error ?? block.error },
 				days: blockDays

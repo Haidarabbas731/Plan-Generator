@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createDisclosureMode } from '#lib/disclosure.svelte.js';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import CircleIcon from '@lucide/svelte/icons/circle';
 	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
@@ -34,10 +35,9 @@
 	let { status, error, label, blocks, busy = false, onresume, onpause }: Props = $props();
 
 	let open = $state(false);
-	let instant = $state(false);
+	const mode = createDisclosureMode();
 
 	const outlineDone = $derived(blocks.length > 0);
-	const hasFailedBlock = $derived(blocks.some((block) => block.status === 'failed'));
 </script>
 
 <section aria-label="Plan generation" class="rounded-lg border bg-card">
@@ -71,7 +71,7 @@
 			{:else}
 				<Button type="button" disabled={busy} onclick={onresume}>
 					{#if busy}<Spinner data-icon="inline-start" />{:else}<PlayIcon aria-hidden="true" />{/if}
-					{status === 'failed' || hasFailedBlock ? 'Try again' : 'Resume'}
+					{status === 'failed' ? 'Try again' : 'Resume'}
 				</Button>
 			{/if}
 		</div>
@@ -80,7 +80,8 @@
 	<Collapsible bind:open>
 		<CollapsibleTrigger
 			class="group flex min-h-11 w-full items-center justify-between gap-2 border-t px-4 text-left text-caption font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"
-			onclick={(event: MouseEvent) => (instant = event.detail === 0)}
+			onkeydown={mode.onkeydown}
+			onpointerdown={mode.onpointerdown}
 		>
 			{open ? 'Hide details' : 'Show details'}
 			<ChevronDownIcon
@@ -88,7 +89,7 @@
 				aria-hidden="true"
 			/>
 		</CollapsibleTrigger>
-		<CollapsibleContent data-instant={instant ? '' : undefined}>
+		<CollapsibleContent data-instant={mode.instant ? '' : undefined}>
 			<ol class="flex max-h-72 flex-col gap-1 overflow-y-auto border-t p-3 text-sm">
 				<li class="flex min-h-9 items-center gap-2.5 px-1">
 					{#if outlineDone}

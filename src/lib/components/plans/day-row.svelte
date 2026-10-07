@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { createDisclosureMode } from '#lib/disclosure.svelte.js';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import {
@@ -35,7 +36,7 @@
 	}: Props = $props();
 
 	let open = $state(false);
-	let instant = $state(false);
+	const mode = createDisclosureMode();
 	let touched = $state(false);
 
 	const dateLabel = $derived(date ? formatDate(date) : null);
@@ -64,7 +65,8 @@
 			</div>
 			<CollapsibleTrigger
 				class="group flex min-h-11 min-w-0 flex-1 items-center gap-3 rounded-md py-2 pr-1 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-				onclick={(event: MouseEvent) => (instant = event.detail === 0)}
+				onkeydown={mode.onkeydown}
+				onpointerdown={mode.onpointerdown}
 			>
 				<span class="flex min-w-0 flex-1 flex-col">
 					<span class="truncate text-sm font-medium {completed ? 'text-muted-foreground' : ''}">
@@ -81,7 +83,7 @@
 				/>
 			</CollapsibleTrigger>
 		</div>
-		<CollapsibleContent data-instant={instant ? '' : undefined}>
+		<CollapsibleContent data-instant={mode.instant ? '' : undefined}>
 			<dl class="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-3 py-2 pr-2 pl-12 text-sm">
 				{#each tasks as task (task.label)}
 					<dt class="font-medium text-accent-foreground">{task.label}</dt>

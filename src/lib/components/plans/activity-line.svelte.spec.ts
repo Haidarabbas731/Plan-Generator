@@ -83,6 +83,6 @@ describe('ActivityLine', () => {
 		});
 		await fireEvent.click(screen.getByRole('button', { name: 'Show details' }));
 		expect(screen.getByText('No days returned.')).toBeVisible();
-		expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Resume' })).toBeInTheDocument();
 	});
 });
