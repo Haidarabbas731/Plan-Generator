@@ -1,54 +1,68 @@
-# sv
+# Plan Generator
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Turn a goal into a day-by-day plan. Describe what you want to learn and how much time you have, and get a task for every day, a checkpoint every few days, and a chat to adjust the plan as your week changes.
 
-## Creating a project
+Each person brings their own AI key (Gemini, OpenRouter, Anthropic or OpenAI). Keys are stored encrypted, and only the last four characters are ever shown.
 
-If you're seeing this, you've probably already done this step. Congrats!
+> Work in progress. The interface foundation and landing page are in place; accounts, key storage, plan generation and chat are being built.
 
-```sh
-# create a new project
-npx sv create my-app
-```
+## Stack
 
-To recreate this project with the same configuration:
+SvelteKit 3 (Svelte 5 runes), TypeScript, Tailwind CSS v4, shadcn-svelte on Bits UI, Svelte AI Elements for the chat, Bun. Planned: Drizzle with PostgreSQL, Better Auth, Vercel AI SDK.
 
-```sh
-# recreate this project
-bun x sv@1.1.1 create --template minimal --types ts --add prettier eslint vitest="usages:unit,component" playwright="demo:no" tailwindcss="plugins:none" sveltekit-adapter="adapter:node" --no-download-check --install bun Plan-Generator
-```
+## Setup
 
-## Adding features
-
-Add features to your project with `sv add`:
+Requires [Bun](https://bun.sh).
 
 ```sh
-npx sv add
+bun install
+cp .env.example .env
+bun run dev
 ```
 
-For example, to add Tailwind CSS:
+The app runs at <http://localhost:5173>. Everything in `.env` is optional for now.
 
-```sh
-npx sv add tailwindcss
+## Scripts
+
+| Script                                         | What it does                          |
+| ---------------------------------------------- | ------------------------------------- |
+| `bun run dev`                                  | Start the dev server                  |
+| `bun run build` / `bun run preview`            | Production build and local preview    |
+| `bun run check`                                | Type check with svelte-check          |
+| `bun run lint` / `bun run format`              | Prettier and ESLint / format the code |
+| `bun run test`                                 | Unit and component tests (Vitest)     |
+| `bun run test:e2e` / `bun run test:e2e:headed` | End-to-end tests in Google Chrome     |
+
+End-to-end tests use the Chrome installed on your machine (`channel: 'chrome'` in `playwright.config.ts`). Set `SLOWMO=800` to slow each step down when running headed.
+
+## Project structure
+
+```
+src/
+  env.ts                  environment variables, validated at startup
+  routes/                 pages, layout, global styles and theme tokens
+  lib/
+    components/ui/        shadcn-svelte components (our restyled copies)
+    components/ai-elements/  chat components
+    components/chat/      model picker
+    components/shared/    header, logo, theme toggle
+    components/landing/   landing page pieces
+e2e/                      Playwright tests
 ```
 
-## Developing
+Imports use the `#lib/...` subpath alias.
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+## Environment variables
 
-```sh
-npm run dev
+Declared in `src/env.ts`. See `.env.example`.
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+| Variable                                                        | Purpose                                   |
+| --------------------------------------------------------------- | ----------------------------------------- |
+| `DATABASE_URL`                                                  | PostgreSQL connection string              |
+| `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`                         | Session signing secret and public app URL |
+| `ENCRYPTION_KEY`                                                | 32 bytes, base64. Encrypts saved AI keys  |
+| `GOOGLE_CLIENT_ID/SECRET`, `GITHUB_CLIENT_ID/SECRET`            | Optional sign-in providers                |
+| `RESEND_API_KEY`, `EMAIL_FROM`                                  | Optional verification and reset emails    |
+| `LIMIT_AI_PER_HOUR`, `LIMIT_PLANS_PER_USER`, `LIMIT_CHAT_CHARS` | Optional usage limits                     |
 
-## Building
-
-To create a production version of your app:
-
-```sh
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
+Losing `ENCRYPTION_KEY` makes saved AI keys unreadable, so back it up.
