@@ -34,6 +34,29 @@ export type RevisionSource = (typeof REVISION_SOURCES)[number];
 export const USAGE_KINDS = ['generation', 'chat'] as const;
 export type UsageKind = (typeof USAGE_KINDS)[number];
 
+export interface PlanBlockView {
+	id: string;
+	idx: number;
+	startDay: number;
+	endDay: number;
+	theme: string;
+	objective: string;
+	milestone: Milestone;
+	status: BlockStatus;
+	error: string | null;
+}
+
+export interface PlanDayView {
+	day: number;
+	blockId: string;
+	title: string;
+	learn: string;
+	practice: string;
+	review: string;
+	minutes: number;
+	completed: boolean;
+}
+
 export interface PlanSummary {
 	id: string;
 	title: string;
