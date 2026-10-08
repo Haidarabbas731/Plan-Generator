@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isCurrentPath, showsTabBar } from './nav.js';
+import { isCurrentPath, showsBackLink, showsTabBar } from './nav.js';
 
 describe('isCurrentPath', () => {
 	it('matches the path itself and anything below it', () => {
@@ -27,5 +27,19 @@ describe('showsTabBar', () => {
 		expect(showsTabBar('/')).toBe(false);
 		expect(showsTabBar('/login')).toBe(false);
 		expect(showsTabBar('/settingsx')).toBe(false);
+	});
+});
+
+describe('showsBackLink', () => {
+	it('shows on the form and on a single plan', () => {
+		expect(showsBackLink('/plans/new')).toBe(true);
+		expect(showsBackLink('/plans/abc')).toBe(true);
+	});
+
+	it('hides on the lists, settings, exports and the landing page', () => {
+		expect(showsBackLink('/plans')).toBe(false);
+		expect(showsBackLink('/settings/keys')).toBe(false);
+		expect(showsBackLink('/plans/abc/export/ics')).toBe(false);
+		expect(showsBackLink('/')).toBe(false);
 	});
 });

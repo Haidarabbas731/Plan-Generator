@@ -67,6 +67,12 @@ test('a new user sees an empty history and can start a plan', async ({ page }) =
 	await page.getByRole('link', { name: 'New plan' }).click();
 	await expect(page).toHaveURL(/\/plans\/new$/);
 	await expect(page.getByRole('heading', { name: 'New plan' })).toBeVisible();
+
+	await page.setViewportSize({ width: 390, height: 844 });
+	const back = header.getByRole('link', { name: 'Plans', exact: true }).first();
+	await expect(back).toBeVisible();
+	await back.click();
+	await expect(page).toHaveURL(/\/plans$/);
 });
 
 test('without an AI key the form explains what to do and cannot be submitted', async ({ page }) => {

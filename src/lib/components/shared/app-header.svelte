@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import ArrowLeftIcon from '@lucide/svelte/icons/arrow-left';
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
-	import { isCurrentPath } from '#lib/nav.js';
+	import { isCurrentPath, showsBackLink } from '#lib/nav.js';
 	import Logo from './logo.svelte';
 	import ThemeToggle from './theme-toggle.svelte';
 	import UserMenu from './user-menu.svelte';
@@ -16,6 +17,8 @@
 		{ href: '/plans', label: 'Plans' },
 		{ href: '/settings', label: 'Settings' }
 	];
+
+	const backLink = $derived(Boolean(user) && showsBackLink(page.url.pathname));
 
 	let scrolled = $state(false);
 
@@ -32,9 +35,23 @@
 	class="sticky top-0 z-40 border-b glass border-b-transparent transition-[border-color] duration-(--dur-fast) ease-(--ease-out) data-[scrolled]:border-b-border"
 >
 	<div class="frame flex h-14 items-center justify-between gap-4">
+		{#if backLink}
+			<a
+				href="/plans"
+				class="{buttonVariants({
+					variant: 'ghost',
+					class: '-ml-2 h-11 gap-1.5 px-2 sm:hidden'
+				})} text-base"
+			>
+				<ArrowLeftIcon aria-hidden="true" />
+				Plans
+			</a>
+		{/if}
 		<a
 			href={user ? '/plans' : '/'}
-			class="inline-flex min-h-11 items-center rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+			class="inline-flex min-h-11 items-center rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/40 {backLink
+				? 'max-sm:hidden'
+				: ''}"
 		>
 			<Logo />
 		</a>
