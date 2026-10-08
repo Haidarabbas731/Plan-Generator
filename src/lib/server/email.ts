@@ -1,4 +1,5 @@
 import { EMAIL_LOGO } from './email-logo.js';
+import { APP_NAME } from './email-templates.js';
 import { logger } from './logger.js';
 
 export interface EmailMessage {
@@ -25,6 +26,11 @@ export const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 const RESERVED_TEST_DOMAINS = ['example.com', 'example.org', 'example.net'];
 const RESERVED_TEST_SUFFIXES = ['.test', '.example', '.invalid', '.localhost'];
 
+export function formatFrom(from: string, name = APP_NAME): string {
+	const address = from.trim();
+	return address.includes('<') ? address : `${name} <${address}>`;
+}
+
 export function isReservedTestAddress(address: string): boolean {
 	const domain = address.trim().toLowerCase().split('@').pop() ?? '';
 	return (
@@ -34,7 +40,8 @@ export function isReservedTestAddress(address: string): boolean {
 }
 
 export function createEmailSender(options: EmailSenderOptions) {
-	const { apiKey, from, outbox } = options;
+	const { apiKey, outbox } = options;
+	const from = options.from ? formatFrom(options.from) : undefined;
 	const doFetch = options.fetch ?? fetch;
 	const enabled = Boolean(apiKey && from);
 

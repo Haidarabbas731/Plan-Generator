@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createEmailSender, isReservedTestAddress, RESEND_ENDPOINT } from './email.js';
+import { createEmailSender, formatFrom, isReservedTestAddress, RESEND_ENDPOINT } from './email.js';
 
 const message = { to: 'reader@gmail.com', subject: 'Hi', text: 'Body' };
 
@@ -71,6 +71,28 @@ describe('email sender', () => {
 		expect(await sender.send({ ...message, to: 'e2e+1@example.com' })).toBe(true);
 		expect(fetcher).not.toHaveBeenCalled();
 		expect(saved).toEqual(['e2e+1@example.com']);
+	});
+});
+
+describe('formatFrom', () => {
+	it('gives a bare address the app name so inboxes do not show "noreply"', () => {
+		expect(formatFrom('noreply@haidarabbas.dev')).toBe('Plan Generator <noreply@haidarabbas.dev>');
+		expect(formatFrom('  noreply@haidarabbas.dev ')).toBe(
+			'Plan Generator <noreply@haidarabbas.dev>'
+		);
+	});
+
+	it('keeps a sender that already has a name', () => {
+		expect(formatFrom('Plans <p@x.io>')).toBe('Plans <p@x.io>');
+	});
+
+	it('is used for the Resend request', async () => {
+		const fetcher = vi.fn<typeof fetch>(async () => new Response('{}', { status: 200 }));
+		const sender = createEmailSender({ apiKey: 'k', from: 'noreply@x.io', fetch: fetcher });
+		await sender.send({ to: 'reader@gmail.com', subject: 'Hi', text: 'Body' });
+		expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body)).from).toBe(
+			'Plan Generator <noreply@x.io>'
+		);
 	});
 });
 
