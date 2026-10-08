@@ -13,6 +13,7 @@
 	let { children, data }: LayoutProps = $props();
 
 	const tabBar = $derived(Boolean(data.user) && showsTabBar(page.url.pathname));
+	const onAuthPage = $derived(page.route.id?.startsWith('/(auth)') ?? false);
 
 	$effect(() => {
 		document.documentElement.setAttribute('data-hydrated', '');
@@ -34,7 +35,9 @@
 </a>
 
 <Tooltip.Provider delayDuration={400}>
-	<AppHeader user={data.user} />
+	{#if !onAuthPage}
+		<AppHeader user={data.user} />
+	{/if}
 
 	<main
 		id="main"

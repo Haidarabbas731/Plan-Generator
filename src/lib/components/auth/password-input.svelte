@@ -14,9 +14,17 @@
 		autocomplete: 'current-password' | 'new-password';
 		invalid?: boolean;
 		describedBy?: string;
+		value?: string;
 	}
 
-	let { id, name = 'password', autocomplete, invalid = false, describedBy }: Props = $props();
+	let {
+		id,
+		name = 'password',
+		autocomplete,
+		invalid = false,
+		describedBy,
+		value = $bindable('')
+	}: Props = $props();
 
 	let visible = $state(false);
 </script>
@@ -26,6 +34,7 @@
 		{id}
 		{name}
 		{autocomplete}
+		bind:value
 		type={visible ? 'text' : 'password'}
 		required
 		aria-invalid={invalid}

@@ -23,7 +23,13 @@ export function signInMessage(failure: AuthFailure | null): string {
 	return 'Sign-in is unavailable right now. Try again in a moment.';
 }
 
-export function signUpMessage(failure: AuthFailure | null): { field?: 'email'; message: string } {
+export function signUpMessage(failure: AuthFailure | null): {
+	field?: 'email' | 'password';
+	message: string;
+} {
+	if (failure?.code === 'PASSWORD_TOO_WEAK') {
+		return { field: 'password', message: 'Choose a stronger password that meets every rule.' };
+	}
 	if (failure?.status === 429) {
 		return { message: 'Too many attempts. Wait a minute and try again.' };
 	}

@@ -55,17 +55,17 @@ test('changing the password needs the right current one and works for the next s
 	await open(page, '/settings/account');
 
 	await page.getByLabel('Current password').fill('wrong-password-123');
-	await page.getByLabel('New password').fill('brand-new-password-1');
+	await page.getByLabel('New password').fill('Brand-new-password-1!');
 	await page.getByRole('button', { name: 'Change password' }).click();
 	await expect(page.getByText('The current password is not correct.')).toBeVisible();
 
 	await page.getByLabel('Current password').fill(PASSWORD);
-	await page.getByLabel('New password').fill('brand-new-password-1');
+	await page.getByLabel('New password').fill('Brand-new-password-1!');
 	await page.getByRole('button', { name: 'Change password' }).click();
 	await expect(page.getByText('Password changed')).toBeVisible();
 
 	await page.context().clearCookies();
-	await signIn(page, email, 'brand-new-password-1');
+	await signIn(page, email, 'Brand-new-password-1!');
 	await expect(page).toHaveURL(/\/plans$/);
 });
 

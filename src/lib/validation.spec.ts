@@ -26,15 +26,23 @@ describe('validatePassword', () => {
 	it('enforces length bounds', () => {
 		expect(validatePassword('')).toBeDefined();
 		expect(validatePassword('short')).toBeDefined();
-		expect(validatePassword('long-enough')).toBeUndefined();
-		expect(validatePassword('x'.repeat(129))).toBeDefined();
+		expect(validatePassword('Long-enough-1')).toBeUndefined();
+		expect(validatePassword(`Aa1!${'x'.repeat(125)}`)).toBeDefined();
+	});
+
+	it('asks for the first missing kind of character', () => {
+		expect(validatePassword('long-enough')).toBe('Add at least one uppercase letter.');
+		expect(validatePassword('Long-enough')).toBe('Add at least one number.');
+		expect(validatePassword('Longenough1')).toBe(
+			'Add at least one special character, such as ! or @.'
+		);
 	});
 });
 
 describe('validateSignUp', () => {
 	it('returns no errors for valid input', () => {
 		expect(
-			validateSignUp({ name: 'Ada', email: 'ada@example.com', password: 'correct-horse' })
+			validateSignUp({ name: 'Ada', email: 'ada@example.com', password: 'Correct-horse-9' })
 		).toEqual({});
 	});
 

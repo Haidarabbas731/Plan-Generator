@@ -1,6 +1,7 @@
 export const LIMITS = {
 	passwordMin: 8,
 	passwordMax: 128,
+	passwordStrong: 12,
 	nameMax: 80,
 	emailMax: 254,
 	apiKeyMin: 8,

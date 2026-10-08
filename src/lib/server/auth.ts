@@ -1,4 +1,5 @@
 import { betterAuth } from 'better-auth';
+import { createAuthMiddleware } from 'better-auth/api';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { emailOTP } from 'better-auth/plugins';
 import { sveltekitCookies } from 'better-auth/svelte-kit';
@@ -27,6 +28,7 @@ import { createRedisOutbox } from './email-outbox.js';
 import { renderPasswordResetEmail, renderVerificationCodeEmail } from './email-templates.js';
 import { logger } from './logger.js';
 import { redis } from './redis.js';
+import { assertPasswordStrong } from './password-hook.js';
 import { createSendGate } from './send-gate.js';
 
 export const oauthProviders = {
@@ -74,6 +76,11 @@ export const auth = betterAuth({
 		}
 	}),
 	onAPIError: { errorURL: '/auth-error' },
+	hooks: {
+		before: createAuthMiddleware(async (ctx) => {
+			assertPasswordStrong(ctx.path, ctx.body);
+		})
+	},
 	socialProviders: {
 		...(oauthProviders.google && {
 			google: { clientId: GOOGLE_CLIENT_ID!, clientSecret: GOOGLE_CLIENT_SECRET! }

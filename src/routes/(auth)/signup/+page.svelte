@@ -4,6 +4,7 @@
 	import AuthCard from '#lib/components/auth/auth-card.svelte';
 	import OauthButtons from '#lib/components/auth/oauth-buttons.svelte';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
+	import PasswordStrength from '#lib/components/auth/password-strength.svelte';
 	import { Alert, AlertDescription } from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import {
@@ -20,6 +21,7 @@
 	let { data, form }: PageProps = $props();
 
 	let submitting = $state(false);
+	let password = $state('');
 </script>
 
 <svelte:head>
@@ -34,8 +36,6 @@
 	title="Create an account"
 	description="Then connect your own AI key and write your first plan."
 >
-	<OauthButtons {...data.oauth} callbackURL={data.callbackURL} />
-
 	<form
 		method="POST"
 		novalidate
@@ -89,12 +89,15 @@
 				<PasswordInput
 					id="password"
 					autocomplete="new-password"
+					bind:value={password}
 					invalid={Boolean(form?.errors?.password)}
 					describedBy="password-hint{form?.errors?.password ? ' password-error' : ''}"
 				/>
 				<FieldDescription id="password-hint">
-					Use at least {LIMITS.passwordMin} characters.
+					Use {LIMITS.passwordMin} or more characters with an uppercase letter, a number and a special
+					character.
 				</FieldDescription>
+				<PasswordStrength {password} />
 				{#if form?.errors?.password}
 					<FieldError id="password-error">{form.errors.password}</FieldError>
 				{/if}
@@ -106,10 +109,12 @@
 		</FieldGroup>
 	</form>
 
-	<p class="text-sm text-muted-foreground">
+	<OauthButtons {...data.oauth} callbackURL={data.callbackURL} />
+
+	{#snippet footer()}
 		Already have an account?
 		<a href="/login" class="font-medium text-primary underline-offset-4 hover:underline">
 			Sign in
 		</a>
-	</p>
+	{/snippet}
 </AuthCard>

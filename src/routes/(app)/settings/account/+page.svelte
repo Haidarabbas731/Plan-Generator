@@ -3,7 +3,10 @@
 	import { authClient } from '#lib/auth-client.js';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 	import { toast } from 'svelte-sonner';
+	import GithubIcon from '#lib/components/auth/provider-icons/github-icon.svelte';
+	import GoogleIcon from '#lib/components/auth/provider-icons/google-icon.svelte';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
+	import PasswordStrength from '#lib/components/auth/password-strength.svelte';
 	import PlanField from '#lib/components/plans/plan-field.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Field, FieldError, FieldGroup, FieldLabel } from '#lib/components/ui/field/index.js';
@@ -15,6 +18,7 @@
 
 	let pending = $state<'name' | 'password' | null>(null);
 	let linking = $state<string | null>(null);
+	let newPassword = $state('');
 
 	async function connect(provider: 'google' | 'github') {
 		linking = provider;
@@ -107,10 +111,12 @@
 							id="newPassword"
 							name="newPassword"
 							autocomplete="new-password"
+							bind:value={newPassword}
 							invalid={Boolean(passwordError)}
 							describedBy={passwordError ? 'password-error' : undefined}
 						/>
 						{#if passwordError}<FieldError id="password-error">{passwordError}</FieldError>{/if}
+						<PasswordStrength password={newPassword} />
 					</Field>
 				</FieldGroup>
 				<p class="text-caption text-muted-foreground">
@@ -151,11 +157,17 @@
 					<Button
 						type="button"
 						variant="outline"
-						class="h-11 px-4"
+						class="h-11 gap-2 px-4"
 						disabled={linking !== null}
 						onclick={() => connect(option.id)}
 					>
-						{#if linking === option.id}<Spinner data-icon="inline-start" />{/if}
+						{#if linking === option.id}
+							<Spinner data-icon="inline-start" />
+						{:else if option.id === 'google'}
+							<GoogleIcon class="size-4" />
+						{:else}
+							<GithubIcon class="size-4" />
+						{/if}
 						Connect {option.name}
 					</Button>
 				{/each}

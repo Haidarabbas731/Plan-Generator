@@ -30,6 +30,13 @@ describe('isEmailNotVerified', () => {
 });
 
 describe('messages', () => {
+	it('points a weak password back at the password field', () => {
+		expect(signUpMessage({ status: 400, code: 'PASSWORD_TOO_WEAK' })).toEqual({
+			field: 'password',
+			message: 'Choose a stronger password that meets every rule.'
+		});
+	});
+
 	it('never says which half of a wrong sign-in was wrong', () => {
 		expect(signInMessage({ status: 401, code: 'INVALID_EMAIL_OR_PASSWORD' })).toBe(
 			'The email or password is not correct.'

@@ -154,11 +154,12 @@
 				</p>
 			{/if}
 		</form>
-		<p>
-			Wrong address?
-			<a href="/signup" class="font-medium text-primary underline-offset-4 hover:underline">
-				Start again
-			</a>
-		</p>
 	</div>
+
+	{#snippet footer()}
+		Wrong address?
+		<a href="/signup" class="font-medium text-primary underline-offset-4 hover:underline">
+			Start again
+		</a>
+	{/snippet}
 </AuthCard>

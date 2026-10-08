@@ -1,4 +1,5 @@
 import { LIMITS } from './limits.js';
+import { firstPasswordProblem } from './password.js';
 
 export interface SignUpInput {
 	name: string;
@@ -18,12 +19,10 @@ export function validateEmail(email: string): string | undefined {
 
 export function validatePassword(password: string): string | undefined {
 	if (!password) return 'Enter a password.';
-	if (password.length < LIMITS.passwordMin) {
-		return `Use at least ${LIMITS.passwordMin} characters.`;
-	}
 	if (password.length > LIMITS.passwordMax) {
 		return `Use at most ${LIMITS.passwordMax} characters.`;
 	}
+	return firstPasswordProblem(password);
 }
 
 export function validateSignUp(input: SignUpInput): FieldErrors<SignUpInput> {

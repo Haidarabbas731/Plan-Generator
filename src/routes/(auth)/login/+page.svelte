@@ -21,8 +21,6 @@
 </svelte:head>
 
 <AuthCard title="Sign in" description="Welcome back. Pick up where your plan left off.">
-	<OauthButtons {...data.oauth} callbackURL={data.redirectTo} />
-
 	<form
 		method="POST"
 		novalidate
@@ -90,10 +88,12 @@
 		</FieldGroup>
 	</form>
 
-	<p class="text-sm text-muted-foreground">
+	<OauthButtons {...data.oauth} callbackURL={data.redirectTo} />
+
+	{#snippet footer()}
 		New here?
 		<a href="/signup" class="font-medium text-primary underline-offset-4 hover:underline">
 			Create an account
 		</a>
-	</p>
+	{/snippet}
 </AuthCard>

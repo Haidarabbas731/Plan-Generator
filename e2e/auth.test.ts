@@ -1,8 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { emailVerificationOn, verifyWithEmailedCode } from './email.js';
-import { open } from './helpers.js';
-
-const PASSWORD = 'correct-horse-battery';
+import { open, PASSWORD } from './helpers.js';
 
 function uniqueEmail() {
 	return `e2e+${Date.now()}-${Math.random().toString(36).slice(2, 8)}@example.com`;
@@ -67,6 +65,40 @@ test('sign up shows a message for each invalid field', async ({ page }) => {
 	await expect(page.getByText('Enter your email address.')).toBeVisible();
 	await expect(page.getByText('Enter a password.')).toBeVisible();
 	await expect(page.getByLabel('Email')).toHaveAttribute('aria-invalid', 'true');
+});
+
+test('the password rules show while typing and a weak password is refused with the first missing rule', async ({
+	page
+}) => {
+	await open(page, '/signup');
+	const password = page.getByLabel('Password', { exact: true });
+	const rules = page.getByRole('list').filter({ hasText: 'One uppercase letter' });
+	await expect(rules).toBeHidden();
+
+	await password.fill('longenough');
+	await expect(rules).toBeVisible();
+	await expect(rules.getByText('At least 8 characters')).toContainText('met');
+	await expect(rules.getByText('One uppercase letter')).toContainText('not met');
+
+	await password.fill('Longenough1!');
+	await expect(rules.getByText('One special character')).toContainText('met');
+	await expect(page.getByRole('status').filter({ hasText: /Strong|Very strong/ })).toBeVisible();
+
+	await page.getByLabel('Name').fill('Weak Tester');
+	await page.getByLabel('Email').fill(uniqueEmail());
+	await password.fill('longenough');
+	await page.getByRole('button', { name: 'Create account' }).click();
+	await expect(page.getByText('Add at least one uppercase letter.')).toBeVisible();
+	await expect(page).toHaveURL(/\/signup/);
+});
+
+test('the sign-up endpoint itself refuses a weak password', async ({ request }) => {
+	const response = await request.post('/api/auth/sign-up/email', {
+		data: { name: 'Weak Direct', email: uniqueEmail(), password: 'longenough1' },
+		headers: { origin: new URL(process.env.BASE_URL ?? 'http://localhost:5173').origin }
+	});
+	expect(response.status()).toBe(400);
+	expect((await response.json()).code).toBe('PASSWORD_TOO_WEAK');
 });
 
 test('sign up with an email that already has an account is rejected', async ({ page, request }) => {

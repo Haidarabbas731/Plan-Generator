@@ -7,20 +7,21 @@
 		description: string;
 		align?: 'start' | 'center';
 		children: Snippet;
+		footer?: Snippet;
 	}
 
-	let { title, description, align = 'start', children }: Props = $props();
+	let { title, description, align = 'start', children, footer }: Props = $props();
 </script>
 
-<div
-	class={cn(
-		'mx-auto flex w-full max-w-sm flex-col gap-6 px-4 py-14 sm:py-20',
-		align === 'center' && 'text-center'
-	)}
->
-	<div class="flex flex-col gap-1.5">
+<div class={cn('flex flex-col gap-8', align === 'center' && 'text-center')}>
+	<div class="flex flex-col gap-2">
 		<h1 class="text-title">{title}</h1>
 		<p class="text-sm text-muted-foreground">{description}</p>
 	</div>
 	{@render children()}
+	{#if footer}
+		<div class="border-t pt-6 text-center text-sm text-muted-foreground">
+			{@render footer()}
+		</div>
+	{/if}
 </div>

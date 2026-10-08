@@ -1,7 +1,7 @@
 import { expect, type Page } from '@playwright/test';
 import { verifyWithEmailedCode } from './email.js';
 
-export const PASSWORD = 'correct-horse-battery';
+export const PASSWORD = 'Correct-horse-battery-9!';
 
 export async function open(page: Page, url: string) {
 	const response = await page.goto(url);
