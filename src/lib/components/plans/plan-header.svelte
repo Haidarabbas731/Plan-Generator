@@ -3,16 +3,16 @@
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
 	import FlameIcon from '@lucide/svelte/icons/flame';
-	import MessageSquareIcon from '@lucide/svelte/icons/message-square';
+	import SparklesIcon from '@lucide/svelte/icons/sparkles';
 	import TrashIcon from '@lucide/svelte/icons/trash-2';
 	import { Badge } from '#lib/components/ui/badge/index.js';
+	import { Progress } from '#lib/components/ui/progress/index.js';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import { formatDate } from '#lib/format.js';
 	import { LIMITS } from '#lib/limits.js';
 	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
 	import DeletePlanDialog from './delete-plan-dialog.svelte';
-	import ProgressRing from './progress-ring.svelte';
 
 	interface Props {
 		id: string;
@@ -49,13 +49,16 @@
 
 	const goalLong = $derived(goal.length > LIMITS.goalPreviewChars);
 
-	const ratio = $derived(total === 0 ? 0 : done / total);
+	const percent = $derived(total === 0 ? 0 : Math.round((done / total) * 100));
 </script>
 
-<header class="flex flex-col gap-4 sm:flex-row sm:items-start">
-	<div class="flex items-center justify-between sm:contents">
-		<ProgressRing value={ratio} size={64} label="{title} progress" />
-		<div class="flex items-center gap-1 sm:order-last">
+<header class="flex flex-col gap-4">
+	<div class="flex items-start justify-between gap-3">
+		<div class="flex min-w-0 flex-col gap-2">
+			{#if topicTag}<Badge variant="secondary" class="w-fit">{topicTag}</Badge>{/if}
+			<h1 class="text-title">{title}</h1>
+		</div>
+		<div class="flex shrink-0 items-center gap-1">
 			{#if onchat}
 				<Button
 					type="button"
@@ -65,8 +68,8 @@
 					aria-controls="plan-chat"
 					onclick={onchat}
 				>
-					<MessageSquareIcon aria-hidden="true" />
-					Ask
+					<SparklesIcon aria-hidden="true" />
+					Ask AI
 				</Button>
 			{/if}
 
@@ -78,6 +81,13 @@
 					<EllipsisIcon aria-hidden="true" />
 				</DropdownMenu.Trigger>
 				<DropdownMenu.Content align="end" class="min-w-56">
+					<DropdownMenu.Label class="flex flex-col gap-0.5 font-normal">
+						<span class="text-caption text-muted-foreground">Written by</span>
+						<span class="truncate text-sm font-medium">
+							{PROVIDER_INFO[provider].name} · {model}
+						</span>
+					</DropdownMenu.Label>
+					<DropdownMenu.Separator />
 					<DropdownMenu.Item>
 						{#snippet child({ props })}
 							<a {...props} href="/plans/{id}/export/markdown" download>
@@ -103,15 +113,15 @@
 			</DropdownMenu.Root>
 		</div>
 	</div>
-	<div class="flex min-w-0 flex-1 flex-col gap-2">
-		<h1 class="text-title">{title}</h1>
+
+	<div class="flex flex-col gap-1">
 		<p id="plan-goal" class="text-muted-foreground {goalLong && !goalOpen ? 'line-clamp-3' : ''}">
 			{goal}
 		</p>
 		{#if goalLong}
 			<button
 				type="button"
-				class="-mt-1 min-h-11 self-start text-caption font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
+				class="min-h-11 self-start text-caption font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
 				aria-expanded={goalOpen}
 				aria-controls="plan-goal"
 				onclick={() => (goalOpen = !goalOpen)}
@@ -119,6 +129,9 @@
 				{goalOpen ? 'Show less' : 'Show more'}
 			</button>
 		{/if}
+	</div>
+
+	<div class="flex flex-col gap-2">
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-muted-foreground">
 			<span class="tabular-nums">{done} of {total} days done</span>
 			{#if streak > 0}
@@ -132,10 +145,16 @@
 				<CalendarIcon class="size-3.5" aria-hidden="true" />
 				Starts {formatDate(startDate, 'date')}
 			</span>
-			<Badge variant="outline" class="max-w-full min-w-0 justify-start">
-				<span class="truncate">{PROVIDER_INFO[provider].name} · {model}</span>
-			</Badge>
-			{#if topicTag}<Badge variant="secondary">{topicTag}</Badge>{/if}
+		</div>
+		<div class="flex items-center gap-3">
+			<Progress
+				value={percent}
+				class="h-1.5 min-w-0 flex-1"
+				aria-label="Plan progress, {percent} percent"
+			/>
+			<span class="shrink-0 text-caption font-medium tabular-nums" aria-hidden="true"
+				>{percent}%</span
+			>
 		</div>
 	</div>
 </header>

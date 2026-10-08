@@ -48,7 +48,10 @@
 	]);
 </script>
 
-<li class="flex flex-col" data-today={isToday ? '' : undefined}>
+<li
+	class="flex flex-col {isToday ? 'rounded-md bg-accent/50' : ''}"
+	data-today={isToday ? '' : undefined}
+>
 	<Collapsible bind:open>
 		<div class="flex min-h-11 items-start gap-1">
 			<div class="flex size-11 shrink-0 items-center justify-center">
@@ -72,9 +75,16 @@
 					<span class="truncate text-sm font-medium {completed ? 'text-muted-foreground' : ''}">
 						Day {day} · {title}
 					</span>
-					<span class="text-caption text-muted-foreground">
-						{#if dateLabel}{dateLabel} ·
-						{/if}<span class="tabular-nums">{minutes}</span> min
+					<span class="flex flex-wrap items-center gap-x-1.5 text-caption text-muted-foreground">
+						{#if isToday}
+							<span class="font-semibold text-highlight">Today</span>
+							<span aria-hidden="true">·</span>
+						{/if}
+						{#if dateLabel}
+							<span>{dateLabel}</span>
+							<span aria-hidden="true">·</span>
+						{/if}
+						<span><span class="tabular-nums">{minutes}</span> min</span>
 					</span>
 				</span>
 				<ChevronDownIcon

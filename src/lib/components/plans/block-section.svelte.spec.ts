@@ -129,8 +129,28 @@ describe('BlockSection', () => {
 		expect(screen.getByText(/It counts a 1 MB file/)).not.toBeVisible();
 	});
 
+	it('marks the block that holds today and shows its progress', () => {
+		setup({}, { todayDay: 5 });
+		expect(screen.getByText('Current block')).toBeInTheDocument();
+		expect(screen.getByText('1 of 3')).toBeInTheDocument();
+	});
+
+	it('does not mark other blocks as current', () => {
+		setup({}, { todayDay: 2 });
+		expect(screen.queryByText('Current block')).not.toBeInTheDocument();
+	});
+
+	it('shows a check once every day of the block is done', () => {
+		const all = days.map((day) => ({ ...day, completed: true }));
+		render(BlockSection, {
+			props: { block, days: all, dates, open: true, ontoggle: vi.fn(), onretry: vi.fn() }
+		});
+		expect(screen.getByLabelText('All days done')).toBeInTheDocument();
+	});
+
 	it('uses a single day label for a one day block', () => {
 		setup({ startDay: 4, endDay: 4 });
-		expect(screen.getByText(/^Day 4(?! ·)/)).toBeInTheDocument();
+		expect(screen.getByText('Day 4', { exact: true })).toBeInTheDocument();
+		expect(screen.queryByText(/Days 4/)).not.toBeInTheDocument();
 	});
 });

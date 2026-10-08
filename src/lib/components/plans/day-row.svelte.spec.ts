@@ -21,6 +21,16 @@ describe('DayRow', () => {
 		expect(screen.getByText(/45/)).toBeInTheDocument();
 	});
 
+	it('tags the row of today', () => {
+		render(DayRow, { props: { ...base, isToday: true, ontoggle: () => {} } });
+		expect(screen.getByText('Today')).toBeInTheDocument();
+	});
+
+	it('shows no tag on other days', () => {
+		render(DayRow, { props: { ...base, ontoggle: () => {} } });
+		expect(screen.queryByText('Today')).not.toBeInTheDocument();
+	});
+
 	it('names the checkbox after the day and reports a toggle', async () => {
 		const ontoggle = vi.fn();
 		render(DayRow, { props: { ...base, ontoggle } });

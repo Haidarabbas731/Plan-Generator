@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { onMount, untrack } from 'svelte';
+	import { onMount, tick, untrack } from 'svelte';
+	import FlagIcon from '@lucide/svelte/icons/flag';
 	import { toast } from 'svelte-sonner';
 	import { enhance } from '$app/forms';
 	import { invalidate } from '$app/navigation';
@@ -7,6 +8,7 @@
 	import { LIVE_POLL_MS, PlanStream, setPlanStream } from '#lib/client/plan-stream.svelte.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { localToday } from '#lib/format.js';
+	import { LIMITS } from '#lib/limits.js';
 	import { liveFromData } from '#lib/plan-live.js';
 	import type { PlanBlockView, PlanDayView, PlanDetail } from '#lib/plan-types.js';
 	import type { Provider } from '#lib/providers.js';
@@ -16,6 +18,7 @@
 	import BlockSection from './block-section.svelte';
 	import PlanChatDock from './plan-chat-dock.svelte';
 	import PlanHeader from './plan-header.svelte';
+	import PlanOutline, { type OutlineItem } from './plan-outline.svelte';
 	import TodayCard from './today-card.svelte';
 
 	interface Props {
@@ -42,6 +45,7 @@
 	let openBlocks = $state<Record<number, boolean>>({});
 	let autoOpened = false;
 	let busy = $state<'resume' | 'cancel' | null>(null);
+	let aboutOpen = $state(false);
 
 	let toggleForm = $state<HTMLFormElement | null>(null);
 	let toggleDay = $state('');
@@ -70,6 +74,8 @@
 
 	const status = $derived(stream.live.status);
 
+	const aboutLong = $derived((plan.overview ?? '').length > LIMITS.goalPreviewChars);
+
 	const blockViews = $derived(
 		blocks.map((block) => {
 			const live = stream.live.blocks[block.idx];
@@ -83,6 +89,26 @@
 			};
 		})
 	);
+
+	const outline = $derived<OutlineItem[]>(
+		blockViews.map(({ block, days: blockDays }) => ({
+			idx: block.idx,
+			theme: block.theme,
+			startDay: block.startDay,
+			endDay: block.endDay,
+			done: blockDays.filter((day) => day.completed).length,
+			total: blockDays.length,
+			written: block.status === 'ready' || block.status === 'stale',
+			current: todayDay !== null && todayDay >= block.startDay && todayDay <= block.endDay
+		}))
+	);
+	const railOn = $derived(!dock.docked && blockViews.length > 1);
+
+	async function showBlock(idx: number) {
+		openBlocks = { ...openBlocks, [idx]: true };
+		await tick();
+		document.getElementById(`block-${idx}`)?.scrollIntoView({ block: 'start' });
+	}
 
 	$effect(() => {
 		stream.sync(liveFromData(plan, blocks), blocks.length);
@@ -147,7 +173,7 @@
 		: 'transition-[padding] duration-(--dur-base) ease-(--ease-out)'}
 	style:padding-right={dock.docked ? `${dock.width}px` : undefined}
 >
-	<div class="frame py-10">
+	<div class="frame py-10 {railOn ? 'xl:grid xl:grid-cols-[48rem_minmax(0,1fr)] xl:gap-10' : ''}">
 		<div class="flex column-narrow flex-col gap-6">
 			<PlanHeader
 				id={plan.id}
@@ -190,20 +216,6 @@
 				</p>
 			{/if}
 
-			{#if plan.overview || plan.finalOutcome}
-				<section aria-label="About this plan" class="flex flex-col gap-3 text-sm">
-					{#if plan.overview}<p class="whitespace-pre-line text-foreground/85">
-							{plan.overview}
-						</p>{/if}
-					{#if plan.finalOutcome}
-						<p>
-							<span class="font-medium">By the end:</span>
-							<span class="whitespace-pre-line text-foreground/85">{plan.finalOutcome}</span>
-						</p>
-					{/if}
-				</section>
-			{/if}
-
 			{#if blockViews.length === 0}
 				<div class="flex flex-col gap-3" aria-hidden="true">
 					{#each [0, 1, 2] as key (key)}
@@ -213,7 +225,11 @@
 			{:else}
 				<ol class="flex flex-col gap-3">
 					{#each blockViews as view, i (view.block.id)}
-						<li class="reveal" style="--reveal-i: {Math.min(i, 5)}">
+						<li
+							id="block-{view.block.idx}"
+							class="reveal scroll-mt-20"
+							style="--reveal-i: {Math.min(i, 5)}"
+						>
 							<BlockSection
 								block={view.block}
 								days={view.days}
@@ -231,7 +247,50 @@
 					{/each}
 				</ol>
 			{/if}
+
+			{#if plan.overview || plan.finalOutcome}
+				<section
+					aria-label="About this plan"
+					class="flex flex-col gap-3 rounded-lg p-4 text-sm surface-flat"
+				>
+					<p class="text-caption font-semibold text-muted-foreground">About this plan</p>
+					{#if plan.overview}
+						<p
+							id="plan-about"
+							class="whitespace-pre-line text-foreground/85 {aboutLong && !aboutOpen
+								? 'line-clamp-3'
+								: ''}"
+						>
+							{plan.overview}
+						</p>
+						{#if aboutLong}
+							<button
+								type="button"
+								class="-mt-2 min-h-11 self-start text-caption font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
+								aria-expanded={aboutOpen}
+								aria-controls="plan-about"
+								onclick={() => (aboutOpen = !aboutOpen)}
+							>
+								{aboutOpen ? 'Show less' : 'Show more'}
+							</button>
+						{/if}
+					{/if}
+					{#if plan.finalOutcome}
+						<p class="flex items-start gap-2.5">
+							<FlagIcon class="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden="true" />
+							<span>
+								<span class="font-medium">By the end:</span>
+								<span class="whitespace-pre-line text-foreground/85">{plan.finalOutcome}</span>
+							</span>
+						</p>
+					{/if}
+				</section>
+			{/if}
 		</div>
+
+		{#if railOn}
+			<PlanOutline items={outline} onselect={showBlock} />
+		{/if}
 	</div>
 </div>
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { createDisclosureMode } from '#lib/disclosure.svelte.js';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import FlagIcon from '@lucide/svelte/icons/flag';
 	import TriangleAlertIcon from '@lucide/svelte/icons/triangle-alert';
 	import { Badge } from '#lib/components/ui/badge/index.js';
@@ -42,6 +43,11 @@
 	const span = $derived(block.endDay - block.startDay + 1);
 	const done = $derived(days.filter((day) => day.completed).length);
 	const isWritten = $derived(block.status === 'ready' || block.status === 'stale');
+	const isCurrent = $derived(
+		todayDay !== null && todayDay >= block.startDay && todayDay <= block.endDay
+	);
+	const complete = $derived(isWritten && days.length > 0 && done === days.length);
+	const ratio = $derived(days.length === 0 ? 0 : done / days.length);
 	const skeletonKeys = $derived(Array.from({ length: Math.min(span, 5) }, (_, i) => i));
 	const dayRange = $derived(
 		block.startDay === block.endDay
@@ -50,7 +56,12 @@
 	);
 </script>
 
-<section aria-label="Block {block.idx + 1}: {block.theme}" class="rounded-lg border bg-card">
+<section
+	aria-label="Block {block.idx + 1}: {block.theme}"
+	class="relative rounded-lg surface-flat {isCurrent
+		? 'before:absolute before:inset-y-4 before:left-0 before:w-0.5 before:rounded-full before:bg-primary'
+		: ''}"
+>
 	<Collapsible bind:open>
 		<CollapsibleTrigger
 			class="group flex min-h-16 w-full items-center gap-3 rounded-lg p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
@@ -58,14 +69,22 @@
 			onpointerdown={mode.onpointerdown}
 		>
 			<span class="flex min-w-0 flex-1 flex-col gap-0.5">
-				<span class="text-caption text-muted-foreground">Block {block.idx + 1}</span>
-				<span class="text-heading">{block.theme}</span>
-				<span class="text-caption text-muted-foreground">
-					{dayRange}
-					{#if isWritten}
-						· <span class="tabular-nums">{done} of {days.length}</span> done
+				<span class="flex items-center gap-1.5 text-caption text-muted-foreground">
+					<span>Block {block.idx + 1}</span>
+					{#if isCurrent}
+						<span aria-hidden="true">·</span>
+						<span class="font-medium text-primary">Current block</span>
 					{/if}
 				</span>
+				<span
+					class="flex items-center gap-2 text-heading {complete ? 'text-muted-foreground' : ''}"
+				>
+					{block.theme}
+					{#if complete}
+						<CircleCheckIcon class="size-4 shrink-0 text-success" aria-label="All days done" />
+					{/if}
+				</span>
+				<span class="text-caption text-muted-foreground">{dayRange}</span>
 				{#if block.status === 'writing'}
 					<Badge variant="outline" class="mt-1.5 gap-1.5 self-start">
 						<Spinner class="size-3" aria-label="Writing this block" />
@@ -78,7 +97,21 @@
 				{:else if block.status === 'stale'}
 					<Badge variant="secondary" class="mt-1.5 self-start">May be out of date</Badge>
 				{/if}
+				{#if isWritten && days.length > 0}
+					<span
+						class="mt-2 block h-1 w-full overflow-hidden rounded-full bg-muted"
+						aria-hidden="true"
+					>
+						<span
+							class="block h-full w-full origin-left bg-primary transition-transform duration-(--dur-sheet) ease-(--ease-out)"
+							style:transform="scaleX({ratio})"
+						></span>
+					</span>
+				{/if}
 			</span>
+			{#if isWritten}
+				<span class="text-caption text-muted-foreground tabular-nums">{done} of {days.length}</span>
+			{/if}
 			<ChevronDownIcon
 				class="size-4 shrink-0 text-muted-foreground transition-transform duration-(--dur-fast) ease-(--ease-out) group-data-[state=open]:rotate-180"
 				aria-hidden="true"
@@ -90,7 +123,7 @@
 				<p class="text-sm text-muted-foreground">{block.objective}</p>
 
 				{#if isWritten}
-					<ul class="flex flex-col">
+					<ul class="flex flex-col divide-y divide-border">
 						{#each days as day (day.day)}
 							<DayRow
 								day={day.day}

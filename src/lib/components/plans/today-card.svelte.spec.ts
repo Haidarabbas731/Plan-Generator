@@ -47,6 +47,13 @@ describe('TodayCard', () => {
 		expect(ontoggle).toHaveBeenCalledWith(8, true);
 	});
 
+	it('labels the way to mark the day done and lists the tasks with their icons', () => {
+		setup({ kind: 'session', day: 8 }, { day });
+		expect(screen.getByText('Mark done')).toBeInTheDocument();
+		expect(screen.getByText('Practice')).toBeInTheDocument();
+		expect(screen.getByText('90')).toBeInTheDocument();
+	});
+
 	it('reflects a day that is already done', () => {
 		setup({ kind: 'session', day: 8 }, { day: { ...day, completed: true } });
 		expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'true');
