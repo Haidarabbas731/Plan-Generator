@@ -56,9 +56,27 @@
 				</nav>
 				<UserMenu name={user.name} email={user.email} />
 			{:else}
+				{#if page.url.pathname === '/'}
+					<nav aria-label="Landing page" class="mr-1 hidden items-center gap-1 md:flex">
+						<a
+							href="#how-it-works"
+							class={buttonVariants({ variant: 'ghost', class: 'h-11 px-4' })}
+						>
+							How it works
+						</a>
+						<a href="#faq" class={buttonVariants({ variant: 'ghost', class: 'h-11 px-4' })}>
+							FAQ
+						</a>
+					</nav>
+				{/if}
 				<a href="/login" class={buttonVariants({ variant: 'ghost', class: 'h-11 px-4' })}>
 					Sign in
 				</a>
+				{#if page.url.pathname === '/'}
+					<a href="/signup" class={buttonVariants({ class: 'hidden h-11 px-4 sm:inline-flex' })}>
+						Get started
+					</a>
+				{/if}
 			{/if}
 			<ThemeToggle />
 		</div>

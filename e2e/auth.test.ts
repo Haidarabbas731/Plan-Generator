@@ -32,7 +32,7 @@ test('sign up, sign out, protected page redirects, then sign in', async ({ page 
 
 	await expect(page.getByRole('navigation', { name: 'Main' })).toBeVisible();
 	await signOut(page);
-	await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+	await expect(page.getByRole('banner').getByRole('link', { name: 'Sign in' })).toBeVisible();
 
 	await open(page, '/plans');
 	await expect(page).toHaveURL(/\/login\?redirectTo=%2Fplans$/);

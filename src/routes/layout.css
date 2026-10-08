@@ -54,6 +54,7 @@
 	--dur-fast: 180ms;
 	--dur-base: 240ms;
 	--dur-sheet: 360ms;
+	--dur-reveal: 420ms;
 }
 
 .dark {
@@ -235,6 +236,26 @@
 @utility reveal {
 	animation: reveal var(--dur-base) var(--ease-out) both;
 	animation-delay: calc(var(--reveal-i, 0) * 60ms);
+}
+
+[data-reveal='pending'] [data-reveal-item] {
+	opacity: 0;
+}
+
+[data-reveal='shown'] [data-reveal-item] {
+	animation: reveal-rise var(--dur-reveal) var(--ease-out) both;
+	animation-delay: calc(var(--reveal-i, 0) * var(--reveal-step, 70ms));
+}
+
+@keyframes reveal-rise {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
 }
 
 @utility glass {
@@ -454,6 +475,10 @@
 	}
 	.reveal {
 		animation-name: fade-in;
+		animation-delay: 0ms;
+	}
+	[data-reveal='shown'] [data-reveal-item] {
+		animation: fade-in 200ms var(--ease-out) both;
 		animation-delay: 0ms;
 	}
 	.keycap[data-active='true'] {
