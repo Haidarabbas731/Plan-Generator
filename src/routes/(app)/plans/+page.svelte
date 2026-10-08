@@ -25,6 +25,9 @@
 	let pendingDelete = $state<{ id: string; title: string } | null>(null);
 	let deleteOpen = $state(false);
 
+	const NEAR_LIMIT_RATIO = 0.8;
+	const nearLimit = $derived(data.plans.length >= data.planLimit * NEAR_LIMIT_RATIO);
+
 	const filtered = $derived.by(() => {
 		const needle = query.trim().toLowerCase();
 		if (!needle) return data.plans;
@@ -43,7 +46,16 @@
 
 <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10 sm:px-6">
 	<div class="flex flex-wrap items-center justify-between gap-3">
-		<h1 class="text-title">Your plans</h1>
+		<div class="flex flex-col">
+			<h1 class="text-title">Your plans</h1>
+			{#if nearLimit}
+				<p class="text-sm text-muted-foreground" role="status">
+					<span class="tabular-nums">{data.plans.length}</span> of
+					<span class="tabular-nums">{data.planLimit}</span> plans. Delete one you no longer need to make
+					room.
+				</p>
+			{/if}
+		</div>
 		<a href="/plans/new" class={buttonVariants({ class: 'h-11 pressable px-4' })}>
 			<PlusIcon aria-hidden="true" />
 			New plan

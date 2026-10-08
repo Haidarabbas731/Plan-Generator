@@ -25,6 +25,7 @@
 		provider: Provider;
 		model: string;
 		providers: { id: Provider; name: string }[];
+		aiLeft?: number | null;
 		currentRevision: number;
 		chat: ChatState | null;
 		loadError?: string | null;
@@ -44,6 +45,7 @@
 		provider,
 		model,
 		providers,
+		aiLeft = null,
 		currentRevision,
 		chat,
 		loadError = null,
@@ -65,6 +67,14 @@
 			: providers.length === 0
 				? 'Add an AI key in Settings to chat about this plan.'
 				: null
+	);
+	const LOW_AI_LEFT = 5;
+	const aiHint = $derived(
+		aiLeft === null || aiLeft > LOW_AI_LEFT
+			? null
+			: aiLeft === 0
+				? 'No AI requests left this hour.'
+				: `${aiLeft} AI ${aiLeft === 1 ? 'request' : 'requests'} left this hour.`
 	);
 	const lastMessage = $derived(chat?.messages[chat.messages.length - 1] ?? null);
 	const waiting = $derived(chat?.status === 'submitted');
@@ -185,6 +195,9 @@
 	<div class="flex flex-col gap-2 border-t p-3">
 		{#if blockedReason}
 			<p class="text-caption text-muted-foreground" role="status">{blockedReason}</p>
+		{/if}
+		{#if aiHint && !blockedReason}
+			<p class="text-caption text-muted-foreground" role="status">{aiHint}</p>
 		{/if}
 		{#if chat?.error}
 			<Alert variant="destructive" role="alert">

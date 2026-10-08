@@ -35,6 +35,11 @@
 		}}
 	>
 		<FieldGroup>
+			{#if data.passwordReset && !form?.message}
+				<Alert role="status">
+					<AlertDescription>Your password was changed. Sign in with the new one.</AlertDescription>
+				</Alert>
+			{/if}
 			{#if form?.message}
 				<Alert variant="destructive" role="alert">
 					<AlertDescription>{form.message}</AlertDescription>
@@ -57,7 +62,17 @@
 				{/if}
 			</Field>
 			<Field data-invalid={form?.errors?.password ? true : undefined}>
-				<FieldLabel for="password">Password</FieldLabel>
+				<div class="flex items-center justify-between gap-2">
+					<FieldLabel for="password">Password</FieldLabel>
+					{#if data.emailEnabled}
+						<a
+							href="/forgot-password"
+							class="text-caption font-medium text-primary underline-offset-4 hover:underline"
+						>
+							Forgot password?
+						</a>
+					{/if}
+				</div>
 				<PasswordInput
 					id="password"
 					autocomplete="current-password"

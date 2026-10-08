@@ -1,6 +1,7 @@
 import type { PlanEvent } from '#lib/plan-live.js';
 import { validatePlanRequest } from '#lib/plan-validation.js';
 import type { Provider } from '#lib/providers.js';
+import { limitMessage, type UsageGuard } from '../usage-guard.js';
 import type { PlanStore } from './plan-store.js';
 import type { PlanQueue } from './plan-queue.js';
 
@@ -8,9 +9,14 @@ export type CreatePlanResult =
 	| { ok: true; planId: string }
 	| { ok: false; reason: 'invalid'; errors: Record<string, string> }
 	| { ok: false; reason: 'no-key'; provider: Provider }
-	| { ok: false; reason: 'limit' };
+	| { ok: false; reason: 'limit' }
+	| { ok: false; reason: 'rate-limit'; retryInMinutes: number; message: string };
 
-export type ControlResult = 'queued' | 'already-running' | 'not-found';
+export type ControlResult =
+	| 'queued'
+	| 'already-running'
+	| 'not-found'
+	| { status: 'rate-limit'; retryInMinutes: number; message: string };
 
 export interface PlanServiceDeps {
 	store: PlanStore;
@@ -18,10 +24,11 @@ export interface PlanServiceDeps {
 	hasKey: (userId: string, provider: Provider) => Promise<boolean>;
 	emit?: (event: PlanEvent) => void;
 	planLimit?: number;
+	guard?: Pick<UsageGuard, 'check'>;
 }
 
 export function createPlanService(deps: PlanServiceDeps) {
-	const { store, queue, hasKey, emit, planLimit } = deps;
+	const { store, queue, hasKey, emit, planLimit, guard } = deps;
 
 	async function createAndStartPlan(
 		userId: string,
@@ -35,6 +42,15 @@ export function createPlanService(deps: PlanServiceDeps) {
 		if (planLimit !== undefined && (await store.countPlans(userId)) >= planLimit) {
 			return { ok: false, reason: 'limit' };
 		}
+		const allowance = await guard?.check(userId);
+		if (allowance && !allowance.ok) {
+			return {
+				ok: false,
+				reason: 'rate-limit',
+				retryInMinutes: allowance.retryInMinutes,
+				message: limitMessage(allowance)
+			};
+		}
 
 		const planId = await store.createPlan(userId, { inputs, provider, model, startDate });
 		await queue.enqueue(planId);
@@ -45,6 +61,14 @@ export function createPlanService(deps: PlanServiceDeps) {
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return 'not-found';
 		if (plan.status === 'generating') return 'already-running';
+		const allowance = await guard?.check(userId);
+		if (allowance && !allowance.ok) {
+			return {
+				status: 'rate-limit',
+				retryInMinutes: allowance.retryInMinutes,
+				message: limitMessage(allowance)
+			};
+		}
 		await store.setPlanStatus(planId, 'generating');
 		await queue.enqueue(planId);
 		return 'queued';

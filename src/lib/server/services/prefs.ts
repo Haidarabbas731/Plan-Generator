@@ -16,3 +16,17 @@ export async function getPrefs(userId: string): Promise<UserPrefs> {
 		.limit(1);
 	return row ?? { defaultProvider: null, defaultModel: null };
 }
+
+export async function savePrefs(
+	userId: string,
+	value: { provider: Provider; model: string } | null
+): Promise<void> {
+	const defaults = {
+		defaultProvider: value?.provider ?? null,
+		defaultModel: value?.model ?? null
+	};
+	await db
+		.insert(userPrefs)
+		.values({ userId, ...defaults })
+		.onConflictDoUpdate({ target: userPrefs.userId, set: defaults });
+}

@@ -4,13 +4,21 @@
 
 	let { children }: LayoutProps = $props();
 
-	const tabs = [{ href: '/settings/keys', label: 'AI keys' }];
+	const tabs = [
+		{ href: '/settings/keys', label: 'AI keys' },
+		{ href: '/settings/models', label: 'Model' },
+		{ href: '/settings/account', label: 'Account' },
+		{ href: '/settings/data', label: 'Data & privacy' }
+	];
 </script>
 
 <div class="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-10 sm:px-6">
 	<div class="flex flex-col gap-4">
 		<h1 class="text-title">Settings</h1>
-		<nav aria-label="Settings" class="flex gap-1 border-b">
+		<nav
+			aria-label="Settings"
+			class="-mx-4 flex gap-1 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0"
+		>
 			{#each tabs as tab (tab.href)}
 				<a
 					href={tab.href}

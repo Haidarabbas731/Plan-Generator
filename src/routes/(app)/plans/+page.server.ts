@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { appLimits } from '#lib/server/app-limits.js';
 import { planService, planStore } from '#lib/server/plans/runtime.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { listKeys } from '#lib/server/services/provider-keys.js';
@@ -10,7 +11,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		listKeys(user.id),
 		planStore.listPlanSummaries(user.id)
 	]);
-	return { hasKeys: keys.length > 0, plans };
+	return { hasKeys: keys.length > 0, plans, planLimit: appLimits.plansPerUser };
 };
 
 export const actions: Actions = {

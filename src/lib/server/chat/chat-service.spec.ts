@@ -96,6 +96,36 @@ describe.skipIf(!url)('chat service (real database, fake chat model)', () => {
 		expect(await service.history(userId, planId)).toEqual([]);
 	});
 
+	it('answers 429 with a retry hint when the hourly AI cap is reached', async () => {
+		const service = createChatService({
+			store,
+			chatStore,
+			editor,
+			resolveModel: async () => createFakeChatModel(),
+			guard: { check: async () => ({ ok: false, used: 30, cap: 30, retryInMinutes: 7 }) }
+		});
+		const planId = await readyPlan();
+		const response = await service.send({ userId, planId, text: 'hello' });
+		expect(response.status).toBe(429);
+		expect(response.headers.get('retry-after')).toBe('420');
+		expect(await response.json()).toMatchObject({ error: 'rate-limit', retryInMinutes: 7 });
+		expect(await service.history(userId, planId)).toEqual([]);
+	});
+
+	it('uses the configured maximum message length', async () => {
+		const service = createChatService({
+			store,
+			chatStore,
+			editor,
+			resolveModel: async () => createFakeChatModel(),
+			maxMessageChars: 10
+		});
+		const planId = await readyPlan();
+		const response = await service.send({ userId, planId, text: 'x'.repeat(11) });
+		expect(response.status).toBe(400);
+		expect(await response.json()).toMatchObject({ message: expect.stringContaining('10') });
+	});
+
 	it('is closed while the plan is being written', async () => {
 		const service = serviceWith();
 		const planId = await readyPlan();

@@ -4,6 +4,7 @@ import type { ChatUIMessage } from '#lib/chat-types.js';
 import { CHAT } from '../config.js';
 import { rootAiError } from '../ai/errors.js';
 import type { PlanRow, PlanStore } from '../plans/plan-store.js';
+import { limitMessage, type UsageGuard } from '../usage-guard.js';
 import type { ChatStore, StoredMessage } from './chat-store.js';
 import { createOrchestrator, planSummaryText, type EditOutcome } from './orchestrator.js';
 import type { PlanEditor } from './plan-editor.js';
@@ -20,12 +21,14 @@ export interface ChatServiceDeps {
 	editor: PlanEditor;
 	resolveModel: (plan: PlanRow) => Promise<LanguageModel>;
 	maxToolSupportEntries?: number;
+	maxMessageChars?: number;
+	guard?: Pick<UsageGuard, 'check'>;
 }
 
-const json = (body: unknown, status: number) =>
+const json = (body: unknown, status: number, headers: Record<string, string> = {}) =>
 	new Response(JSON.stringify(body), {
 		status,
-		headers: { 'content-type': 'application/json' }
+		headers: { 'content-type': 'application/json', ...headers }
 	});
 
 export function toUiMessage(message: StoredMessage): ChatUIMessage {
@@ -49,7 +52,8 @@ const TOOLS_UNSUPPORTED_MESSAGE =
 	"This model can't use tools, so it can't edit plans. Send your message again and it will answer without making changes.";
 
 export function createChatService(deps: ChatServiceDeps) {
-	const { store, chatStore, editor, resolveModel } = deps;
+	const { store, chatStore, editor, resolveModel, guard } = deps;
+	const maxMessageChars = deps.maxMessageChars ?? CHAT.maxMessageChars;
 	const maxEntries = deps.maxToolSupportEntries ?? 500;
 	const toolsSupport = new Map<string, boolean>();
 
@@ -81,9 +85,9 @@ export function createChatService(deps: ChatServiceDeps) {
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return json({ error: 'not-found', message: 'Plan not found.' }, 404);
 		if (!text) return json({ error: 'empty', message: 'Write a message first.' }, 400);
-		if (text.length > CHAT.maxMessageChars) {
+		if (text.length > maxMessageChars) {
 			return json(
-				{ error: 'too-long', message: `Keep messages under ${CHAT.maxMessageChars} characters.` },
+				{ error: 'too-long', message: `Keep messages under ${maxMessageChars} characters.` },
 				400
 			);
 		}
@@ -94,6 +98,19 @@ export function createChatService(deps: ChatServiceDeps) {
 					message: 'The plan is still being written. Chat opens when it is done or paused.'
 				},
 				409
+			);
+		}
+
+		const allowance = await guard?.check(userId);
+		if (allowance && !allowance.ok) {
+			return json(
+				{
+					error: 'rate-limit',
+					message: limitMessage(allowance),
+					retryInMinutes: allowance.retryInMinutes
+				},
+				429,
+				{ 'retry-after': String(allowance.retryInMinutes * 60) }
 			);
 		}
 

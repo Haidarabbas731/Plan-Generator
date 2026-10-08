@@ -23,9 +23,10 @@
 		blocks: PlanBlockView[];
 		days: PlanDayView[];
 		providers: { id: Provider; name: string }[];
+		aiLeft: number;
 	}
 
-	let { plan, blocks, days, providers }: Props = $props();
+	let { plan, blocks, days, providers, aiLeft }: Props = $props();
 
 	const stream = untrack(
 		() =>
@@ -232,7 +233,7 @@
 	</div>
 </div>
 
-<PlanChatDock {dock} {plan} {status} {providers} />
+<PlanChatDock {dock} {plan} {status} {providers} {aiLeft} />
 
 <form
 	bind:this={toggleForm}
@@ -260,7 +261,11 @@
 	hidden
 	use:enhance={() => {
 		busy = 'resume';
-		return async ({ update }) => {
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				const data = result.data as { message?: string } | undefined;
+				toast.error(data?.message ?? 'Could not resume the plan.');
+			}
 			await update({ reset: false });
 			busy = null;
 		};

@@ -1,5 +1,5 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { auth, oauthProviders } from '#lib/server/auth.js';
+import { auth, email, oauthProviders } from '#lib/server/auth.js';
 import { describeAuthError, signInMessage } from '#lib/server/auth-errors.js';
 import { safeRedirectPath, validateSignIn, type FieldErrors } from '#lib/validation.js';
 import type { Actions, PageServerLoad } from './$types';
@@ -15,7 +15,12 @@ const failure = (data: SignInFailure) => fail(400, data);
 export const load: PageServerLoad = ({ locals, url }) => {
 	const redirectTo = safeRedirectPath(url.searchParams.get('redirectTo'), '/plans');
 	if (locals.user) redirect(303, redirectTo);
-	return { oauth: oauthProviders, redirectTo };
+	return {
+		oauth: oauthProviders,
+		redirectTo,
+		emailEnabled: email.enabled,
+		passwordReset: url.searchParams.get('reset') === '1'
+	};
 };
 
 export const actions: Actions = {

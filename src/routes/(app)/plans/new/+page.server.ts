@@ -3,6 +3,7 @@ import { AI_FAKE } from '$app/env/private';
 import { LIMITS } from '#lib/limits.js';
 import type { PlanRequestErrors } from '#lib/plan-validation.js';
 import { PROVIDER_INFO, PROVIDERS } from '#lib/providers.js';
+import { appLimits } from '#lib/server/app-limits.js';
 import { planService } from '#lib/server/plans/runtime.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { getPrefs } from '#lib/server/services/prefs.js';
@@ -91,12 +92,12 @@ export const actions: Actions = {
 			};
 			return failForm(400, values, errors);
 		}
-		const errors: FormErrors = {};
+		if (result.reason === 'rate-limit') return failForm(429, values, {}, result.message);
 		return failForm(
 			429,
 			values,
-			errors,
-			'You have reached the plan limit. Delete a plan to create a new one.'
+			{},
+			`You have reached the limit of ${appLimits.plansPerUser} plans. Delete a plan to create a new one.`
 		);
 	}
 };

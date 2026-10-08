@@ -70,6 +70,26 @@ describe('ChatPanel', () => {
 		expect(chat.send).toHaveBeenCalledWith('I only have weekends now');
 	});
 
+	it('warns when only a few AI requests are left this hour', () => {
+		setup({ aiLeft: 3 });
+		expect(screen.getByText('3 AI requests left this hour.')).toBeInTheDocument();
+	});
+
+	it('uses the singular for one request and a clear message for none', () => {
+		setup({ aiLeft: 1 });
+		expect(screen.getByText('1 AI request left this hour.')).toBeInTheDocument();
+	});
+
+	it('says when none are left and stays quiet while plenty remain', () => {
+		setup({ aiLeft: 0 });
+		expect(screen.getByText('No AI requests left this hour.')).toBeInTheDocument();
+	});
+
+	it('shows no limit hint with plenty of requests left', () => {
+		setup({ aiLeft: 25 });
+		expect(screen.queryByText(/left this hour/)).not.toBeInTheDocument();
+	});
+
 	it('is closed while the plan is being written and explains why', () => {
 		setup({ planStatus: 'generating' });
 		expect(screen.getByText(/still being written/)).toBeInTheDocument();

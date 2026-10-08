@@ -136,4 +136,26 @@ describe.skipIf(!url)('plan store reads and day completion (real database)', () 
 		expect(await store.getPlan(planId)).toBeUndefined();
 		expect(await store.listDays(planId)).toEqual([]);
 	});
+
+	it('lists recent usage of one user and drops events older than a day on write', async () => {
+		const old = new Date(Date.now() - 25 * 60 * 60 * 1000);
+		const older = new Date(Date.now() - 90 * 60 * 1000);
+		await db.insert(schema.usageEvents).values([
+			{ userId, kind: 'chat', createdAt: old },
+			{ userId, kind: 'chat', createdAt: older },
+			{ userId: otherId, kind: 'chat' }
+		]);
+		await store.recordUsage(userId, 'generation');
+
+		const lastHour = await store.usageSince(userId, new Date(Date.now() - 60 * 60 * 1000));
+		expect(lastHour).toHaveLength(1);
+		const lastDay = await store.usageSince(userId, new Date(Date.now() - 24 * 60 * 60 * 1000));
+		expect(lastDay).toHaveLength(2);
+		const everything = await db
+			.select()
+			.from(schema.usageEvents)
+			.where(eq(schema.usageEvents.userId, userId));
+		expect(everything).toHaveLength(2);
+		expect(await store.usageSince(otherId, new Date(0))).toHaveLength(1);
+	});
 });

@@ -38,3 +38,5 @@ export const CHAT = {
 } as const;
 
 export const REVISION_KEEP = 30;
+
+export const DATA_EXPORT = { max: 5, windowMs: 60 * 60 * 1000 } as const;

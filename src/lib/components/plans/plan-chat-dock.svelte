@@ -17,9 +17,10 @@
 		plan: PlanDetail;
 		status: PlanStatus;
 		providers: { id: Provider; name: string }[];
+		aiLeft: number;
 	}
 
-	let { dock, plan, status, providers }: Props = $props();
+	let { dock, plan, status, providers, aiLeft }: Props = $props();
 
 	let chat = $state.raw<ChatState | null>(null);
 	let chatLoadError = $state<string | null>(null);
@@ -96,6 +97,7 @@
 		provider={plan.provider}
 		model={plan.model}
 		{providers}
+		{aiLeft}
 		currentRevision={plan.currentRevision}
 		{chat}
 		loadError={chatLoadError}

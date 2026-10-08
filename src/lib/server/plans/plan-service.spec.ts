@@ -23,6 +23,7 @@ function setup(
 		limit?: number;
 		status?: string;
 		cancelResult?: boolean;
+		blockedFor?: number;
 	} = {}
 ) {
 	const store = {
@@ -43,7 +44,13 @@ function setup(
 		queue,
 		emit,
 		hasKey: async () => options.hasKey ?? true,
-		planLimit: options.limit
+		planLimit: options.limit,
+		guard: {
+			check: async () =>
+				options.blockedFor === undefined
+					? { ok: true, used: 1, cap: 30 }
+					: { ok: false, used: 30, cap: 30, retryInMinutes: options.blockedFor }
+		}
 	});
 	return { store, queue, service, emit };
 }
@@ -109,5 +116,20 @@ describe('plan service', () => {
 		expect(await service.cancelPlan('u1', 'plan-1')).toBe(false);
 		expect(store.setPlanStatus).not.toHaveBeenCalled();
 		expect(emit).not.toHaveBeenCalled();
+	});
+
+	it('refuses to start a plan while the hourly AI cap is reached', async () => {
+		const { service, store, queue } = setup({ blockedFor: 12 });
+		const result = await service.createAndStartPlan('u1', request);
+		expect(result).toMatchObject({ ok: false, reason: 'rate-limit', retryInMinutes: 12 });
+		expect(store.createPlan).not.toHaveBeenCalled();
+		expect(queue.enqueue).not.toHaveBeenCalled();
+	});
+
+	it('refuses to resume a plan while the hourly AI cap is reached', async () => {
+		const { service, queue } = setup({ blockedFor: 3 });
+		const result = await service.resumePlan('u1', 'plan-1');
+		expect(result).toMatchObject({ status: 'rate-limit', retryInMinutes: 3 });
+		expect(queue.enqueue).not.toHaveBeenCalled();
 	});
 });

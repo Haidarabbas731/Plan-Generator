@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, inArray, lt, sql } from 'drizzle-orm';
 import type {
 	BlockStatus,
 	LedgerEntry,
@@ -12,6 +12,7 @@ import type { Provider } from '#lib/providers.js';
 import type { DayOutput, Outline } from '../ai/types.js';
 import * as schema from '../db/schema.js';
 import type { Db } from '../db/types.js';
+import { USAGE_KEEP_MS } from '../usage-guard.js';
 import { writeRevision } from './revisions.js';
 
 const { plans, planBlocks, planDays, usageEvents } = schema;
@@ -243,6 +244,22 @@ export function createPlanStore(db: Db) {
 
 		async recordUsage(userId: string, kind: UsageKind): Promise<void> {
 			await db.insert(usageEvents).values({ userId, kind });
+			await db
+				.delete(usageEvents)
+				.where(
+					and(
+						eq(usageEvents.userId, userId),
+						lt(usageEvents.createdAt, new Date(Date.now() - USAGE_KEEP_MS))
+					)
+				);
+		},
+
+		async usageSince(userId: string, since: Date): Promise<Date[]> {
+			const rows = await db
+				.select({ createdAt: usageEvents.createdAt })
+				.from(usageEvents)
+				.where(and(eq(usageEvents.userId, userId), gt(usageEvents.createdAt, since)));
+			return rows.map((row) => row.createdAt);
 		},
 
 		async listGeneratingPlanIds(): Promise<string[]> {

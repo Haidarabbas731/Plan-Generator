@@ -2,7 +2,7 @@ import { error, fail, redirect } from '@sveltejs/kit';
 import { AI_FAKE } from '$app/env/private';
 import { LIMITS } from '#lib/limits.js';
 import { isProvider, PROVIDER_INFO, PROVIDERS } from '#lib/providers.js';
-import { planService, planStore, revisionStore } from '#lib/server/plans/runtime.js';
+import { planService, planStore, revisionStore, usageGuard } from '#lib/server/plans/runtime.js';
 import { toBlockView, toDayView } from '#lib/server/plans/views.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { getKey, listKeys } from '#lib/server/services/provider-keys.js';
@@ -15,10 +15,11 @@ export const load: PageServerLoad = async ({ locals, params, depends }) => {
 	const plan = await planStore.getOwnedPlan(user.id, params.id);
 	if (!plan) error(404, 'Plan not found');
 
-	const [blocks, days, keys] = await Promise.all([
+	const [blocks, days, keys, allowance] = await Promise.all([
 		planStore.listBlocks(plan.id),
 		planStore.listDays(plan.id),
-		listKeys(user.id)
+		listKeys(user.id),
+		usageGuard.check(user.id)
 	]);
 
 	return {
@@ -41,7 +42,8 @@ export const load: PageServerLoad = async ({ locals, params, depends }) => {
 			inputs: plan.inputs
 		},
 		blocks: blocks.map(toBlockView),
-		days: days.map(toDayView)
+		days: days.map(toDayView),
+		aiLeft: Math.max(0, allowance.cap - allowance.used)
 	};
 };
 
@@ -63,6 +65,7 @@ export const actions: Actions = {
 		const user = requireUser(locals);
 		const result = await planService.resumePlan(user.id, params.id);
 		if (result === 'not-found') error(404, 'Plan not found');
+		if (typeof result === 'object') return fail(429, { message: result.message });
 		return { resumed: result };
 	},
 
