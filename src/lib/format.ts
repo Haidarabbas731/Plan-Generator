@@ -13,6 +13,10 @@ export function formatDate(isoDate: string, style: DateStyle = 'short'): string 
 	);
 }
 
+export function plural(count: number, one: string, other: string): string {
+	return new Intl.PluralRules('en').select(count) === 'one' ? one : other;
+}
+
 export function localToday(now: Date = new Date()): string {
 	const month = String(now.getMonth() + 1).padStart(2, '0');
 	const day = String(now.getDate()).padStart(2, '0');

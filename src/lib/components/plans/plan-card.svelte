@@ -7,6 +7,7 @@
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import type { PlanSummary } from '#lib/plan-types.js';
+	import { plural } from '#lib/format.js';
 	import { PROVIDER_INFO } from '#lib/providers.js';
 	import ProgressRing from './progress-ring.svelte';
 
@@ -48,16 +49,19 @@
 >
 	<ProgressRing value={ratio} size={52} label="{plan.title} progress" />
 	<div class="flex min-w-0 flex-1 flex-col gap-1.5">
-		<h2 class="truncate text-heading">
+		<h2 class="line-clamp-2 text-heading">
 			<a
 				href="/plans/{plan.id}"
+				title={plan.title}
 				class="outline-none after:absolute after:inset-0 after:rounded-lg after:content-[''] focus-visible:after:ring-3 focus-visible:after:ring-ring/40"
 			>
 				{plan.title}
 			</a>
 		</h2>
-		<p class="truncate text-caption text-muted-foreground">
-			<span class="tabular-nums">{plan.daysDone} of {plan.daysTotal} days</span>
+		<p class="text-caption text-muted-foreground">
+			<span class="tabular-nums"
+				>{plan.daysDone} of {plan.daysTotal} {plural(plan.daysTotal, 'day', 'days')}</span
+			>
 			· Updated {updated}
 		</p>
 		<div
@@ -71,7 +75,9 @@
 				</Badge>
 			{/if}
 			{#if plan.topicTag}
-				<Badge variant="secondary">{plan.topicTag}</Badge>
+				<Badge variant="secondary" title={plan.topicTag}>
+					<span class="truncate">{plan.topicTag}</span>
+				</Badge>
 			{/if}
 			<Badge variant="outline" class="hidden max-w-full min-w-0 justify-start sm:inline-flex">
 				<span class="truncate">{PROVIDER_INFO[plan.provider].name} · {plan.model}</span>

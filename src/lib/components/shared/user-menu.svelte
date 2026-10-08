@@ -28,8 +28,8 @@
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content align="end" class="w-60">
 		<DropdownMenu.Label class="flex flex-col gap-0.5 font-normal">
-			<span class="truncate text-sm font-medium">{name}</span>
-			<span class="truncate text-caption text-muted-foreground">{email}</span>
+			<span class="truncate text-sm font-medium" title={name}>{name}</span>
+			<span class="truncate text-caption text-muted-foreground" title={email}>{email}</span>
 		</DropdownMenu.Label>
 		<DropdownMenu.Separator />
 		<DropdownMenu.Item onSelect={() => signOutForm?.requestSubmit()}>Sign out</DropdownMenu.Item>

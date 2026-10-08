@@ -156,7 +156,9 @@
 								class="mt-0.5 size-4 shrink-0 text-destructive"
 								aria-hidden="true"
 							/>
-							<span>{block.error ?? 'This block could not be written.'}</span>
+							<span class="line-clamp-4" title={block.error ?? undefined}>
+								{block.error ?? 'This block could not be written.'}
+							</span>
 						</p>
 						<div>
 							<Button type="button" variant="outline" disabled={retrying} onclick={onretry}>

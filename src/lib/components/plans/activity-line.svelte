@@ -53,7 +53,7 @@
 			<div class="flex min-w-0 flex-col">
 				<p class="text-sm font-medium" aria-live="polite">{label}</p>
 				{#if status === 'failed' && error}
-					<p class="text-caption text-destructive">{error}</p>
+					<p class="{open ? '' : 'line-clamp-4'} text-caption text-destructive">{error}</p>
 				{:else if status === 'paused'}
 					<p class="text-caption text-muted-foreground">
 						Finished blocks are saved. Resume to continue where it stopped.
@@ -118,7 +118,9 @@
 							</span>
 						</div>
 						{#if block.status === 'failed' && block.error}
-							<p class="pl-6.5 text-caption text-destructive">{block.error}</p>
+							<p class="pl-6.5 text-caption text-destructive">
+								{block.error}
+							</p>
 						{/if}
 					</li>
 				{/each}

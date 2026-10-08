@@ -8,6 +8,7 @@ import type {
 	RevisionSource,
 	UsageKind
 } from '#lib/plan-types.js';
+import { LIMITS } from '#lib/limits.js';
 import type { Provider } from '#lib/providers.js';
 import type { DayOutput, Outline } from '../ai/types.js';
 import * as schema from '../db/schema.js';
@@ -16,6 +17,11 @@ import { USAGE_KEEP_MS } from '../usage-guard.js';
 import { writeRevision } from './revisions.js';
 
 const { plans, planBlocks, planDays, usageEvents } = schema;
+
+function clipError(error: string | null): string | null {
+	if (error === null || error.length <= LIMITS.errorMax) return error;
+	return `${error.slice(0, LIMITS.errorMax - 1)}…`;
+}
 
 export type PlanRow = typeof plans.$inferSelect;
 export type BlockRow = typeof planBlocks.$inferSelect;
@@ -177,7 +183,7 @@ export function createPlanStore(db: Db) {
 		): Promise<void> {
 			await db
 				.update(planBlocks)
-				.set({ status, error })
+				.set({ status, error: clipError(error) })
 				.where(and(eq(planBlocks.planId, planId), eq(planBlocks.idx, idx)));
 			await db.update(plans).set({ updatedAt: new Date() }).where(eq(plans.id, planId));
 		},
@@ -233,7 +239,7 @@ export function createPlanStore(db: Db) {
 		): Promise<void> {
 			await db
 				.update(plans)
-				.set({ status, error, updatedAt: new Date() })
+				.set({ status, error: clipError(error), updatedAt: new Date() })
 				.where(eq(plans.id, planId));
 		},
 

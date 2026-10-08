@@ -25,6 +25,19 @@ function setup(overrides: Partial<PlanSummary> = {}) {
 }
 
 describe('PlanCard', () => {
+	it('says "1 day" for a one day plan', () => {
+		setup({ daysDone: 0, daysTotal: 1 });
+		expect(screen.getByText('0 of 1 day')).toBeInTheDocument();
+	});
+
+	it('keeps a long topic from stretching the card', () => {
+		const topicTag = 'Systems programming and performance engineering';
+		setup({ topicTag });
+		const badge = screen.getByText(topicTag).closest('[data-slot="badge"]');
+		expect(badge).toHaveClass('max-w-full');
+		expect(screen.getByText(topicTag)).toHaveClass('truncate');
+	});
+
 	it('links the title to the plan page', () => {
 		setup();
 		expect(screen.getByRole('link', { name: 'Learn Rust' })).toHaveAttribute('href', '/plans/p1');

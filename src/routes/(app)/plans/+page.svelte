@@ -59,7 +59,7 @@
 		</PageHeader>
 		{#if nearLimit}
 			<p class="text-sm text-muted-foreground" role="status">
-				<span class="tabular-nums">{data.plans.length}</span> of
+				<span class="tabular-nums">{Math.min(data.plans.length, data.planLimit)}</span> of
 				<span class="tabular-nums">{data.planLimit}</span> plans. Delete one you no longer need to make
 				room.
 			</p>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, localToday } from './format.js';
+import { formatDate, localToday, plural } from './format.js';
 
 describe('formatDate', () => {
 	it('formats a short date with the weekday', () => {
@@ -30,5 +30,13 @@ describe('localToday', () => {
 
 	it('uses the local date late in the evening', () => {
 		expect(localToday(new Date(2026, 9, 7, 23, 30))).toBe('2026-10-07');
+	});
+});
+
+describe('plural', () => {
+	it('uses the singular only for exactly one', () => {
+		expect(plural(1, 'day', 'days')).toBe('day');
+		expect(plural(0, 'day', 'days')).toBe('days');
+		expect(plural(2, 'day', 'days')).toBe('days');
 	});
 });

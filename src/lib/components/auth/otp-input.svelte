@@ -64,7 +64,7 @@
 		class="flex items-center justify-center"
 	>
 		{#snippet children({ cells })}
-			<div class="flex gap-2 sm:gap-3" aria-hidden="true">
+			<div class="flex gap-1.5 min-[360px]:gap-2 sm:gap-3" aria-hidden="true">
 				{#each cells as cell, index (index)}
 					<PinInput.Cell {cell}>
 						{#snippet child({ props })}
@@ -72,7 +72,7 @@
 								{...props}
 								data-active={cell.isActive}
 								class={cn(
-									'keycap relative flex h-14 w-11 items-center justify-center rounded-xl border bg-card text-2xl font-semibold tabular-nums sm:h-16 sm:w-12',
+									'keycap relative flex h-14 w-10 items-center justify-center rounded-xl border bg-card text-2xl font-semibold tabular-nums min-[360px]:w-11 sm:h-16 sm:w-12',
 									status === 'success'
 										? 'border-success/60 text-success'
 										: status === 'error'

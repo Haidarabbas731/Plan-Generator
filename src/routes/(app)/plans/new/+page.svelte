@@ -171,7 +171,7 @@
 						rows={4}
 						maxlength={data.limits.goalMax}
 						placeholder="Learn Rust well enough to build a CLI tool"
-						class="text-base sm:text-sm"
+						class="max-h-64 overflow-y-auto text-base sm:text-sm"
 						aria-invalid={errors.goal ? true : undefined}
 						aria-describedby={errors.goal ? 'goal-error' : undefined}
 					/>

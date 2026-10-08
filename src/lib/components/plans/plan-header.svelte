@@ -9,7 +9,7 @@
 	import { Progress } from '#lib/components/ui/progress/index.js';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
-	import { formatDate } from '#lib/format.js';
+	import { formatDate, plural } from '#lib/format.js';
 	import { LIMITS } from '#lib/limits.js';
 	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
 	import DeletePlanDialog from './delete-plan-dialog.svelte';
@@ -55,8 +55,12 @@
 <header class="flex flex-col gap-4">
 	<div class="flex items-start justify-between gap-3">
 		<div class="flex min-w-0 flex-col gap-2">
-			{#if topicTag}<Badge variant="secondary" class="w-fit">{topicTag}</Badge>{/if}
-			<h1 class="text-title">{title}</h1>
+			{#if topicTag}
+				<Badge variant="secondary" class="w-fit" title={topicTag}>
+					<span class="truncate">{topicTag}</span>
+				</Badge>
+			{/if}
+			<h1 class="line-clamp-4 text-title max-sm:text-[1.5rem]" {title}>{title}</h1>
 		</div>
 		<div class="flex shrink-0 items-center gap-1">
 			{#if onchat}
@@ -133,7 +137,7 @@
 
 	<div class="flex flex-col gap-2">
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-muted-foreground">
-			<span class="tabular-nums">{done} of {total} days done</span>
+			<span class="tabular-nums">{done} of {total} {plural(total, 'day', 'days')} done</span>
 			{#if streak > 0}
 				<span class="inline-flex items-center gap-1 font-medium text-highlight">
 					<FlameIcon class="size-3.5" aria-hidden="true" />

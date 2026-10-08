@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { plural } from '#lib/format.js';
 	import type { PlanSummary } from '#lib/plan-summary.js';
 
 	interface Props {
@@ -16,16 +17,18 @@
 >
 	{#if summary}
 		<p class="font-medium text-accent-foreground">
-			<span class="tabular-nums">{daysTotal}</span> sessions ·
-			<span class="tabular-nums">{summary.totalHours}</span> hours in total ·
+			<span class="tabular-nums">{daysTotal}</span>
+			{plural(daysTotal ?? 0, 'session', 'sessions')} ·
+			<span class="tabular-nums">{summary.totalHours}</span>
+			{plural(summary.totalHours, 'hour', 'hours')} in total ·
 			<span class="tabular-nums">{summary.weeks}</span>
-			{summary.weeks === 1 ? 'week' : 'weeks'}
+			{plural(summary.weeks, 'week', 'weeks')}
 		</p>
 		<p class="text-muted-foreground">
 			Ends {summary.end}. Written in <span class="tabular-nums">{summary.blocks}</span>
-			{summary.blocks === 1 ? 'block' : 'blocks'}, about
-			<span class="tabular-nums">{summary.calls}</span> calls on your {providerName ??
-				'AI provider'} key.
+			{plural(summary.blocks, 'block', 'blocks')}, about
+			<span class="tabular-nums">{summary.calls}</span>
+			{plural(summary.calls, 'call', 'calls')} on your {providerName ?? 'AI provider'} key.
 		</p>
 	{:else}
 		<p class="text-muted-foreground">Fill in the numbers to see the size of your plan.</p>
