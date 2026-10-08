@@ -63,19 +63,24 @@ src/
   env.ts                    environment variables, validated at startup
   hooks.server.ts           sessions, startup recovery, shutdown
   routes/                   pages, layout, global styles and theme tokens
-    (app)/plans/[id]/events live progress stream (server-sent events)
+    (auth)/                 sign in, sign up, forgot and reset password
+    (app)/plans/            list, new plan form, plan page, chat, exports, live stream
+    (app)/settings/         AI keys, model default, account, data and privacy, data export
   lib/
-    limits.ts               limits shared by server and client
-    plan-validation.ts      plan request validation
-    components/             ui (shadcn-svelte), ai-elements, chat, shared, landing
+    limits.ts, prefs-validation.ts, plan-validation.ts, plan-summary.ts
+                            validation and limits shared by server and client
+    client/                 chat state, live plan stream, chat dock, drag to dismiss
+    components/             ui (shadcn-svelte), ai-elements, chat, plans, settings, shared
     server/
       db/                   Drizzle schema and client
       ai/                   prompts, outliner, block writer, validators, ledger,
-                            model list and compatibility check, fake model
-      plans/                store, worker, Redis queue and events, plan service
-      services/             encrypted provider keys
+                            model list and compatibility check, fake models
+      plans/                store, worker, Redis queue and events, plan service, revisions
+      chat/                 chat service and store, orchestrator, plan editing tools
+      services/             encrypted provider keys, defaults, account deletion
+      export/               Markdown, calendar and personal data exports
       crypto/               AES-256-GCM vault
-      config.ts, logger.ts  server settings and the redacting logger
+      usage-guard.ts, email.ts, rate-limiter.ts, config.ts, logger.ts
 drizzle/                    generated migrations
 scripts/                    migration runner and container start script
 e2e/                        Playwright tests
@@ -103,4 +108,43 @@ Losing `ENCRYPTION_KEY` makes saved AI keys unreadable, so back it up.
 
 ## Deploying
 
-`Dockerfile` builds a production image (Bun build, Node runtime, non-root user) that runs the migrations and then starts the server. `docker-compose.dokploy.yml` runs it with Postgres and Redis for Dokploy; set the variables from `.env.dokploy.example` in the project's Environment tab and attach your domain to the `app` service on port 3000.
+`Dockerfile` builds a production image (Bun build, Node runtime, non-root user, about 550 MB) that applies the database migrations and then starts the server. A failed migration stops the container. `docker-compose.dokploy.yml` runs it together with Postgres and Redis.
+
+### On Dokploy
+
+1. Create a **Compose** project that points at this repository and `docker-compose.dokploy.yml`.
+2. In the project's **Environment** tab set the variables from `.env.dokploy.example`. Generate `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` with `openssl rand -base64 32`, and pick a strong `POSTGRES_PASSWORD`.
+3. Attach your domain to the `app` service, port 3000, with HTTPS.
+4. Set `BETTER_AUTH_URL` to exactly that public URL (for example `https://plans.example.com`).
+5. Deploy. The app is ready when its health check (`/healthz`) turns green.
+
+The server learns its public address from the proxy's `X-Forwarded-Proto` and `X-Forwarded-Host` headers (the compose file sets `PROTOCOL_HEADER` and `HOST_HEADER`; Dokploy's Traefik sends both). If requests reach the container without them, the server assumes `https` and form posts fail with "Cross-site POST form submissions are forbidden".
+
+### Sign-in with Google or GitHub (optional)
+
+Create an OAuth app with each provider and set the callback URL to `<BETTER_AUTH_URL>/api/auth/callback/google` and `<BETTER_AUTH_URL>/api/auth/callback/github`. Put the client id and secret in the Environment tab. A button appears only when both values are set.
+
+### Email (optional)
+
+Set `RESEND_API_KEY` and `EMAIL_FROM` (a sender address verified in Resend) to enable verification emails and "Forgot password?". Without them those pages are hidden.
+
+### Backups and the encryption key
+
+- Back up the `postgres_data` volume with Dokploy's backup feature, or run `docker compose exec postgres pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB" > backup.sql` on a schedule. Redis only holds the job queue and live events, so it needs no backup.
+- **Back up `ENCRYPTION_KEY` separately.** Without it every saved AI key in a restored database is unreadable and users must add their keys again.
+
+### Trying the production image locally
+
+```sh
+cp .env.dokploy.example .env.smoke   # fill in the secrets, set BETTER_AUTH_URL=http://localhost:3100
+printf "services:\n  app:\n    ports:\n      - '3100:3000'\n" > smoke.override.yml
+docker compose -p smoke -f docker-compose.dokploy.yml -f smoke.override.yml --env-file .env.smoke up --build -d
+BASE_URL=http://localhost:3100 bun run test:e2e   # sends the proxy headers a real deployment gets
+docker compose -p smoke -f docker-compose.dokploy.yml -f smoke.override.yml --env-file .env.smoke down -v
+```
+
+Add `AI_FAKE: '1'` under `environment:` in the override to also run the tests that need the fake model. Never set it in production.
+
+### Updating
+
+Redeploy from Dokploy. Migrations run on start and are safe to repeat. Existing plans, chats and saved keys are kept in the Postgres volume.

@@ -3,6 +3,8 @@
 # All secrets and config are read from ${VAR}: set them in the Dokploy project's
 # "Environment" tab (see .env.dokploy.example for the full list) rather than
 # committing a .env file. Attach the domain in Dokploy to the `app` service, port 3000.
+# The server learns its public address from the proxy's X-Forwarded-Proto and X-Forwarded-Host
+# headers (Dokploy's Traefik sets both), which must match BETTER_AUTH_URL.
 #
 # Plan generation runs as queued jobs in Redis (BullMQ); progress events travel through Redis too.
 
@@ -41,7 +43,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      ORIGIN: ${BETTER_AUTH_URL}
+      PROTOCOL_HEADER: x-forwarded-proto
+      HOST_HEADER: x-forwarded-host
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}

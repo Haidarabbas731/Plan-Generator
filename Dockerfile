@@ -22,10 +22,12 @@ RUN DATABASE_URL=postgres://build:build@localhost:5432/build \
     ENCRYPTION_KEY=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA= \
     bun run build
 
-# Keep only production dependencies for the runtime image
+# Keep only the dependencies the server loads at runtime. Svelte libraries are devDependencies
+# and are bundled into the build; --omit=peer stops optional peers of production packages
+# (vitest, drizzle-kit, typescript, jsdom) from being installed.
 RUN rm -rf node_modules
 RUN --mount=type=cache,target=/root/.bun/install/cache \
-    bun install --frozen-lockfile --production
+    bun install --frozen-lockfile --production --omit=peer --ignore-scripts
 
 
 FROM node:24-bookworm-slim
