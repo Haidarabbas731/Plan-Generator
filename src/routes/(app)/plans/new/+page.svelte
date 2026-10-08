@@ -3,6 +3,8 @@
 	import { enhance } from '$app/forms';
 	import KeyRoundIcon from '@lucide/svelte/icons/key-round';
 	import ModelField from '#lib/components/plans/model-field.svelte';
+	import PlanField from '#lib/components/plans/plan-field.svelte';
+	import PlanSummaryCard from '#lib/components/plans/plan-summary-card.svelte';
 	import StudyDaysField from '#lib/components/plans/study-days-field.svelte';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
@@ -15,13 +17,11 @@
 		FieldLegend,
 		FieldSet
 	} from '#lib/components/ui/field/index.js';
-	import { Input } from '#lib/components/ui/input/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { ToggleGroup, ToggleGroupItem } from '#lib/components/ui/toggle-group/index.js';
-	import { formatDate, localToday } from '#lib/format.js';
-	import { planBlockRanges } from '#lib/plan-blocks.js';
-	import { endDate, weeksSpanned } from '#lib/schedule.js';
+	import { localToday } from '#lib/format.js';
+	import { summarizePlan } from '#lib/plan-summary.js';
 	import type { PageProps } from './$types';
 
 	let { data, form }: PageProps = $props();
@@ -64,25 +64,16 @@
 	const errors = $derived(form?.errors ?? {});
 	const providerName = $derived(data.providers.find((option) => option.id === provider)?.name);
 
-	const summary = $derived.by(() => {
-		const days = daysTotal;
-		const hours = hoursPerDay;
-		const size = blockSize;
-		if (!days || !hours || !size) return null;
-		if (!Number.isInteger(days) || days < 1 || days > data.limits.maxPlanDays) return null;
-		if (hours <= 0 || studyDays.length === 0 || !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) return null;
-		const weekdays = studyDays.map(Number);
-		const end = endDate(startDate, weekdays, days);
-		if (!end) return null;
-		const blocks = planBlockRanges(days, size).length;
-		return {
-			totalHours: Math.round(days * hours * 10) / 10,
-			weeks: weeksSpanned(startDate, weekdays, days),
-			end: formatDate(end, 'date'),
-			blocks,
-			calls: blocks + 1
-		};
-	});
+	const summary = $derived(
+		summarizePlan({
+			daysTotal,
+			hoursPerDay,
+			blockSize,
+			studyDays,
+			startDate,
+			maxPlanDays: data.limits.maxPlanDays
+		})
+	);
 
 	const canSubmit = $derived(
 		data.providers.length > 0 && studyDays.length > 0 && goal.trim().length > 0 && !submitting
@@ -181,109 +172,60 @@
 				<input type="hidden" name="level" value={level} />
 			</FieldSet>
 
-			<Field data-invalid={errors.doneLooksLike ? true : undefined}>
-				<FieldLabel for="doneLooksLike">What does done look like?</FieldLabel>
-				<Input
-					id="doneLooksLike"
-					name="doneLooksLike"
-					bind:value={doneLooksLike}
-					maxlength={data.limits.doneLooksLikeMax}
-					placeholder="I can ship a small command line tool"
-					class="h-11 text-base sm:text-sm"
-					aria-invalid={errors.doneLooksLike ? true : undefined}
-					aria-describedby={errors.doneLooksLike ? 'done-error' : undefined}
-				/>
-				<FieldDescription>Optional. One sentence is enough.</FieldDescription>
-				{#if errors.doneLooksLike}
-					<FieldError id="done-error">{errors.doneLooksLike}</FieldError>
-				{/if}
-			</Field>
+			<PlanField
+				id="doneLooksLike"
+				label="What does done look like?"
+				bind:value={doneLooksLike}
+				maxlength={data.limits.doneLooksLikeMax}
+				placeholder="I can ship a small command line tool"
+				note="Optional. One sentence is enough."
+				error={errors.doneLooksLike}
+			/>
 		</FieldGroup>
 
 		<FieldGroup class="grid gap-6 sm:grid-cols-2">
-			<Field data-invalid={errors.daysTotal ? true : undefined}>
-				<FieldLabel for="daysTotal">Study sessions</FieldLabel>
-				<Input
-					id="daysTotal"
-					name="daysTotal"
-					type="number"
-					inputmode="numeric"
-					min="1"
-					max={data.limits.maxPlanDays}
-					step="1"
-					bind:value={daysTotal}
-					class="h-11 text-base sm:text-sm"
-					aria-invalid={errors.daysTotal ? true : undefined}
-					aria-describedby={errors.daysTotal ? 'days-error' : 'days-note'}
-				/>
-				{#if errors.daysTotal}
-					<FieldError id="days-error">{errors.daysTotal}</FieldError>
-				{:else}
-					<FieldDescription id="days-note">
-						Days you will study, up to {data.limits.maxPlanDays}.
-					</FieldDescription>
-				{/if}
-			</Field>
-
-			<Field data-invalid={errors.hoursPerDay ? true : undefined}>
-				<FieldLabel for="hoursPerDay">Hours per session</FieldLabel>
-				<Input
-					id="hoursPerDay"
-					name="hoursPerDay"
-					type="number"
-					inputmode="decimal"
-					min="0.5"
-					max="12"
-					step="0.5"
-					bind:value={hoursPerDay}
-					class="h-11 text-base sm:text-sm"
-					aria-invalid={errors.hoursPerDay ? true : undefined}
-					aria-describedby={errors.hoursPerDay ? 'hours-error' : undefined}
-				/>
-				{#if errors.hoursPerDay}
-					<FieldError id="hours-error">{errors.hoursPerDay}</FieldError>
-				{/if}
-			</Field>
-
-			<Field data-invalid={errors.startDate ? true : undefined}>
-				<FieldLabel for="startDate">Start date</FieldLabel>
-				<Input
-					id="startDate"
-					name="startDate"
-					type="date"
-					bind:value={startDate}
-					class="h-11 text-base sm:text-sm"
-					aria-invalid={errors.startDate ? true : undefined}
-					aria-describedby={errors.startDate ? 'start-error' : undefined}
-				/>
-				{#if errors.startDate}
-					<FieldError id="start-error">{errors.startDate}</FieldError>
-				{/if}
-			</Field>
-
-			<Field data-invalid={errors.blockSize ? true : undefined}>
-				<FieldLabel for="blockSize">Days per block</FieldLabel>
-				<Input
-					id="blockSize"
-					name="blockSize"
-					type="number"
-					inputmode="numeric"
-					min={data.limits.minBlockDays}
-					max={data.limits.maxBlockDays}
-					step="1"
-					bind:value={blockSize}
-					class="h-11 text-base sm:text-sm"
-					aria-invalid={errors.blockSize ? true : undefined}
-					aria-describedby={errors.blockSize ? 'block-error' : 'block-note'}
-				/>
-				{#if errors.blockSize}
-					<FieldError id="block-error">{errors.blockSize}</FieldError>
-				{:else}
-					<FieldDescription id="block-note">
-						Each block ends with a milestone. At least {data.limits.minBlockDays} days.
-					</FieldDescription>
-				{/if}
-			</Field>
+			<PlanField
+				id="daysTotal"
+				label="Study sessions"
+				type="number"
+				inputmode="numeric"
+				min="1"
+				max={data.limits.maxPlanDays}
+				step="1"
+				bind:value={daysTotal}
+				note="Days you will study, up to {data.limits.maxPlanDays}."
+				error={errors.daysTotal}
+			/>
+			<PlanField
+				id="hoursPerDay"
+				label="Hours per session"
+				type="number"
+				inputmode="decimal"
+				min="0.5"
+				max="12"
+				step="0.5"
+				bind:value={hoursPerDay}
+				error={errors.hoursPerDay}
+			/>
+			<PlanField
+				id="startDate"
+				label="Start date"
+				type="date"
+				bind:value={startDate}
+				error={errors.startDate}
+			/>
+			<PlanField
+				id="blockSize"
+				label="Days per block"
+				type="number"
+				inputmode="numeric"
+				min={data.limits.minBlockDays}
+				max={data.limits.maxBlockDays}
+				step="1"
+				bind:value={blockSize}
+				note="Each block ends with a milestone. At least {data.limits.minBlockDays} days."
+				error={errors.blockSize}
+			/>
 		</FieldGroup>
 
 		<FieldSet>
@@ -315,27 +257,7 @@
 			/>
 		</FieldSet>
 
-		<section
-			aria-label="Plan summary"
-			class="flex flex-col gap-1 rounded-lg border bg-accent/50 p-4 text-sm"
-		>
-			{#if summary}
-				<p class="font-medium text-accent-foreground">
-					<span class="tabular-nums">{daysTotal}</span> sessions ·
-					<span class="tabular-nums">{summary.totalHours}</span> hours in total ·
-					<span class="tabular-nums">{summary.weeks}</span>
-					{summary.weeks === 1 ? 'week' : 'weeks'}
-				</p>
-				<p class="text-muted-foreground">
-					Ends {summary.end}. Written in <span class="tabular-nums">{summary.blocks}</span>
-					{summary.blocks === 1 ? 'block' : 'blocks'}, about
-					<span class="tabular-nums">{summary.calls}</span> calls on your {providerName ??
-						'AI provider'} key.
-				</p>
-			{:else}
-				<p class="text-muted-foreground">Fill in the numbers above to see the size of your plan.</p>
-			{/if}
-		</section>
+		<PlanSummaryCard {summary} {daysTotal} {providerName} />
 
 		<div class="flex flex-col gap-2">
 			<Button type="submit" size="lg" class="h-12 pressable" disabled={!canSubmit}>
