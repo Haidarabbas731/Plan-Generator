@@ -66,6 +66,7 @@ test('the chat works with the keyboard alone', async ({ page }) => {
 	const chat = page.getByRole('region', { name: 'Chat about this plan' });
 	await expect(chat).toBeVisible();
 	const box = chat.getByRole('textbox', { name: 'Message' });
+	await expect(box).toBeEnabled();
 	await box.focus();
 	await page.keyboard.type('Show me block 1');
 	await page.keyboard.press('Enter');

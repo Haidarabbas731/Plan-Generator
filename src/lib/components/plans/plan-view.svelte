@@ -158,8 +158,8 @@
 			done={progress.done}
 			total={daysTotal}
 			{streak}
-			{chatOpen}
-			onchat={toggleChat}
+			chatOpen={dock.open}
+			onchat={() => dock.toggle()}
 		/>
 
 		{#if status !== 'ready'}
