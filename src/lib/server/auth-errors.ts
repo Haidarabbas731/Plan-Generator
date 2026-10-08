@@ -11,6 +11,12 @@ export function describeAuthError(error: unknown): AuthFailure | null {
 	return { status: error.statusCode, code };
 }
 
+export const EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED';
+
+export function isEmailNotVerified(failure: AuthFailure | null): boolean {
+	return failure?.status === 403 && failure.code === EMAIL_NOT_VERIFIED;
+}
+
 export function signInMessage(failure: AuthFailure | null): string {
 	if (failure?.status === 429) return 'Too many attempts. Wait a minute and try again.';
 	if (failure && failure.status < 500) return 'The email or password is not correct.';

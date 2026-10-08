@@ -2,8 +2,23 @@ export const AUTH_RATE_LIMIT = {
 	windowSeconds: 60,
 	maxRequests: 100,
 	signIn: { windowSeconds: 60, maxRequests: 10 },
-	signUp: { windowSeconds: 60, maxRequests: 10 }
+	signUp: { windowSeconds: 60, maxRequests: 10 },
+	verifyCode: { windowSeconds: 60, maxRequests: 30 },
+	sendCode: { windowSeconds: 60, maxRequests: 10 }
 } as const;
+
+export const EMAIL_CODE = {
+	length: 6,
+	expiresSeconds: 600,
+	allowedAttempts: 5
+} as const;
+
+export const EMAIL_SEND = {
+	cooldownSeconds: 60,
+	perHour: 5
+} as const;
+
+export const PASSWORD_RESET_EXPIRY_MINUTES = 60;
 
 export const KEY_CHECK_TIMEOUT_MS = 8000;
 

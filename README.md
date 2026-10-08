@@ -126,7 +126,13 @@ Create an OAuth app with each provider and set the callback URL to `<BETTER_AUTH
 
 ### Email (optional)
 
-Set `RESEND_API_KEY` and `EMAIL_FROM` (a sender address verified in Resend) to enable verification emails and "Forgot password?". Without them those pages are hidden.
+Set `RESEND_API_KEY` and `EMAIL_FROM` (an address on a domain you have **verified in Resend**; with an unverified domain Resend only delivers to your own address and new users would be locked out) to turn on:
+
+- **Email verification with a 6-digit code.** Signing up, or signing in to an unverified account, sends a code (10 minutes, 5 wrong tries, one email per address every 60 seconds and at most 5 per hour) and opens the code page. Verifying also signs you in, and lets the same address sign in with Google or GitHub.
+- **Password reset by link**, and "Forgot password?" on the sign-in page.
+- HTML emails with a dark variant and a plain-text twin.
+
+Without the two variables there is no verification and those pages answer 404. Messages to reserved test addresses (`example.com`, `.test`, `.invalid`, `.localhost`) are never sent; they are kept in Redis for 5 minutes so the end-to-end tests can read the code.
 
 ### Backups and the encryption key
 

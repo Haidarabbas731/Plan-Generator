@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emailVerificationOn } from './email.js';
 import { open, PASSWORD, signUp } from './helpers.js';
 
 async function signIn(page: Page, email: string, password: string) {
@@ -108,9 +109,10 @@ test('deleting the account needs the phrase and the password, then removes the a
 	await expect(page.getByText('The email or password is not correct.')).toBeVisible();
 });
 
-test('the password reset pages are hidden while no email service is set up', async ({ page }) => {
+test('the password reset pages follow whether email is set up', async ({ page, request }) => {
+	const emailOn = await emailVerificationOn(request);
 	const response = await open(page, '/forgot-password');
-	expect(response?.status()).toBe(404);
+	expect(response?.status()).toBe(emailOn ? 200 : 404);
 	await open(page, '/login');
-	await expect(page.getByRole('link', { name: 'Forgot password?' })).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Forgot password?' })).toHaveCount(emailOn ? 1 : 0);
 });

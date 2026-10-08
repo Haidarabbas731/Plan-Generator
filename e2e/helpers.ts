@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { verifyWithEmailedCode } from './email.js';
 
 export const PASSWORD = 'correct-horse-battery';
 
@@ -15,6 +16,8 @@ export async function signUp(page: Page, name = 'E2E User') {
 	await page.getByLabel('Email').fill(email);
 	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
 	await page.getByRole('button', { name: 'Create account' }).click();
+	await page.waitForURL(/\/(settings\/keys\?welcome=1|verify-email\?)/);
+	if (page.url().includes('/verify-email')) await verifyWithEmailedCode(page, email);
 	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
 	return email;
 }

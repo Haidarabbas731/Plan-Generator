@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { auth, email } from '#lib/server/auth.js';
+import { auth, email, oauthProviders } from '#lib/server/auth.js';
 import { describeAuthError } from '#lib/server/auth-errors.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { LIMITS } from '#lib/limits.js';
@@ -18,6 +18,12 @@ export const load: PageServerLoad = async ({ locals, request }) => {
 		connected: accounts
 			.filter((account) => account.providerId !== CREDENTIAL)
 			.map((account) => SOCIAL_NAMES[account.providerId] ?? account.providerId),
+		connectable: (['google', 'github'] as const)
+			.filter(
+				(provider) =>
+					oauthProviders[provider] && !accounts.some((account) => account.providerId === provider)
+			)
+			.map((provider) => ({ id: provider, name: SOCIAL_NAMES[provider] })),
 		emailEnabled: email.enabled
 	};
 };

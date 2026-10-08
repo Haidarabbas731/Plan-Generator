@@ -1,6 +1,7 @@
 import { fail, redirect } from '@sveltejs/kit';
+import { verifyEmailPath } from '#lib/auth-paths.js';
 import { auth, email, oauthProviders } from '#lib/server/auth.js';
-import { describeAuthError, signInMessage } from '#lib/server/auth-errors.js';
+import { describeAuthError, isEmailNotVerified, signInMessage } from '#lib/server/auth-errors.js';
 import { safeRedirectPath, validateSignIn, type FieldErrors } from '#lib/validation.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -36,7 +37,9 @@ export const actions: Actions = {
 		try {
 			await auth.api.signInEmail({ body: { email, password }, headers: request.headers });
 		} catch (error) {
-			return failure({ errors: {}, message: signInMessage(describeAuthError(error)), values });
+			const problem = describeAuthError(error);
+			if (isEmailNotVerified(problem)) redirect(303, verifyEmailPath(email));
+			return failure({ errors: {}, message: signInMessage(problem), values });
 		}
 
 		redirect(303, safeRedirectPath(url.searchParams.get('redirectTo'), '/plans'));

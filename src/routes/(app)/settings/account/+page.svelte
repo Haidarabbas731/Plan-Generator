@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance, type SubmitFunction } from '$app/forms';
+	import { authClient } from '#lib/auth-client.js';
 	import BadgeCheckIcon from '@lucide/svelte/icons/badge-check';
 	import { toast } from 'svelte-sonner';
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
@@ -13,6 +14,13 @@
 	let { data, form }: PageProps = $props();
 
 	let pending = $state<'name' | 'password' | null>(null);
+	let linking = $state<string | null>(null);
+
+	async function connect(provider: 'google' | 'github') {
+		linking = provider;
+		await authClient.linkSocial({ provider, callbackURL: '/settings/account' });
+		linking = null;
+	}
 	let name = $derived(data.profile.name);
 
 	const nameError = $derived(form && form.section === 'name' && 'error' in form ? form.error : '');
@@ -136,6 +144,25 @@
 			</ul>
 		{:else}
 			<p class="text-sm text-muted-foreground">No Google or GitHub account is connected.</p>
+		{/if}
+		{#if data.connectable.length > 0}
+			<div class="flex flex-wrap gap-2">
+				{#each data.connectable as option (option.id)}
+					<Button
+						type="button"
+						variant="outline"
+						class="h-11 px-4"
+						disabled={linking !== null}
+						onclick={() => connect(option.id)}
+					>
+						{#if linking === option.id}<Spinner data-icon="inline-start" />{/if}
+						Connect {option.name}
+					</Button>
+				{/each}
+			</div>
+			<p class="text-caption text-muted-foreground">
+				Connecting lets you sign in with that account too. It must use the same email address.
+			</p>
 		{/if}
 	</section>
 

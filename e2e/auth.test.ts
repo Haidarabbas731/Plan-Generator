@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { emailVerificationOn, verifyWithEmailedCode } from './email.js';
 import { open } from './helpers.js';
 
 const PASSWORD = 'correct-horse-battery';
@@ -13,6 +14,8 @@ async function signUp(page: Page, email: string, name = 'E2E User') {
 	await page.getByLabel('Email').fill(email);
 	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
 	await page.getByRole('button', { name: 'Create account' }).click();
+	await page.waitForURL(/\/(settings\/keys\?welcome=1|verify-email\?)/);
+	if (page.url().includes('/verify-email')) await verifyWithEmailedCode(page, email);
 	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
 }
 
@@ -66,7 +69,7 @@ test('sign up shows a message for each invalid field', async ({ page }) => {
 	await expect(page.getByLabel('Email')).toHaveAttribute('aria-invalid', 'true');
 });
 
-test('sign up with an email that already has an account is rejected', async ({ page }) => {
+test('sign up with an email that already has an account is rejected', async ({ page, request }) => {
 	const email = uniqueEmail();
 	await signUp(page, email);
 	await signOut(page);
@@ -77,8 +80,13 @@ test('sign up with an email that already has an account is rejected', async ({ p
 	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
 	await page.getByRole('button', { name: 'Create account' }).click();
 
-	await expect(page.getByText('An account with this email already exists.')).toBeVisible();
-	await expect(page).toHaveURL(/\/signup/);
+	if (await emailVerificationOn(request)) {
+		await expect(page).toHaveURL(/\/verify-email\?email=/);
+		await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
+	} else {
+		await expect(page.getByText('An account with this email already exists.')).toBeVisible();
+		await expect(page).toHaveURL(/\/signup/);
+	}
 });
 
 test('the password can be shown and hidden', async ({ page }) => {
@@ -95,4 +103,19 @@ test('a signed-in visitor is sent away from the login page', async ({ page }) =>
 	await signUp(page, uniqueEmail());
 	await open(page, '/login');
 	await expect(page).toHaveURL('/plans');
+});
+
+test('a failed provider sign-in shows a plain explanation, not a code', async ({ page }) => {
+	await open(page, '/auth-error?error=account_not_linked');
+	await expect(
+		page.getByRole('heading', { name: 'Sign in with your password first' })
+	).toBeVisible();
+	await expect(page.getByText('account_not_linked')).toHaveCount(0);
+	await expect(page.getByRole('link', { name: 'Back to sign in' })).toHaveAttribute(
+		'href',
+		'/login'
+	);
+
+	await open(page, '/auth-error?error=whatever_new');
+	await expect(page.getByRole('heading', { name: "Sign-in didn't work" })).toBeVisible();
 });

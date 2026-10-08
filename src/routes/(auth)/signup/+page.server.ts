@@ -1,10 +1,9 @@
 import { fail, redirect } from '@sveltejs/kit';
-import { auth, oauthProviders } from '#lib/server/auth.js';
+import { FIRST_RUN_PATH, verifyEmailPath } from '#lib/auth-paths.js';
+import { auth, email as mailer, oauthProviders } from '#lib/server/auth.js';
 import { describeAuthError, signUpMessage } from '#lib/server/auth-errors.js';
 import { validateSignUp, type FieldErrors, type SignUpInput } from '#lib/validation.js';
 import type { Actions, PageServerLoad } from './$types';
-
-const FIRST_RUN_PATH = '/settings/keys?welcome=1';
 
 interface SignUpFailure {
 	errors: FieldErrors<SignUpInput>;
@@ -38,6 +37,6 @@ export const actions: Actions = {
 			return failure({ errors: {}, message, values });
 		}
 
-		redirect(303, FIRST_RUN_PATH);
+		redirect(303, mailer.enabled ? verifyEmailPath(email) : FIRST_RUN_PATH);
 	}
 };
