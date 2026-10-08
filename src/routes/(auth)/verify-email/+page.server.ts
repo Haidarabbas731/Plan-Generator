@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
+import { FIRST_RUN_PATH } from '#lib/auth-paths.js';
 import { auth, email, sendGate } from '#lib/server/auth.js';
-import { validateEmail } from '#lib/validation.js';
+import { safeRedirectPath, validateEmail } from '#lib/validation.js';
 import type { Actions, PageServerLoad } from './$types';
 
 function addressFrom(value: string | null): string | null {
@@ -13,7 +14,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (locals.user) redirect(303, '/plans');
 	const address = addressFrom(url.searchParams.get('email'));
 	if (!address) redirect(303, '/signup');
-	return { email: address, wait: await sendGate.wait(address).catch(() => 0) };
+	return {
+		email: address,
+		next: safeRedirectPath(url.searchParams.get('next'), FIRST_RUN_PATH),
+		wait: await sendGate.wait(address).catch(() => 0)
+	};
 };
 
 export const actions: Actions = {

@@ -4,7 +4,6 @@
 	import { goto } from '$app/navigation';
 	import CircleCheckIcon from '@lucide/svelte/icons/circle-check';
 	import { toast } from 'svelte-sonner';
-	import { FIRST_RUN_PATH } from '#lib/auth-paths.js';
 	import { authClient } from '#lib/auth-client.js';
 	import AuthCard from '#lib/components/auth/auth-card.svelte';
 	import OtpInput, { type OtpStatus } from '#lib/components/auth/otp-input.svelte';
@@ -49,7 +48,7 @@
 		const { error } = await authClient.emailOtp.verifyEmail({ email: data.email, otp: entered });
 		if (!error) {
 			status = 'success';
-			later(SUCCESS_BEAT_MS, () => void goto(FIRST_RUN_PATH, { invalidateAll: true }));
+			later(SUCCESS_BEAT_MS, () => void goto(data.next, { invalidateAll: true }));
 			return;
 		}
 		message = MESSAGES[error.code ?? ''] ?? "We couldn't check that code. Try again.";

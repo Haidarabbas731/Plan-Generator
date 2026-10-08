@@ -79,10 +79,10 @@ test('signing in before verifying sends you to the code page', async ({ page }) 
 	await page.getByLabel('Email').fill(email);
 	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
 	await page.getByRole('button', { name: 'Sign in' }).click();
-	await expect(page).toHaveURL(/\/verify-email\?email=/);
+	await expect(page).toHaveURL(/\/verify-email\?email=.*&next=%2Fplans$/);
 
 	await typeCode(page, await readCode(email));
-	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
+	await expect(page).toHaveURL(/\/plans$/);
 });
 
 test('the verify page needs an address and does not show to a signed-in user', async ({ page }) => {

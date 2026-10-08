@@ -38,7 +38,10 @@ export const actions: Actions = {
 			await auth.api.signInEmail({ body: { email, password }, headers: request.headers });
 		} catch (error) {
 			const problem = describeAuthError(error);
-			if (isEmailNotVerified(problem)) redirect(303, verifyEmailPath(email));
+			if (isEmailNotVerified(problem)) {
+				const next = safeRedirectPath(url.searchParams.get('redirectTo'), '/plans');
+				redirect(303, verifyEmailPath(email, next));
+			}
 			return failure({ errors: {}, message: signInMessage(problem), values });
 		}
 
