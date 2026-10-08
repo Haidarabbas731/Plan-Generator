@@ -19,6 +19,7 @@
 		date: string | null;
 		completed: boolean;
 		isToday?: boolean;
+		changed?: boolean;
 		ontoggle: (day: number, completed: boolean) => void;
 	}
 
@@ -32,6 +33,7 @@
 		date,
 		completed,
 		isToday = false,
+		changed = false,
 		ontoggle
 	}: Props = $props();
 
@@ -49,7 +51,11 @@
 </script>
 
 <li
-	class="flex flex-col {isToday ? 'rounded-md bg-accent/50' : ''}"
+	class="flex flex-col rounded-md transition-[background-color] duration-1000 ease-(--ease-out) {changed
+		? 'bg-accent'
+		: isToday
+			? 'bg-accent/50'
+			: ''}"
 	data-today={isToday ? '' : undefined}
 >
 	<Collapsible bind:open>

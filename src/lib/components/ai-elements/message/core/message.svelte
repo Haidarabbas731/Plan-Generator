@@ -16,8 +16,8 @@
 
 <div
 	class={cn(
-		'group flex w-full max-w-[95%] flex-col gap-2',
-		from === 'user' ? 'is-user ml-auto justify-end' : 'is-assistant',
+		'group flex w-full flex-col gap-2',
+		from === 'user' ? 'is-user ml-auto max-w-[85%] justify-end' : 'is-assistant max-w-full',
 		className
 	)}
 	data-role={from}

@@ -24,7 +24,7 @@
 	);
 </script>
 
-<div class="flex flex-col gap-2 rounded-lg border bg-card px-3 py-2.5 text-sm" role="status">
+<div class="flex flex-col rounded-xl bg-muted/50 px-3 py-2.5 text-sm" role="status">
 	<div class="flex items-center gap-2.5">
 		{#if step.state === 'running'}
 			<Spinner class="size-4 shrink-0 text-primary" aria-label={step.label} />
@@ -43,7 +43,7 @@
 				type="button"
 				variant="ghost"
 				size="sm"
-				class="h-8 shrink-0 gap-1.5 px-2"
+				class="relative -my-1 -mr-1.5 h-9 shrink-0 gap-1.5 px-3 after:absolute after:-inset-1 after:content-['']"
 				disabled={undoing}
 				onclick={() => onundo(step.revisionId!)}
 			>
@@ -56,17 +56,17 @@
 		{/if}
 	</div>
 	{#if step.detail}
-		<p class="pl-6.5 text-caption text-muted-foreground">{step.detail}</p>
+		<p class="pt-1 pl-6.5 text-caption text-muted-foreground">{step.detail}</p>
 	{/if}
 	{#if step.state === 'done' && step.staleBlocks.length > 0}
-		<div class="flex flex-wrap items-center gap-2 pl-6.5">
-			<p class="text-caption text-muted-foreground">{staleText}</p>
+		<div class="mt-2.5 flex flex-wrap items-center gap-2 border-t border-border/60 pt-2.5 pl-6.5">
+			<p class="min-w-0 flex-1 text-caption text-muted-foreground">{staleText}</p>
 			{#if onupdate}
 				<Button
 					type="button"
 					variant="outline"
 					size="sm"
-					class="h-8 px-2.5"
+					class="h-9 shrink-0 px-3"
 					onclick={() => onupdate(nextBlocks)}
 				>
 					Update {nextBlocks.length === 1

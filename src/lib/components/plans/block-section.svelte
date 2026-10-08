@@ -21,6 +21,7 @@
 		days: PlanDayView[];
 		dates: string[];
 		todayDay?: number | null;
+		changed?: ReadonlySet<number>;
 		open?: boolean;
 		retrying?: boolean;
 		ontoggle: (day: number, completed: boolean) => void;
@@ -32,6 +33,7 @@
 		days,
 		dates,
 		todayDay = null,
+		changed = new Set<number>(),
 		open = $bindable(false),
 		retrying = false,
 		ontoggle,
@@ -135,6 +137,7 @@
 								completed={day.completed}
 								date={dates[day.day - 1] ?? null}
 								isToday={day.day === todayDay}
+								changed={changed.has(day.day)}
 								{ontoggle}
 							/>
 						{/each}

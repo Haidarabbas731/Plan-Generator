@@ -1,13 +1,12 @@
 <script lang="ts">
-	import { untrack } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import { invalidate } from '$app/navigation';
 	import { ChatState } from '#lib/client/chat.svelte.js';
 	import { CHAT_WIDTH, maxChatWidth } from '#lib/client/chat-width.js';
 	import type { ChatDock } from '#lib/client/chat-dock.svelte.js';
-	import { dragToDismiss } from '#lib/client/drag-dismiss.js';
 	import ChatPanel from '#lib/components/chat/chat-panel.svelte';
-	import * as Sheet from '#lib/components/ui/sheet/index.js';
+	import ChatSheet from '#lib/components/chat/chat-sheet.svelte';
 	import type { ChatUIMessage } from '#lib/chat-types.js';
 	import type { PlanDetail, PlanStatus } from '#lib/plan-types.js';
 	import type { Provider } from '#lib/providers.js';
@@ -26,7 +25,7 @@
 	let chatLoadError = $state<string | null>(null);
 	let chatPending = $state<'undo' | 'restore' | 'model' | null>(null);
 	let chatActionError = $state<string | null>(null);
-	let sheetElement = $state<HTMLElement | null>(null);
+	let mounted = $state(false);
 
 	let undoForm = $state<HTMLFormElement | null>(null);
 	let undoRevisionId = $state('');
@@ -35,6 +34,10 @@
 	let modelForm = $state<HTMLFormElement | null>(null);
 	let modelProvider = $state('');
 	let modelName = $state('');
+
+	onMount(() => {
+		mounted = true;
+	});
 
 	async function loadChat() {
 		chatLoadError = null;
@@ -54,8 +57,10 @@
 		}
 	}
 
+	const showSheet = $derived(mounted && !dock.desktop.current && status !== 'generating');
+
 	$effect(() => {
-		if (dock.open && !chat) untrack(() => void loadChat());
+		if ((dock.open || showSheet) && !chat) untrack(() => void loadChat());
 	});
 
 	const chatAction =
@@ -90,7 +95,7 @@
 	}
 </script>
 
-{#snippet chatPanel()}
+{#snippet chatPanel(layout: 'panel' | 'sheet', compact: boolean)}
 	<ChatPanel
 		planId={plan.id}
 		planStatus={status}
@@ -103,7 +108,11 @@
 		loadError={chatLoadError}
 		pending={chatPending}
 		actionError={chatActionError}
-		showClose
+		{layout}
+		{compact}
+		showClose={layout === 'panel'}
+		oncollapse={() => dock.sheet.collapse()}
+		oncomposerfocus={() => dock.sheet.composerFocused()}
 		onclose={() => (dock.open = false)}
 		onmodel={switchModel}
 		onundo={undoChange}
@@ -141,34 +150,17 @@
 					: ''}"
 			></span>
 		</div>
-		{@render chatPanel()}
+		{@render chatPanel('panel', false)}
 	</aside>
 {/if}
 
-<Sheet.Root bind:open={() => dock.sheetOpen, (value) => (dock.open = value)}>
-	<Sheet.Content
-		bind:ref={sheetElement}
-		id="plan-chat"
-		side="bottom"
-		showCloseButton={false}
-		class="gap-0 rounded-t-2xl p-0 pb-[env(safe-area-inset-bottom)] data-[side=bottom]:h-[85dvh]"
-	>
-		<Sheet.Title class="sr-only">Chat about this plan</Sheet.Title>
-		<div
-			class="flex h-7 shrink-0 cursor-grab touch-none items-center justify-center active:cursor-grabbing"
-			{@attach dragToDismiss({
-				target: () => sheetElement,
-				ondismiss: () => (dock.open = false)
-			})}
-			aria-hidden="true"
-		>
-			<span class="h-1.5 w-10 rounded-full bg-muted-foreground/30"></span>
-		</div>
-		<div class="min-h-0 flex-1">
-			{@render chatPanel()}
-		</div>
-	</Sheet.Content>
-</Sheet.Root>
+{#snippet sheetPanel(compact: boolean)}
+	{@render chatPanel('sheet', compact)}
+{/snippet}
+
+{#if showSheet}
+	<ChatSheet sheet={dock.sheet} panel={sheetPanel} />
+{/if}
 
 <form bind:this={undoForm} method="POST" action="?/undo" hidden use:enhance={chatAction('undo')}>
 	<input type="hidden" name="revisionId" value={undoRevisionId} />

@@ -63,7 +63,7 @@
 				<Button
 					type="button"
 					variant={chatOpen ? 'secondary' : 'outline'}
-					class="h-11 shrink-0 gap-2 px-3.5"
+					class="h-11 shrink-0 gap-2 px-3.5 max-lg:hidden"
 					aria-expanded={chatOpen}
 					aria-controls="plan-chat"
 					onclick={onchat}

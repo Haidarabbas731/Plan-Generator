@@ -62,13 +62,48 @@ test('the chat works with the keyboard alone', async ({ page }) => {
 	});
 });
 
-test('the chat opens as a sheet on a phone', async ({ page }) => {
+test('on a phone the ask bar is docked and the chat grows into a sheet', async ({ page }) => {
 	await page.setViewportSize({ width: 390, height: 844 });
 	await createPlan(page);
-	await page.getByRole('button', { name: 'Ask' }).click();
-	const dialog = page.getByRole('dialog');
-	await expect(dialog).toBeVisible();
-	await dialog.getByRole('textbox', { name: 'Message' }).fill('hello there');
-	await dialog.getByRole('button', { name: 'Send' }).click();
-	await expect(dialog.getByText('Fake answer: hello there')).toBeVisible();
+	await expect(page.getByRole('button', { name: 'Ask AI' })).toBeHidden();
+
+	const grip = page.getByRole('slider', { name: 'Resize chat' });
+	await expect(grip).toHaveAttribute('aria-valuetext', 'Collapsed');
+	const chat = page.getByRole('region', { name: 'Chat about this plan' });
+	const box = chat.getByRole('textbox', { name: 'Message' });
+
+	await box.click();
+	await expect(grip).toHaveAttribute('aria-valuetext', 'Half height');
+	await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+
+	await box.fill('hello there');
+	await chat.getByRole('button', { name: 'Send' }).click();
+	await expect(chat.getByText('Fake answer: hello there')).toBeVisible();
+
+	await grip.focus();
+	await page.keyboard.press('ArrowUp');
+	await expect(grip).toHaveAttribute('aria-valuetext', 'Full height');
+	await page.keyboard.press('Escape');
+	await expect(grip).toHaveAttribute('aria-valuetext', 'Half height');
+	await page.keyboard.press('End');
+	await expect(grip).toHaveAttribute('aria-valuetext', 'Collapsed');
+});
+
+test('Enter adds a new line on a touch screen and only the button sends', async ({ browser }) => {
+	const context = await browser.newContext({
+		viewport: { width: 390, height: 844 },
+		hasTouch: true,
+		isMobile: true
+	});
+	const page = await context.newPage();
+	await createPlan(page);
+	const chat = page.getByRole('region', { name: 'Chat about this plan' });
+	const box = chat.getByRole('textbox', { name: 'Message' });
+	await box.click();
+	await box.fill('first line');
+	await page.keyboard.press('Enter');
+	await page.keyboard.type('second line');
+	await expect(box).toHaveValue('first line\nsecond line');
+	await expect(chat.getByText('Fake answer:')).toHaveCount(0);
+	await context.close();
 });

@@ -429,6 +429,22 @@
 	}
 }
 
+.typing-dot {
+	animation: typing-dot 1.2s ease-in-out infinite;
+	animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+@keyframes typing-dot {
+	0%,
+	60%,
+	100% {
+		opacity: 0.3;
+	}
+	30% {
+		opacity: 1;
+	}
+}
+
 @keyframes shake-x {
 	20% {
 		transform: translateX(-4px);
@@ -491,6 +507,10 @@
 	.keycap-caret,
 	.shake-x {
 		animation: none;
+	}
+	.typing-dot {
+		animation: none;
+		opacity: 0.5;
 	}
 	[data-slot='collapsible-content'][data-state='open']:not([data-instant]) {
 		animation-name: fade-in;

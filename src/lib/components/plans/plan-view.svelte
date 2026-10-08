@@ -46,6 +46,8 @@
 	let autoOpened = false;
 	let busy = $state<'resume' | 'cancel' | null>(null);
 	let aboutOpen = $state(false);
+	let flashing = $state<ReadonlySet<number>>(new Set());
+	const seenDays: Record<number, string> = {};
 
 	let toggleForm = $state<HTMLFormElement | null>(null);
 	let toggleDay = $state('');
@@ -74,6 +76,8 @@
 
 	const status = $derived(stream.live.status);
 
+	const FLASH_MS = 1200;
+
 	const aboutLong = $derived((plan.overview ?? '').length > LIMITS.goalPreviewChars);
 
 	const blockViews = $derived(
@@ -89,6 +93,25 @@
 			};
 		})
 	);
+
+	const phoneInset = $derived(
+		today !== null && !dock.desktop.current && status !== 'generating' ? dock.sheet.restInset : 0
+	);
+
+	$effect(() => {
+		const changed: number[] = [];
+		for (const day of days) {
+			const key = [day.title, day.learn, day.practice, day.review].join('\u0001');
+			const before = seenDays[day.day];
+			if (before !== undefined && before !== key) changed.push(day.day);
+			seenDays[day.day] = key;
+		}
+		if (changed.length === 0) return;
+		flashing = new Set([...untrack(() => flashing), ...changed]);
+		setTimeout(() => {
+			flashing = new Set([...untrack(() => flashing)].filter((day) => !changed.includes(day)));
+		}, FLASH_MS);
+	});
 
 	const outline = $derived<OutlineItem[]>(
 		blockViews.map(({ block, days: blockDays }) => ({
@@ -170,8 +193,9 @@
 <div
 	class={dock.dragging
 		? 'select-none'
-		: 'transition-[padding] duration-(--dur-base) ease-(--ease-out)'}
+		: 'transition-[padding] duration-(--dur-base) ease-(--ease-out) max-lg:transition-none'}
 	style:padding-right={dock.docked ? `${dock.width}px` : undefined}
+	style:padding-bottom={phoneInset > 0 ? `${phoneInset}px` : undefined}
 >
 	<div class="frame py-10 {railOn ? 'xl:grid xl:grid-cols-[48rem_minmax(0,1fr)] xl:gap-10' : ''}">
 		<div class="flex column-narrow flex-col gap-6">
@@ -235,6 +259,7 @@
 								days={view.days}
 								{dates}
 								{todayDay}
+								changed={flashing}
 								bind:open={
 									() => openBlocks[view.block.idx] ?? false,
 									(value) => (openBlocks[view.block.idx] = value)

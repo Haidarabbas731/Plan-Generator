@@ -213,3 +213,53 @@ describe('ChatPanel', () => {
 		});
 	});
 });
+
+describe('ChatPanel on a phone', () => {
+	it('shows only the composer while compact', () => {
+		setup({ layout: 'sheet', compact: true });
+		expect(screen.getByText('Ask about this plan').closest('header')).toHaveClass('hidden');
+		expect(box()).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: 'Send' })).toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: /Model: gemini-test/ })).not.toBeInTheDocument();
+	});
+
+	it('offers collapse instead of close and keeps the model chip when expanded', () => {
+		setup({ layout: 'sheet', compact: false, oncollapse: vi.fn() });
+		expect(screen.getByRole('button', { name: 'Collapse chat' })).toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: 'Close chat' })).not.toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /Model: gemini-test/ })).toBeInTheDocument();
+	});
+
+	it('shows the example requests as a chip row in the sheet', () => {
+		setup({ layout: 'sheet', compact: false });
+		expect(screen.getByRole('button', { name: 'Make block 2 easier' })).toBeInTheDocument();
+	});
+
+	it('tells the sheet when the composer gets focus', async () => {
+		const oncomposerfocus = vi.fn();
+		setup({ layout: 'sheet', compact: true, oncomposerfocus });
+		await fireEvent.focus(box());
+		expect(oncomposerfocus).toHaveBeenCalled();
+	});
+
+	it('does not send with Enter on a touch screen', async () => {
+		vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(pointer: coarse)' }));
+		const send = vi.fn();
+		setup({ chat: fakeChat({ canSend: true, input: 'hello', send }) });
+		await fireEvent.keyDown(box(), { key: 'Enter' });
+		expect(send).not.toHaveBeenCalled();
+		vi.stubGlobal('matchMedia', undefined);
+	});
+
+	it('exposes the waiting state as Thinking', () => {
+		setup({
+			chat: fakeChat({
+				status: 'submitted',
+				busy: true,
+				messages: [{ id: 'm1', role: 'user', parts: [{ type: 'text', text: 'hi' }] }]
+			})
+		});
+		expect(screen.getByRole('status', { name: '' })).toBeInTheDocument();
+		expect(screen.getByText('Thinking')).toBeInTheDocument();
+	});
+});

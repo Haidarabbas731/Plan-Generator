@@ -1,4 +1,5 @@
 import { MediaQuery } from 'svelte/reactivity';
+import { ChatSheet } from './chat-sheet.svelte.js';
 import {
 	CHAT_WIDTH,
 	CHAT_WIDTH_STORAGE_KEY,
@@ -14,13 +15,10 @@ export class ChatDock {
 	viewportWidth = $state(1280);
 	dragging = $state(false);
 	readonly desktop = new MediaQuery('(min-width: 1024px)');
+	readonly sheet = new ChatSheet();
 
 	get docked(): boolean {
 		return this.open && this.desktop.current;
-	}
-
-	get sheetOpen(): boolean {
-		return this.open && !this.desktop.current;
 	}
 
 	toggle() {

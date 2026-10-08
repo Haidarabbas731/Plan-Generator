@@ -31,6 +31,11 @@ describe('DayRow', () => {
 		expect(screen.queryByText('Today')).not.toBeInTheDocument();
 	});
 
+	it('lights up a day that a chat edit just changed', () => {
+		const { container } = render(DayRow, { props: { ...base, changed: true, ontoggle: () => {} } });
+		expect(container.querySelector('li')).toHaveClass('bg-accent');
+	});
+
 	it('names the checkbox after the day and reports a toggle', async () => {
 		const ontoggle = vi.fn();
 		render(DayRow, { props: { ...base, ontoggle } });
