@@ -1,5 +1,4 @@
 <script lang="ts">
-	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import RefreshCwIcon from '@lucide/svelte/icons/refresh-cw';
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
@@ -8,16 +7,13 @@
 	import * as Popover from '#lib/components/ui/popover/index.js';
 	import * as Select from '#lib/components/ui/select/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
-	import type { Provider } from '#lib/providers.js';
+	import ModelOptionRow from '#lib/components/shared/model-option-row.svelte';
+	import { filterModels, type ModelOption } from '#lib/model-options.js';
+	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
 	import { cn } from '#lib/utils.js';
 
 	interface ProviderOption {
 		id: Provider;
-		name: string;
-	}
-
-	interface ModelOption {
-		id: string;
 		name: string;
 	}
 
@@ -43,6 +39,10 @@
 	let status = $state<'idle' | 'loading' | 'ready' | 'error'>('idle');
 	let message = $state('');
 	let reloads = $state(0);
+	let query = $state('');
+
+	const visible = $derived(filterModels(models, query));
+	const hasPrices = $derived(models.some((option) => option.pricing !== undefined));
 
 	const providerName = $derived(providers.find((option) => option.id === provider)?.name);
 	const selectedName = $derived(models.find((option) => option.id === model)?.name ?? model);
@@ -84,6 +84,10 @@
 		model = id;
 		open = false;
 	}
+
+	$effect(() => {
+		if (!open) query = '';
+	});
 </script>
 
 <div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)]">
@@ -175,30 +179,41 @@
 						searchInput?.focus({ preventScroll: true });
 					}}
 				>
-					<Command.Root disableInitialScroll>
-						<Command.Input bind:ref={searchInput} placeholder="Search models" />
+					<Command.Root disableInitialScroll shouldFilter={false}>
+						<Command.Input
+							bind:ref={searchInput}
+							bind:value={query}
+							placeholder={hasPrices ? 'Search models, or type free' : 'Search models'}
+						/>
 						<Command.List class="max-h-64">
-							<Command.Empty>No model found.</Command.Empty>
-							{#each models as option (option.id)}
+							{#if visible.length === 0}
+								<p class="px-3 py-6 text-center text-sm text-muted-foreground">No model found.</p>
+							{/if}
+							{#each visible as option (option.id)}
 								<Command.Item
 									value={`${option.name} ${option.id}`}
 									onSelect={() => choose(option.id)}
 								>
-									<span class="flex min-w-0 flex-col">
-										<span class="truncate">{option.name}</span>
-										{#if option.name !== option.id}
-											<span class="truncate text-caption text-muted-foreground">{option.id}</span>
-										{/if}
-									</span>
-									{#if model === option.id}
-										<CheckIcon class="ml-auto size-4 text-primary" aria-hidden="true" />
-									{/if}
+									<ModelOptionRow {option} selected={model === option.id} />
 								</Command.Item>
 							{/each}
 						</Command.List>
 					</Command.Root>
-					<div class="flex items-center justify-between border-t px-3 py-2">
-						<p class="text-caption text-muted-foreground">{models.length} models</p>
+					<div class="flex items-center justify-between gap-3 border-t px-3 py-2">
+						<p class="min-w-0 truncate text-caption text-muted-foreground">
+							{#if query.trim()}{visible.length} of {models.length} models{:else}{models.length} models{/if}
+							{#if !hasPrices && provider}
+								·
+								<a
+									href={PROVIDER_INFO[provider as Provider].pricingUrl}
+									target="_blank"
+									rel="noreferrer"
+									class="underline-offset-4 hover:underline"
+								>
+									Pricing
+								</a>
+							{/if}
+						</p>
 						<button
 							type="button"
 							class="inline-flex min-h-8 items-center gap-1.5 rounded-md px-2 text-caption font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/40"

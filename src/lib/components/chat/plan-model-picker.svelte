@@ -1,17 +1,13 @@
 <script lang="ts">
-	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronsUpDownIcon from '@lucide/svelte/icons/chevrons-up-down';
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as Command from '#lib/components/ui/command/index.js';
 	import * as Popover from '#lib/components/ui/popover/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
+	import ModelOptionRow from '#lib/components/shared/model-option-row.svelte';
+	import { filterModels, type ModelOption } from '#lib/model-options.js';
 	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
 	import { cn } from '#lib/utils.js';
-
-	interface ModelOption {
-		id: string;
-		name: string;
-	}
 
 	interface Props {
 		providers: { id: Provider; name: string }[];
@@ -42,8 +38,11 @@
 	let models = $state.raw<ModelOption[]>([]);
 	let status = $state<'idle' | 'loading' | 'ready' | 'error'>('idle');
 	let message = $state('');
+	let query = $state('');
 
 	const shown = $derived(viewing ?? provider);
+	const visible = $derived(filterModels(models, query));
+	const hasPrices = $derived(models.some((option) => option.pricing !== undefined));
 
 	$effect(() => {
 		if (!open) return;
@@ -82,6 +81,10 @@
 		if (id === model && shown === provider) return;
 		onselect(shown, id);
 	}
+
+	$effect(() => {
+		if (!open) query = '';
+	});
 </script>
 
 <Popover.Root bind:open>
@@ -110,8 +113,13 @@
 				{/each}
 			</div>
 		{/if}
-		<Command.Root disableInitialScroll>
-			<Command.Input placeholder="Search {PROVIDER_INFO[shown].name} models" />
+		<Command.Root disableInitialScroll shouldFilter={false}>
+			<Command.Input
+				bind:value={query}
+				placeholder={hasPrices
+					? `Search ${PROVIDER_INFO[shown].name} models, or type free`
+					: `Search ${PROVIDER_INFO[shown].name} models`}
+			/>
 			<Command.List class="max-h-64">
 				{#if status === 'loading'}
 					<div class="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
@@ -120,18 +128,12 @@
 				{:else if status === 'error'}
 					<p class="px-3 py-6 text-center text-sm text-muted-foreground">{message}</p>
 				{:else}
-					<Command.Empty>No model found.</Command.Empty>
-					{#each models as option (option.id)}
+					{#if visible.length === 0}
+						<p class="px-3 py-6 text-center text-sm text-muted-foreground">No model found.</p>
+					{/if}
+					{#each visible as option (option.id)}
 						<Command.Item value={`${option.name} ${option.id}`} onSelect={() => choose(option.id)}>
-							<span class="flex min-w-0 flex-col">
-								<span class="truncate">{option.name}</span>
-								{#if option.name !== option.id}
-									<span class="truncate text-caption text-muted-foreground">{option.id}</span>
-								{/if}
-							</span>
-							{#if option.id === model && shown === provider}
-								<CheckIcon class="ml-auto size-4 text-primary" aria-hidden="true" />
-							{/if}
+							<ModelOptionRow {option} selected={option.id === model && shown === provider} />
 						</Command.Item>
 					{/each}
 				{/if}
@@ -139,6 +141,16 @@
 		</Command.Root>
 		<p class="border-t px-3 py-2 text-caption text-muted-foreground">
 			Applies to this whole plan, including blocks still being written.
+			{#if status === 'ready' && !hasPrices}
+				<a
+					href={PROVIDER_INFO[shown].pricingUrl}
+					target="_blank"
+					rel="noreferrer"
+					class="underline-offset-4 hover:underline"
+				>
+					See {PROVIDER_INFO[shown].name} pricing
+				</a>
+			{/if}
 		</p>
 	</Popover.Content>
 </Popover.Root>

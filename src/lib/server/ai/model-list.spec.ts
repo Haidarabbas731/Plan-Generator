@@ -63,6 +63,27 @@ describe('parseModels', () => {
 		expect(models.map((model) => model.id)).toEqual(['a/text']);
 	});
 
+	it('turns OpenRouter per-token prices into dollars per million tokens', () => {
+		const models = parseModels('openrouter', {
+			data: [
+				{ id: 'a/paid', name: 'Paid', pricing: { prompt: '0.000003', completion: '0.000015' } },
+				{ id: 'b/free:free', name: 'Free', pricing: { prompt: '0', completion: '0' } },
+				{ id: 'c/router', name: 'Router', pricing: { prompt: '-1', completion: '-1' } },
+				{ id: 'd/none', name: 'None' }
+			]
+		});
+		const byId = Object.fromEntries(models.map((model) => [model.id, model.pricing]));
+		expect(byId['a/paid']).toEqual({ input: 3, output: 15 });
+		expect(byId['b/free:free']).toEqual({ input: 0, output: 0 });
+		expect(byId['c/router']).toBeUndefined();
+		expect(byId['d/none']).toBeUndefined();
+	});
+
+	it('gives no prices for providers whose model list has none', () => {
+		const models = parseModels('openai', { data: [{ id: 'gpt-x', owned_by: 'openai' }] });
+		expect(models).toEqual([{ id: 'gpt-x', name: 'gpt-x' }]);
+	});
+
 	it('returns an empty list for unexpected bodies', () => {
 		expect(parseModels('openai', null)).toEqual([]);
 		expect(parseModels('google', { models: 'nope' })).toEqual([]);

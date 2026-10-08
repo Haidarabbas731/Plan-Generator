@@ -1,3 +1,4 @@
+import type { ModelOption, ModelPricing } from '#lib/model-options.js';
 import type { Provider } from '#lib/providers.js';
 import { MODEL_LIST } from '../config.js';
 import {
@@ -8,10 +9,7 @@ import {
 	type ProviderFailure
 } from './provider-api.js';
 
-export interface ModelOption {
-	id: string;
-	name: string;
-}
+export type { ModelOption } from '#lib/model-options.js';
 
 export type ModelListResult = { ok: true; models: ModelOption[] } | ProviderFailure;
 
@@ -48,6 +46,21 @@ interface OpenRouterModel {
 	id?: string;
 	name?: string;
 	architecture?: { input_modalities?: string[]; output_modalities?: string[] };
+	pricing?: { prompt?: unknown; completion?: unknown };
+}
+
+const PER_MILLION = 1_000_000;
+
+function perMillion(value: unknown): number | undefined {
+	const perToken = typeof value === 'string' || typeof value === 'number' ? Number(value) : NaN;
+	if (!Number.isFinite(perToken) || perToken < 0) return undefined;
+	return Math.round(perToken * PER_MILLION * 1_000_000) / 1_000_000;
+}
+
+function openRouterPricing(pricing: OpenRouterModel['pricing']): ModelPricing | undefined {
+	const input = perMillion(pricing?.prompt);
+	const output = perMillion(pricing?.completion);
+	return input === undefined || output === undefined ? undefined : { input, output };
 }
 
 const isText = (value: string | undefined): value is string =>
@@ -93,7 +106,14 @@ export function parseModels(provider: Provider, body: unknown): ModelOption[] {
 						model.architecture?.input_modalities?.includes('text') !== false &&
 						model.architecture?.output_modalities?.includes('text') !== false
 				)
-				.map((model) => ({ id: model.id!, name: model.name || model.id! }));
+				.map((model) => {
+					const pricing = openRouterPricing(model.pricing);
+					return {
+						id: model.id!,
+						name: model.name || model.id!,
+						...(pricing ? { pricing } : {})
+					};
+				});
 			break;
 	}
 
