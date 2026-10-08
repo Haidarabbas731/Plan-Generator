@@ -12,6 +12,11 @@ describe('authErrorCopy', () => {
 		expect(authErrorCopy('ACCESS_DENIED').title).toBe(authErrorCopy('access_denied').title);
 	});
 
+	it('has plain wording for a sign-in link that expired or was already used', () => {
+		expect(authErrorCopy('state_not_found').title).toBe('That sign-in link expired');
+		expect(authErrorCopy('state_not_found').body).toMatch(/Start again/);
+	});
+
 	it('never shows the raw code and falls back for unknown or missing ones', () => {
 		for (const code of ['something_new', '', null, undefined]) {
 			const copy = authErrorCopy(code);

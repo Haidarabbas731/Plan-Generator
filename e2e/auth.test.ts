@@ -119,3 +119,10 @@ test('a failed provider sign-in shows a plain explanation, not a code', async ({
 	await open(page, '/auth-error?error=whatever_new');
 	await expect(page.getByRole('heading', { name: "Sign-in didn't work" })).toBeVisible();
 });
+
+test('the sign-in library never shows its own error page', async ({ page }) => {
+	await open(page, '/api/auth/error?error=state_not_found');
+	await expect(page).toHaveURL(/\/auth-error\?error=state_not_found$/);
+	await expect(page.getByRole('heading', { name: 'That sign-in link expired' })).toBeVisible();
+	await expect(page.getByText(/CODE:/)).toHaveCount(0);
+});

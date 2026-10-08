@@ -1,3 +1,4 @@
+import { redirect } from '@sveltejs/kit';
 import type { Handle } from '@sveltejs/kit/hooks';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { building } from '$app/env';
@@ -15,6 +16,8 @@ if (!building) {
 }
 
 export const handle: Handle = async ({ event, resolve }) => {
+	if (event.url.pathname === '/api/auth/error') redirect(302, `/auth-error${event.url.search}`);
+
 	const session = await auth.api.getSession({ headers: event.request.headers });
 	event.locals.user = session?.user ?? null;
 	event.locals.session = session?.session ?? null;

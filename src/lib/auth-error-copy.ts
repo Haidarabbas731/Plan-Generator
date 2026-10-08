@@ -27,6 +27,34 @@ const COPY: Record<string, AuthErrorCopy> = {
 	state_mismatch: {
 		title: 'That sign-in link expired',
 		body: 'Start again from the sign-in page.'
+	},
+	state_not_found: {
+		title: 'That sign-in link expired',
+		body: 'It may have been used already or opened in another browser. Start again from the sign-in page.'
+	},
+	no_code: {
+		title: 'Sign-in was not completed',
+		body: 'The provider did not send us back a sign-in code. Try again from the sign-in page.'
+	},
+	invalid_code: {
+		title: 'Sign-in was not completed',
+		body: 'The provider rejected the sign-in. Try again from the sign-in page.'
+	},
+	email_does_not_match: {
+		title: 'That account uses a different email',
+		body: 'Connect an account that has the same email address as yours, or sign in with that account directly.'
+	},
+	account_already_linked_to_different_user: {
+		title: 'That account is already in use',
+		body: 'It is connected to a different Plan Generator account. Sign in with that one instead.'
+	},
+	email_not_verified: {
+		title: 'Verify your email first',
+		body: 'The provider has not verified this email address. Verify it there, or sign in with your email and password.'
+	},
+	internal_server_error: {
+		title: "Sign-in didn't work",
+		body: 'Something went wrong on our side. Try again in a moment.'
 	}
 };
 
