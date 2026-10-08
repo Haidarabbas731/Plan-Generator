@@ -88,16 +88,17 @@
 			</div>
 			<dl class="flex flex-col gap-3 text-sm">
 				{#each tasks as task (task.label)}
-					<div class="flex items-start gap-3">
-						<span
-							class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background/60 text-accent-foreground"
-						>
-							<task.icon class="size-4" aria-hidden="true" />
-						</span>
-						<div class="min-w-0 pt-0.5">
-							<dt class="font-medium text-accent-foreground">{task.label}</dt>
-							<dd class="whitespace-pre-line text-foreground/85">{task.text}</dd>
-						</div>
+					<div class="relative min-w-0 pt-0.5 pl-11">
+						<dt class="font-medium text-accent-foreground">
+							<span
+								class="absolute top-0 left-0 flex size-8 items-center justify-center rounded-lg bg-background/60"
+								aria-hidden="true"
+							>
+								<task.icon class="size-4" />
+							</span>
+							{task.label}
+						</dt>
+						<dd class="whitespace-pre-line text-foreground/85">{task.text}</dd>
 					</div>
 				{/each}
 			</dl>
