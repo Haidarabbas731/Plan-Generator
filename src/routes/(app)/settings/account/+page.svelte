@@ -8,6 +8,7 @@
 	import PasswordInput from '#lib/components/auth/password-input.svelte';
 	import PasswordStrength from '#lib/components/auth/password-strength.svelte';
 	import PlanField from '#lib/components/plans/plan-field.svelte';
+	import SettingsSection from '#lib/components/settings/settings-section.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Field, FieldError, FieldGroup, FieldLabel } from '#lib/components/ui/field/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -49,9 +50,8 @@
 	<meta name="description" content="Manage your name and password." />
 </svelte:head>
 
-<div class="flex flex-col gap-10">
-	<section class="flex flex-col gap-4" aria-labelledby="profile-heading">
-		<h2 id="profile-heading" class="text-lg font-medium">Profile</h2>
+<div class="flex flex-col gap-8">
+	<SettingsSection id="profile" title="Profile">
 		<div class="flex flex-col gap-1 text-sm">
 			<span class="text-muted-foreground">Email</span>
 			<span class="flex flex-wrap items-center gap-2">
@@ -84,10 +84,9 @@
 				</Button>
 			</div>
 		</form>
-	</section>
+	</SettingsSection>
 
-	<section class="flex flex-col gap-4" aria-labelledby="password-heading">
-		<h2 id="password-heading" class="text-lg font-medium">Password</h2>
+	<SettingsSection id="password" title="Password">
 		{#if data.hasPassword}
 			<form
 				method="POST"
@@ -135,16 +134,20 @@
 				password to change here.
 			</p>
 		{/if}
-	</section>
+	</SettingsSection>
 
-	<section class="flex flex-col gap-3" aria-labelledby="connected-heading">
-		<h2 id="connected-heading" class="text-lg font-medium">Connected accounts</h2>
+	<SettingsSection id="connected" title="Connected accounts" panel={false}>
 		{#if data.connected.length > 0}
 			<ul class="flex flex-col gap-2 text-sm">
 				{#each data.connected as provider (provider)}
-					<li class="flex items-center gap-2 rounded-lg border px-3 py-2.5">
+					<li class="flex items-center gap-2.5 rounded-lg px-3 py-2.5 surface-flat">
+						{#if provider.toLowerCase() === 'google'}
+							<GoogleIcon class="size-4" />
+						{:else if provider.toLowerCase() === 'github'}
+							<GithubIcon class="size-4" />
+						{/if}
+						<span class="flex-1 capitalize">{provider}</span>
 						<BadgeCheckIcon class="size-4 text-success" aria-hidden="true" />
-						{provider}
 					</li>
 				{/each}
 			</ul>
@@ -176,7 +179,7 @@
 				Connecting lets you sign in with that account too. It must use the same email address.
 			</p>
 		{/if}
-	</section>
+	</SettingsSection>
 
 	{#if !data.emailEnabled}
 		<p class="text-caption text-muted-foreground">

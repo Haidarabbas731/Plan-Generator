@@ -4,6 +4,7 @@
 	import KeyRoundIcon from '@lucide/svelte/icons/key-round';
 	import { toast } from 'svelte-sonner';
 	import ModelField from '#lib/components/plans/model-field.svelte';
+	import SettingsSection from '#lib/components/settings/settings-section.svelte';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
@@ -25,14 +26,12 @@
 	<meta name="description" content="Choose the default provider and model for new plans." />
 </svelte:head>
 
-<section class="flex flex-col gap-6" aria-labelledby="defaults-heading">
-	<div class="flex flex-col gap-1">
-		<h2 id="defaults-heading" class="text-lg font-medium">Default model</h2>
-		<p class="text-sm text-muted-foreground">
-			New plans start with this provider and model. You can still change them for each plan.
-		</p>
-	</div>
-
+<SettingsSection
+	id="defaults"
+	title="Default model"
+	description="New plans start with this provider and model. You can still change them for each plan."
+	panel={data.providers.length > 0}
+>
 	{#if data.providers.length === 0}
 		<Alert>
 			<KeyRoundIcon aria-hidden="true" />
@@ -76,4 +75,4 @@
 			</div>
 		</form>
 	{/if}
-</section>
+</SettingsSection>

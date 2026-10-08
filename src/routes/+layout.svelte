@@ -25,7 +25,10 @@
 </svelte:head>
 
 <ModeWatcher themeColors={{ light: '#f2fbf9', dark: '#0a1d1c' }} />
-<Toaster position="bottom-right" />
+<Toaster
+	position="bottom-right"
+	mobileOffset={{ bottom: 'calc(7.5rem + env(safe-area-inset-bottom))', left: 16, right: 16 }}
+/>
 
 <a
 	href="#main"

@@ -2,6 +2,7 @@
 	import DownloadIcon from '@lucide/svelte/icons/download';
 	import { toast } from 'svelte-sonner';
 	import DeleteAccountDialog from '#lib/components/settings/delete-account-dialog.svelte';
+	import SettingsSection from '#lib/components/settings/settings-section.svelte';
 	import { Button } from '#lib/components/ui/button/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import type { PageProps } from './$types';
@@ -48,9 +49,8 @@
 	<meta name="description" content="Export your data or delete your account." />
 </svelte:head>
 
-<div class="flex flex-col gap-10">
-	<section class="flex flex-col gap-3" aria-labelledby="privacy-heading">
-		<h2 id="privacy-heading" class="text-lg font-medium">What we keep</h2>
+<div class="flex flex-col gap-8">
+	<SettingsSection id="privacy" title="What we keep">
 		<ul class="flex list-disc flex-col gap-1.5 pl-5 text-sm text-muted-foreground">
 			<li>Your account, plans, progress and chats with the plan assistant.</li>
 			<li>
@@ -63,14 +63,13 @@
 			</li>
 			<li>You can download everything below, or delete it all.</li>
 		</ul>
-	</section>
+	</SettingsSection>
 
-	<section class="flex flex-col gap-3" aria-labelledby="export-heading">
-		<h2 id="export-heading" class="text-lg font-medium">Export your data</h2>
-		<p class="text-sm text-muted-foreground">
-			A JSON file with your profile, settings, plans, progress and chats. Saved keys are not
-			included, only which providers you connected.
-		</p>
+	<SettingsSection
+		id="export"
+		title="Export your data"
+		description="A JSON file with your profile, settings, plans, progress and chats. Saved keys are not included, only which providers you connected."
+	>
 		<div>
 			<Button
 				type="button"
@@ -85,13 +84,14 @@
 				Download my data
 			</Button>
 		</div>
-	</section>
+	</SettingsSection>
 
-	<section class="flex flex-col gap-3" aria-labelledby="delete-heading">
-		<h2 id="delete-heading" class="text-lg font-medium">Delete your account</h2>
-		<p class="text-sm text-muted-foreground">
-			Removes your account, plans, chats and saved keys. Plans still being written are stopped.
-		</p>
+	<SettingsSection
+		id="delete"
+		title="Delete your account"
+		description="Removes your account, plans, chats and saved keys. Plans still being written are stopped."
+		tone="danger"
+	>
 		<div>
 			<Button
 				type="button"
@@ -102,7 +102,7 @@
 				Delete account
 			</Button>
 		</div>
-	</section>
+	</SettingsSection>
 </div>
 
 <DeleteAccountDialog bind:open={deleteOpen} hasPassword={data.hasPassword} error={deleteError} />
