@@ -16,6 +16,14 @@ function fromUtc(ms: number): string {
 	return new Date(ms).toISOString().slice(0, 10);
 }
 
+const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+export function isRealDate(value: string): boolean {
+	if (!DATE_PATTERN.test(value)) return false;
+	const date = new Date(`${value}T00:00:00Z`);
+	return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export function addDays(date: string, amount: number): string {
 	return fromUtc(toUtc(date) + amount * DAY_MS);
 }

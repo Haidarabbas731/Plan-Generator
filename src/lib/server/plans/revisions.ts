@@ -1,5 +1,4 @@
 import { and, asc, desc, eq, lte } from 'drizzle-orm';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type {
 	BlockStatus,
 	LedgerEntry,
@@ -9,11 +8,10 @@ import type {
 } from '#lib/plan-types.js';
 import { REVISION_KEEP } from '../config.js';
 import * as schema from '../db/schema.js';
+import type { Db, Tx } from '../db/types.js';
 
 const { plans, planBlocks, planDays, planRevisions } = schema;
 
-type Db = PostgresJsDatabase<typeof schema>;
-export type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
 type Executor = Db | Tx;
 
 export interface SnapshotBlock {

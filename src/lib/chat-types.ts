@@ -32,7 +32,7 @@ interface ToolPartLike {
 
 const EDIT_TOOLS = new Set(['revise_blocks', 'restructure_outline', 'update_schedule']);
 
-const rangeText = (from: number, to: number) =>
+export const rangeText = (from: number, to: number) =>
 	from === to ? `block ${from}` : `blocks ${from}–${to}`;
 
 function runningLabel(tool: string, input: Record<string, unknown> | undefined): string {

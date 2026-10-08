@@ -1,6 +1,7 @@
 import { LIMITS } from './limits.js';
 import type { PlanInputs } from './plan-types.js';
 import { isProvider, type Provider } from './providers.js';
+import { isRealDate } from './schedule.js';
 
 export interface ValidPlanRequest {
 	inputs: PlanInputs;
@@ -26,14 +27,6 @@ export type PlanRequestErrors = Partial<
 >;
 
 const LEVELS = ['beginner', 'some', 'returning'] as const;
-const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
-
-function isRealDate(value: string): boolean {
-	if (!DATE_PATTERN.test(value)) return false;
-	const date = new Date(`${value}T00:00:00Z`);
-	return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-}
-
 const asInt = (value: unknown): number | null => {
 	const number = typeof value === 'string' ? Number(value) : value;
 	return typeof number === 'number' && Number.isInteger(number) ? number : null;

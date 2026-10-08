@@ -1,5 +1,4 @@
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type {
 	BlockStatus,
 	LedgerEntry,
@@ -12,11 +11,11 @@ import type {
 import type { Provider } from '#lib/providers.js';
 import type { DayOutput, Outline } from '../ai/types.js';
 import * as schema from '../db/schema.js';
+import type { Db } from '../db/types.js';
 import { writeRevision } from './revisions.js';
 
 const { plans, planBlocks, planDays, usageEvents } = schema;
 
-export type Db = PostgresJsDatabase<typeof schema>;
 export type PlanRow = typeof plans.$inferSelect;
 export type BlockRow = typeof planBlocks.$inferSelect;
 export type DayRow = typeof planDays.$inferSelect;

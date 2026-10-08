@@ -1,13 +1,13 @@
 import { and, eq } from 'drizzle-orm';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type { Provider } from '#lib/providers.js';
 import type { Vault } from '../crypto/vault.js';
 import * as schema from '../db/schema.js';
+import type { Db } from '../db/types.js';
 import type { KeyInfo } from './key-flow.js';
 
 const { providerKeys } = schema;
 
-export function createKeyStore(db: PostgresJsDatabase<typeof schema>, vault: Vault) {
+export function createKeyStore(db: Db, vault: Vault) {
 	const selection = {
 		provider: providerKeys.provider,
 		last4: providerKeys.last4,

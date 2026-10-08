@@ -1,12 +1,10 @@
 import type { UIMessage } from 'ai';
 import { and, asc, desc, eq } from 'drizzle-orm';
-import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import type { Provider } from '#lib/providers.js';
 import * as schema from '../db/schema.js';
+import type { Db } from '../db/types.js';
 
 const { conversations, messages, plans } = schema;
-
-type Db = PostgresJsDatabase<typeof schema>;
 
 export interface StoredMessage {
 	id: string;
