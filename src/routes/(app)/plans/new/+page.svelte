@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 	import { enhance } from '$app/forms';
+	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import KeyRoundIcon from '@lucide/svelte/icons/key-round';
 	import ModelField from '#lib/components/plans/model-field.svelte';
 	import PlanField from '#lib/components/plans/plan-field.svelte';
@@ -8,7 +9,12 @@
 	import PageHeader from '#lib/components/shared/page-header.svelte';
 	import StudyDaysField from '#lib/components/plans/study-days-field.svelte';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
-	import { Button } from '#lib/components/ui/button/index.js';
+	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
+	import {
+		Collapsible,
+		CollapsibleContent,
+		CollapsibleTrigger
+	} from '#lib/components/ui/collapsible/index.js';
 	import {
 		Field,
 		FieldDescription,
@@ -21,6 +27,7 @@
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import { Textarea } from '#lib/components/ui/textarea/index.js';
 	import { ToggleGroup, ToggleGroupItem } from '#lib/components/ui/toggle-group/index.js';
+	import { createDisclosureMode } from '#lib/disclosure.svelte.js';
 	import { localToday } from '#lib/format.js';
 	import { summarizePlan } from '#lib/plan-summary.js';
 	import type { PageProps } from './$types';
@@ -80,6 +87,27 @@
 		data.providers.length > 0 && studyDays.length > 0 && goal.trim().length > 0 && !submitting
 	);
 
+	const submitHint = $derived(
+		data.providers.length === 0
+			? 'Add an AI key in Settings to generate a plan.'
+			: goal.trim().length === 0
+				? 'Describe your goal to continue.'
+				: studyDays.length === 0
+					? 'Choose at least one study day.'
+					: ''
+	);
+
+	const customizeMode = createDisclosureMode();
+	const modelMode = createDisclosureMode();
+	let customizeUser = $state(false);
+	let modelUser = $state(false);
+
+	const customizeForced = $derived(
+		Boolean(errors.doneLooksLike || errors.startDate || errors.blockSize || errors.studyDays) ||
+			studyDays.length === 0
+	);
+	const modelForced = $derived(!provider || !model || Boolean(errors.provider || errors.model));
+
 	onMount(() => {
 		if (startDate === data.today) startDate = localToday();
 	});
@@ -91,13 +119,13 @@
 </svelte:head>
 
 <div class="frame py-10">
-	<div class="flex column-narrow flex-col gap-8">
-		<PageHeader
-			title="New plan"
-			description="Tell us what you want to learn. Your plan is written block by block, and you can start reading while it is still being written."
-		/>
+	<PageHeader
+		title="New plan"
+		description="Tell us what you want to learn. Your plan is written block by block, and you can start reading while it is still being written."
+	/>
 
-		{#if data.providers.length === 0}
+	{#if data.providers.length === 0}
+		<div class="mt-8 column-narrow">
 			<Alert>
 				<KeyRoundIcon aria-hidden="true" />
 				<AlertTitle>Connect your AI key first</AlertTitle>
@@ -111,20 +139,22 @@
 					</a>
 				</AlertDescription>
 			</Alert>
-		{/if}
+		</div>
+	{/if}
 
-		<form
-			method="POST"
-			novalidate
-			class="flex flex-col gap-8"
-			use:enhance={() => {
-				submitting = true;
-				return async ({ update }) => {
-					await update({ reset: false });
-					submitting = false;
-				};
-			}}
-		>
+	<form
+		method="POST"
+		novalidate
+		class="mt-8 flex flex-col gap-8 lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-12"
+		use:enhance={() => {
+			submitting = true;
+			return async ({ update }) => {
+				await update({ reset: false });
+				submitting = false;
+			};
+		}}
+	>
+		<div class="flex flex-col gap-8 lg:max-w-2xl">
 			{#if form?.formError}
 				<Alert variant="destructive" role="alert">
 					<AlertDescription>{form.formError}</AlertDescription>
@@ -170,16 +200,6 @@
 					</ToggleGroup>
 					<input type="hidden" name="level" value={level} />
 				</FieldSet>
-
-				<PlanField
-					id="doneLooksLike"
-					label="What does done look like?"
-					bind:value={doneLooksLike}
-					maxlength={data.limits.doneLooksLikeMax}
-					placeholder="I can ship a small command line tool"
-					note="Optional. One sentence is enough."
-					error={errors.doneLooksLike}
-				/>
 			</FieldGroup>
 
 			<FieldGroup class="grid gap-6 sm:grid-cols-2">
@@ -206,72 +226,166 @@
 					bind:value={hoursPerDay}
 					error={errors.hoursPerDay}
 				/>
-				<PlanField
-					id="startDate"
-					label="Start date"
-					type="date"
-					bind:value={startDate}
-					error={errors.startDate}
-				/>
-				<PlanField
-					id="blockSize"
-					label="Days per block"
-					type="number"
-					inputmode="numeric"
-					min={data.limits.minBlockDays}
-					max={data.limits.maxBlockDays}
-					step="1"
-					bind:value={blockSize}
-					note="Each block ends with a milestone. At least {data.limits.minBlockDays} days."
-					error={errors.blockSize}
-				/>
 			</FieldGroup>
 
-			<FieldSet>
-				<FieldLegend variant="label">Study days</FieldLegend>
-				<FieldDescription id="study-days-note">
-					Sessions land on these weekdays. Other days are rest days.
-				</FieldDescription>
-				<StudyDaysField
-					bind:value={studyDays}
-					invalid={Boolean(errors.studyDays) || studyDays.length === 0}
-					describedBy="study-days-note"
-				/>
-				{#if errors.studyDays || studyDays.length === 0}
-					<FieldError>{errors.studyDays ?? 'Choose at least one day of the week.'}</FieldError>
-				{/if}
-			</FieldSet>
+			{#if data.providers.length > 0}
+				<Collapsible bind:open={() => modelUser || modelForced, (value) => (modelUser = value)}>
+					<div class="flex flex-col gap-2">
+						<p class="text-sm font-medium">AI model</p>
+						<div
+							class="flex min-h-11 items-center justify-between gap-3 rounded-lg py-1 pr-1 pl-3 surface-flat"
+						>
+							<p class="min-w-0 truncate text-sm">
+								{#if model}
+									Written by
+									<span class="font-medium">{providerName ?? 'your AI provider'} · {model}</span>
+								{:else}
+									<span class="text-muted-foreground">Choose the model that writes your plan</span>
+								{/if}
+							</p>
+							{#if !modelForced}
+								<CollapsibleTrigger
+									class={buttonVariants({
+										variant: 'ghost',
+										size: 'sm',
+										class: 'h-9 shrink-0 gap-1 px-3'
+									})}
+									onkeydown={modelMode.onkeydown}
+									onpointerdown={modelMode.onpointerdown}
+								>
+									{modelUser || modelForced ? 'Hide' : 'Change'}
+									<ChevronDownIcon
+										class="size-4 transition-transform duration-(--dur-fast) ease-(--ease-out) {modelUser ||
+										modelForced
+											? 'rotate-180'
+											: ''}"
+										aria-hidden="true"
+									/>
+								</CollapsibleTrigger>
+							{/if}
+						</div>
+					</div>
+					<CollapsibleContent data-instant={modelMode.instant ? '' : undefined}>
+						<div class="flex flex-col gap-3 pt-3">
+							<p class="text-sm text-muted-foreground">
+								The model writes your plan with your own key. You can switch it later.
+							</p>
+							<ModelField
+								providers={data.providers}
+								bind:provider
+								bind:model
+								providerError={errors.provider}
+								modelError={errors.model}
+							/>
+						</div>
+					</CollapsibleContent>
+				</Collapsible>
+			{/if}
 
-			<FieldSet>
-				<FieldLegend variant="label">AI model</FieldLegend>
-				<FieldDescription>
-					The model writes your plan with your own key. You can switch it later.
-				</FieldDescription>
-				<ModelField
-					providers={data.providers}
-					bind:provider
-					bind:model
-					providerError={errors.provider}
-					modelError={errors.model}
-				/>
-			</FieldSet>
+			<Collapsible
+				bind:open={() => customizeUser || customizeForced, (value) => (customizeUser = value)}
+				class="rounded-xl surface-flat"
+			>
+				<CollapsibleTrigger
+					class="group flex min-h-16 w-full items-center gap-3 rounded-xl p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+					onkeydown={customizeMode.onkeydown}
+					onpointerdown={customizeMode.onpointerdown}
+				>
+					<span class="flex min-w-0 flex-1 flex-col gap-0.5">
+						<span class="text-heading">Customize your plan</span>
+						<span class="text-caption text-muted-foreground">
+							What done looks like, start date, days per block, study days
+						</span>
+					</span>
+					<ChevronDownIcon
+						class="size-4 shrink-0 text-muted-foreground transition-transform duration-(--dur-fast) ease-(--ease-out) group-data-[state=open]:rotate-180"
+						aria-hidden="true"
+					/>
+				</CollapsibleTrigger>
+				<CollapsibleContent data-instant={customizeMode.instant ? '' : undefined}>
+					<div class="flex flex-col gap-8 px-4 pt-1 pb-5">
+						<PlanField
+							id="doneLooksLike"
+							label="What does done look like?"
+							bind:value={doneLooksLike}
+							maxlength={data.limits.doneLooksLikeMax}
+							placeholder="I can ship a small command line tool"
+							note="Optional. One sentence is enough."
+							error={errors.doneLooksLike}
+						/>
 
+						<FieldGroup class="grid gap-6 sm:grid-cols-2">
+							<PlanField
+								id="startDate"
+								label="Start date"
+								type="date"
+								bind:value={startDate}
+								error={errors.startDate}
+							/>
+							<PlanField
+								id="blockSize"
+								label="Days per block"
+								type="number"
+								inputmode="numeric"
+								min={data.limits.minBlockDays}
+								max={data.limits.maxBlockDays}
+								step="1"
+								bind:value={blockSize}
+								note="Each block ends with a milestone. At least {data.limits.minBlockDays} days."
+								error={errors.blockSize}
+							/>
+						</FieldGroup>
+
+						<FieldSet>
+							<FieldLegend variant="label">Study days</FieldLegend>
+							<FieldDescription id="study-days-note">
+								Sessions land on these weekdays. Other days are rest days.
+							</FieldDescription>
+							<StudyDaysField
+								bind:value={studyDays}
+								invalid={Boolean(errors.studyDays) || studyDays.length === 0}
+								describedBy="study-days-note"
+							/>
+							{#if errors.studyDays || studyDays.length === 0}
+								<FieldError>
+									{errors.studyDays ?? 'Choose at least one day of the week.'}
+								</FieldError>
+							{/if}
+						</FieldSet>
+					</div>
+				</CollapsibleContent>
+			</Collapsible>
+		</div>
+
+		<aside class="contents lg:sticky lg:top-20 lg:flex lg:flex-col lg:gap-4">
 			<PlanSummaryCard {summary} {daysTotal} {providerName} />
 
-			<div class="flex flex-col gap-2">
-				<Button type="submit" size="lg" class="h-12" disabled={!canSubmit}>
+			<div
+				class="sticky bottom-0 z-30 -mx-4 flex flex-col gap-2 border-t glass px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] sm:-mx-6 sm:px-6 lg:static lg:mx-0 lg:border-0 lg:bg-transparent! lg:p-0 lg:backdrop-blur-none"
+			>
+				<Button
+					type="submit"
+					size="lg"
+					class="h-12"
+					disabled={!canSubmit}
+					aria-describedby={submitHint ? 'submit-hint' : undefined}
+				>
 					{#if submitting}<Spinner data-icon="inline-start" />{/if}
 					{submitting ? 'Starting' : 'Generate plan'}
 				</Button>
-				{#if data.providers.length === 0}
-					<p class="text-sm text-muted-foreground">
-						Add an AI key in <a
-							href="/settings/keys"
-							class="font-medium text-primary underline-offset-4 hover:underline">Settings</a
-						> to generate a plan.
+				{#if submitHint}
+					<p id="submit-hint" class="text-caption text-muted-foreground">
+						{#if data.providers.length === 0}
+							Add an AI key in <a
+								href="/settings/keys"
+								class="font-medium text-primary underline-offset-4 hover:underline">Settings</a
+							> to generate a plan.
+						{:else}
+							{submitHint}
+						{/if}
 					</p>
 				{/if}
 			</div>
-		</form>
-	</div>
+		</aside>
+	</form>
 </div>

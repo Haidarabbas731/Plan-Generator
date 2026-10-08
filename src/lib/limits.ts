@@ -6,6 +6,7 @@ export const LIMITS = {
 	emailMax: 254,
 	apiKeyMin: 8,
 	apiKeyMax: 400,
+	searchMinPlans: 4,
 	minBlockDays: 3,
 	maxBlockDays: 30,
 	goalMin: 3,

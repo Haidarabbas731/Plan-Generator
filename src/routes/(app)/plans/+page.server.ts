@@ -1,4 +1,5 @@
 import { fail } from '@sveltejs/kit';
+import { AI_FAKE } from '$app/env/private';
 import { appLimits } from '#lib/server/app-limits.js';
 import { planService, planStore } from '#lib/server/plans/runtime.js';
 import { requireUser } from '#lib/server/require-user.js';
@@ -11,7 +12,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		listKeys(user.id),
 		planStore.listPlanSummaries(user.id)
 	]);
-	return { hasKeys: keys.length > 0, plans, planLimit: appLimits.plansPerUser };
+	return { hasKeys: AI_FAKE || keys.length > 0, plans, planLimit: appLimits.plansPerUser };
 };
 
 export const actions: Actions = {

@@ -18,6 +18,7 @@
 		EmptyTitle
 	} from '#lib/components/ui/empty/index.js';
 	import { Input } from '#lib/components/ui/input/index.js';
+	import { LIMITS } from '#lib/limits.js';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -27,6 +28,7 @@
 	let deleteOpen = $state(false);
 
 	const NEAR_LIMIT_RATIO = 0.8;
+	const showSearch = $derived(data.plans.length >= LIMITS.searchMinPlans);
 	const nearLimit = $derived(data.plans.length >= data.planLimit * NEAR_LIMIT_RATIO);
 
 	const filtered = $derived.by(() => {
@@ -64,7 +66,7 @@
 		{/if}
 	</div>
 
-	{#if !data.hasKeys}
+	{#if !data.hasKeys && data.plans.length > 0}
 		<Alert>
 			<KeyRoundIcon aria-hidden="true" />
 			<AlertTitle>Connect your AI key</AlertTitle>
@@ -80,7 +82,44 @@
 		</Alert>
 	{/if}
 
-	{#if data.plans.length === 0}
+	{#if data.plans.length === 0 && !data.hasKeys}
+		<section aria-labelledby="start-heading" class="reveal rounded-xl p-6 surface-flat sm:p-8">
+			<h2 id="start-heading" class="text-heading">Get started</h2>
+			<p class="mt-1 text-sm text-muted-foreground">Two steps and your first plan is on its way.</p>
+			<ol class="mt-6 flex flex-col gap-6">
+				<li class="flex items-start gap-4">
+					<span
+						class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground"
+					>
+						1
+					</span>
+					<div class="flex flex-col gap-1">
+						<p class="font-medium">Connect your AI key</p>
+						<p class="text-sm text-muted-foreground">
+							Plans are written with your own key. It is stored encrypted.
+						</p>
+						<div class="mt-2">
+							<a href="/settings/keys" class={buttonVariants({ class: 'h-11 px-4' })}>
+								<KeyRoundIcon aria-hidden="true" />
+								Add a key
+							</a>
+						</div>
+					</div>
+				</li>
+				<li class="flex items-start gap-4 text-muted-foreground">
+					<span
+						class="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold"
+					>
+						2
+					</span>
+					<div class="flex flex-col gap-1">
+						<p class="font-medium text-foreground">Create your first plan</p>
+						<p class="text-sm">Describe a goal and get a day-by-day plan you can follow.</p>
+					</div>
+				</li>
+			</ol>
+		</section>
+	{:else if data.plans.length === 0}
 		<Empty class="reveal border">
 			<EmptyHeader>
 				<EmptyMedia variant="icon"><InboxIcon /></EmptyMedia>
@@ -96,19 +135,21 @@
 			</EmptyContent>
 		</Empty>
 	{:else}
-		<div class="relative">
-			<SearchIcon
-				class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-				aria-hidden="true"
-			/>
-			<Input
-				type="search"
-				bind:value={query}
-				placeholder="Search your plans"
-				aria-label="Search your plans"
-				class="h-11 pl-9"
-			/>
-		</div>
+		{#if showSearch}
+			<div class="relative">
+				<SearchIcon
+					class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+					aria-hidden="true"
+				/>
+				<Input
+					type="search"
+					bind:value={query}
+					placeholder="Search your plans"
+					aria-label="Search your plans"
+					class="h-11 pl-9"
+				/>
+			</div>
+		{/if}
 
 		{#if filtered.length === 0}
 			<p class="py-8 text-center text-muted-foreground">No plans match “{query.trim()}”.</p>

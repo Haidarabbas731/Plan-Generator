@@ -22,11 +22,18 @@ export async function signUp(page: Page, name = 'E2E User') {
 	return email;
 }
 
+export async function openCustomize(page: Page) {
+	const toggle = page.getByRole('button', { name: /Customize your plan/ });
+	if ((await toggle.getAttribute('aria-expanded')) !== 'true') await toggle.click();
+	await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+}
+
 export async function createFakePlan(page: Page) {
 	await signUp(page);
 	await open(page, '/plans/new');
 	await page.getByLabel('What do you want to learn?').fill('Learn to cook risotto');
 	await page.getByLabel('Study sessions').fill('6');
+	await openCustomize(page);
 	await page.getByLabel('Days per block').fill('3');
 	await page.getByRole('button', { name: 'Model', exact: true }).click();
 	await page.getByRole('option', { name: 'Fake model' }).click();

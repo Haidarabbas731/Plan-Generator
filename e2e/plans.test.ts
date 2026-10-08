@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { open, signUp } from './helpers.js';
+import { open, openCustomize, signUp } from './helpers.js';
 
 const WEEKDAY_NAMES = [
 	'Monday',
@@ -41,7 +41,11 @@ test('exports of a plan that does not exist are not found', async ({ page }) => 
 test('a new user sees an empty history and can start a plan', async ({ page }) => {
 	await signUp(page);
 	await open(page, '/plans');
-	await expect(page.getByText('No plans yet')).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Get started' })).toBeVisible();
+	await expect(page.getByRole('link', { name: 'Add a key' })).toHaveAttribute(
+		'href',
+		'/settings/keys'
+	);
 
 	const header = page.locator('header').first();
 	await expect(header).not.toHaveAttribute('data-scrolled', '');
@@ -71,15 +75,28 @@ test('without an AI key the form explains what to do and cannot be submitted', a
 	await expect(page.getByText('Connect your AI key first')).toBeVisible();
 	await page.getByLabel('What do you want to learn?').fill('Learn to cook risotto');
 	await expect(page.getByRole('button', { name: 'Generate plan' })).toBeDisabled();
+	await expect(page.getByText('Add an AI key in Settings to generate a plan.')).toBeVisible();
 	await expect(page.getByRole('link', { name: 'Add a key' })).toHaveAttribute(
 		'href',
 		'/settings/keys'
 	);
 });
 
-test('study days start on every day and the presets change them', async ({ page }) => {
+test('the rarely used settings sit under Customize, then study days and presets work', async ({
+	page
+}) => {
 	await signUp(page);
 	await open(page, '/plans/new');
+
+	const toggle = page.getByRole('button', { name: /Customize your plan/ });
+	await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+	await expect(page.getByLabel('Days per block')).toBeHidden();
+	await expect(page.getByLabel('Study sessions')).toBeVisible();
+	await expect(page.getByLabel('Hours per session')).toBeVisible();
+	await toggle.click();
+	await expect(page.getByLabel('Days per block')).toBeVisible();
+	await expect(page.getByLabel('Start date')).toBeVisible();
+	await expect(page.getByLabel('What does done look like?')).toBeVisible();
 
 	for (const day of WEEKDAY_NAMES) {
 		await expect(chip(page, day)).toHaveAttribute('data-state', 'on');
@@ -106,10 +123,13 @@ test('study days start on every day and the presets change them', async ({ page 
 	);
 });
 
-test('turning off every study day shows a message', async ({ page }) => {
+test('turning off every study day shows a message and keeps Customize open', async ({ page }) => {
 	await signUp(page);
 	await open(page, '/plans/new');
+	await openCustomize(page);
 	for (const day of WEEKDAY_NAMES) await chip(page, day).click();
+	await expect(page.getByText('Choose at least one day of the week.')).toBeVisible();
+	await page.getByRole('button', { name: /Customize your plan/ }).click();
 	await expect(page.getByText('Choose at least one day of the week.')).toBeVisible();
 });
 

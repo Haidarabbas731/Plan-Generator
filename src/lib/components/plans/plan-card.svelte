@@ -44,9 +44,9 @@
 </script>
 
 <div
-	class="relative flex min-h-11 pressable-within items-center gap-4 rounded-lg border bg-card p-4 text-card-foreground hover:border-ring/50"
+	class="relative flex min-h-11 pressable-within items-center gap-4 rounded-lg surface-interactive p-4 text-card-foreground surface-raised"
 >
-	<ProgressRing value={ratio} label="{plan.title} progress" />
+	<ProgressRing value={ratio} size={52} label="{plan.title} progress" />
 	<div class="flex min-w-0 flex-1 flex-col gap-1.5">
 		<h2 class="truncate text-heading">
 			<a
@@ -58,20 +58,25 @@
 		</h2>
 		<p class="truncate text-caption text-muted-foreground">
 			<span class="tabular-nums">{plan.daysDone} of {plan.daysTotal} days</span>
-			· {PROVIDER_INFO[plan.provider].name} · {plan.model} · {updated}
+			· Updated {updated}
 		</p>
-		{#if plan.topicTag || statusLabel}
-			<div class="flex flex-wrap items-center gap-1.5">
-				{#if plan.topicTag}
-					<Badge variant="secondary">{plan.topicTag}</Badge>
-				{/if}
-				{#if statusLabel}
-					<Badge variant={plan.status === 'failed' ? 'destructive' : 'outline'}>
-						{statusLabel}
-					</Badge>
-				{/if}
-			</div>
-		{/if}
+		<div
+			class="flex flex-wrap items-center gap-1.5 {plan.topicTag || statusLabel
+				? ''
+				: 'max-sm:hidden'}"
+		>
+			{#if statusLabel}
+				<Badge variant={plan.status === 'failed' ? 'destructive' : 'outline'}>
+					{statusLabel}
+				</Badge>
+			{/if}
+			{#if plan.topicTag}
+				<Badge variant="secondary">{plan.topicTag}</Badge>
+			{/if}
+			<Badge variant="outline" class="hidden max-w-full min-w-0 justify-start sm:inline-flex">
+				<span class="truncate">{PROVIDER_INFO[plan.provider].name} · {plan.model}</span>
+			</Badge>
+		</div>
 	</div>
 
 	<DropdownMenu.Root>

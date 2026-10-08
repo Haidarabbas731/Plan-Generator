@@ -40,6 +40,13 @@ describe('PlanCard', () => {
 		).toBeInTheDocument();
 	});
 
+	it('shows the update date and keeps the model out of the progress line', () => {
+		setup();
+		const progress = screen.getByText('3 of 30 days').closest('p');
+		expect(progress).toHaveTextContent(/Updated Oct 7/);
+		expect(progress).not.toHaveTextContent('gemini-test');
+	});
+
 	it('has an actions menu named after the plan', () => {
 		setup();
 		expect(screen.getByRole('button', { name: 'Actions for Learn Rust' })).toBeInTheDocument();

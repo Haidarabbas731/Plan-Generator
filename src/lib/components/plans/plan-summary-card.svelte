@@ -12,7 +12,7 @@
 
 <section
 	aria-label="Plan summary"
-	class="flex flex-col gap-1 rounded-lg border bg-accent/50 p-4 text-sm"
+	class="flex flex-col gap-1 rounded-xl bg-accent/50 p-4 text-sm surface-flat"
 >
 	{#if summary}
 		<p class="font-medium text-accent-foreground">
@@ -28,6 +28,6 @@
 				'AI provider'} key.
 		</p>
 	{:else}
-		<p class="text-muted-foreground">Fill in the numbers above to see the size of your plan.</p>
+		<p class="text-muted-foreground">Fill in the numbers to see the size of your plan.</p>
 	{/if}
 </section>
