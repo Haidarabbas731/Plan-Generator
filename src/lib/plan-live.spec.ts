@@ -3,6 +3,7 @@ import {
 	applyLiveEvent,
 	liveFromData,
 	needsRefetch,
+	sameLive,
 	writingLabel,
 	type LiveEvent,
 	type LiveState
@@ -146,5 +147,21 @@ describe('writingLabel', () => {
 		expect(writingLabel({ ...base, status: 'paused' }, 4)).toBe('Paused');
 		expect(writingLabel({ ...base, status: 'failed' }, 4)).toBe('Stopped');
 		expect(writingLabel({ ...base, status: 'ready' }, 4)).toBe('Done');
+	});
+});
+
+describe('sameLive', () => {
+	const ready = { status: 'ready' as const, error: null };
+	it('is true for equal status and block states', () => {
+		const a: LiveState = { ...base, blocks: { 0: { ...ready, status: 'ready' } } };
+		expect(sameLive(a, { ...a })).toBe(true);
+	});
+	it('detects a different plan status', () => {
+		expect(sameLive(base, { ...base, status: 'ready' })).toBe(false);
+	});
+	it('detects a block that changed or appeared', () => {
+		const a: LiveState = { ...base, blocks: { 0: { status: 'writing', error: null } } };
+		expect(sameLive(a, { ...a, blocks: { 0: { status: 'ready', error: null } } })).toBe(false);
+		expect(sameLive(base, a)).toBe(false);
 	});
 });

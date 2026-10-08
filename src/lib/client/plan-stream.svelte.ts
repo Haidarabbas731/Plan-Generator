@@ -2,6 +2,7 @@ import { createContext } from 'svelte';
 import {
 	applyLiveEvent,
 	needsRefetch,
+	sameLive,
 	writingLabel,
 	type LiveEvent,
 	type LiveState
@@ -54,8 +55,14 @@ export class PlanStream {
 			}
 			const isReconnectSnapshot = event.type === 'snapshot' && this.#hasConnected;
 			if (event.type === 'snapshot') this.#hasConnected = true;
-			this.live = applyLiveEvent(this.live, event);
-			if (isReconnectSnapshot || (event.type !== 'snapshot' && needsRefetch(event))) {
+			const before = this.live;
+			this.live = applyLiveEvent(before, event);
+			const staleFirstSnapshot = event.type === 'snapshot' && !sameLive(before, this.live);
+			if (
+				isReconnectSnapshot ||
+				staleFirstSnapshot ||
+				(event.type !== 'snapshot' && needsRefetch(event))
+			) {
 				this.#onChange();
 			}
 		};

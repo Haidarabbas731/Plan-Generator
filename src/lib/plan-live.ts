@@ -89,6 +89,12 @@ export function liveFromData(
 	};
 }
 
+export function sameLive(a: LiveState, b: LiveState): boolean {
+	if (a.status !== b.status) return false;
+	const keys = new Set([...Object.keys(a.blocks), ...Object.keys(b.blocks)]);
+	return [...keys].every((key) => a.blocks[Number(key)]?.status === b.blocks[Number(key)]?.status);
+}
+
 export function needsRefetch(event: LiveEvent): boolean {
 	return event.type !== 'block_started';
 }
