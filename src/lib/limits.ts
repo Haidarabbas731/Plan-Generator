@@ -9,6 +9,7 @@ export const LIMITS = {
 	maxBlockDays: 30,
 	goalMin: 3,
 	goalMax: 2000,
+	goalPreviewChars: 220,
 	doneLooksLikeMax: 300,
 	maxPlanDays: 365,
 	minMinutesPerDay: 15,

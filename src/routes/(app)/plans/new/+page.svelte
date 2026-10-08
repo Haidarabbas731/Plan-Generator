@@ -260,7 +260,7 @@
 		<PlanSummaryCard {summary} {daysTotal} {providerName} />
 
 		<div class="flex flex-col gap-2">
-			<Button type="submit" size="lg" class="h-12 pressable" disabled={!canSubmit}>
+			<Button type="submit" size="lg" class="h-12" disabled={!canSubmit}>
 				{#if submitting}<Spinner data-icon="inline-start" />{/if}
 				{submitting ? 'Starting' : 'Generate plan'}
 			</Button>

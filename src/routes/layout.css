@@ -165,6 +165,7 @@
 	body {
 		@apply bg-background text-foreground;
 		line-height: 1.5;
+		overflow-wrap: anywhere;
 	}
 	::selection {
 		background: color-mix(in oklab, var(--primary) 22%, transparent);
@@ -309,17 +310,46 @@
 	transition: transform var(--dur-base) var(--ease-out);
 }
 
+@keyframes fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,
 	*::after {
-		animation-duration: 1ms !important;
-		animation-iteration-count: 1 !important;
+		--tw-enter-translate-x: 0 !important;
+		--tw-enter-translate-y: 0 !important;
+		--tw-enter-scale: 1 !important;
+		--tw-enter-rotate: 0 !important;
+		--tw-enter-blur: 0 !important;
+		--tw-exit-translate-x: 0 !important;
+		--tw-exit-translate-y: 0 !important;
+		--tw-exit-scale: 1 !important;
+		--tw-exit-rotate: 0 !important;
+		--tw-exit-blur: 0 !important;
 		scroll-behavior: auto !important;
 		transition-property: opacity, color, background-color, border-color, box-shadow !important;
 	}
-	.pressable:active,
-	.pressable-within:has(a:active) {
-		transform: none;
+	.reveal {
+		animation-name: fade-in;
+		animation-delay: 0ms;
+	}
+	[data-slot='collapsible-content'][data-state='open']:not([data-instant]) {
+		animation-name: fade-in;
+	}
+	[data-slot='collapsible-content'][data-state='closed']:not([data-instant]) {
+		animation-name: fade-out;
+	}
+	[data-slot='checkbox'][data-animate] [data-slot='checkbox-indicator'] path {
+		animation: none;
 	}
 }

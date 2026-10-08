@@ -34,6 +34,7 @@
 
 <svelte:head>
 	<title>Account · Plan Generator</title>
+	<meta name="description" content="Manage your name and password." />
 </svelte:head>
 
 <div class="flex flex-col gap-10">
@@ -65,7 +66,7 @@
 				error={nameError}
 			/>
 			<div>
-				<Button type="submit" class="h-11 pressable px-5" disabled={pending !== null}>
+				<Button type="submit" class="h-11 px-5" disabled={pending !== null}>
 					{#if pending === 'name'}<Spinner data-icon="inline-start" />{/if}
 					Save name
 				</Button>
@@ -108,7 +109,7 @@
 					Changing it signs you out on your other devices.
 				</p>
 				<div>
-					<Button type="submit" class="h-11 pressable px-5" disabled={pending !== null}>
+					<Button type="submit" class="h-11 px-5" disabled={pending !== null}>
 						{#if pending === 'password'}<Spinner data-icon="inline-start" />{/if}
 						Change password
 					</Button>

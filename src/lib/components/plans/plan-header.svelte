@@ -9,6 +9,7 @@
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import { formatDate } from '#lib/format.js';
+	import { LIMITS } from '#lib/limits.js';
 	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
 	import DeletePlanDialog from './delete-plan-dialog.svelte';
 	import ProgressRing from './progress-ring.svelte';
@@ -44,6 +45,9 @@
 	}: Props = $props();
 
 	let deleteOpen = $state(false);
+	let goalOpen = $state(false);
+
+	const goalLong = $derived(goal.length > LIMITS.goalPreviewChars);
 
 	const ratio = $derived(total === 0 ? 0 : done / total);
 </script>
@@ -56,7 +60,7 @@
 				<Button
 					type="button"
 					variant={chatOpen ? 'secondary' : 'outline'}
-					class="h-11 shrink-0 pressable gap-2 px-3.5"
+					class="h-11 shrink-0 gap-2 px-3.5"
 					aria-expanded={chatOpen}
 					aria-controls="plan-chat"
 					onclick={onchat}
@@ -101,7 +105,20 @@
 	</div>
 	<div class="flex min-w-0 flex-1 flex-col gap-2">
 		<h1 class="text-title">{title}</h1>
-		<p class="text-muted-foreground">{goal}</p>
+		<p id="plan-goal" class="text-muted-foreground {goalLong && !goalOpen ? 'line-clamp-3' : ''}">
+			{goal}
+		</p>
+		{#if goalLong}
+			<button
+				type="button"
+				class="-mt-1 min-h-11 self-start text-caption font-medium text-primary underline-offset-4 outline-none hover:underline focus-visible:underline"
+				aria-expanded={goalOpen}
+				aria-controls="plan-goal"
+				onclick={() => (goalOpen = !goalOpen)}
+			>
+				{goalOpen ? 'Show less' : 'Show more'}
+			</button>
+		{/if}
 		<div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-caption text-muted-foreground">
 			<span class="tabular-nums">{done} of {total} days done</span>
 			{#if streak > 0}

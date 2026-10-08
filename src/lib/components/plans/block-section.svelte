@@ -66,19 +66,19 @@
 						· <span class="tabular-nums">{done} of {days.length}</span> done
 					{/if}
 				</span>
+				{#if block.status === 'writing'}
+					<Badge variant="outline" class="mt-1.5 gap-1.5 self-start">
+						<Spinner class="size-3" aria-label="Writing this block" />
+						Writing
+					</Badge>
+				{:else if block.status === 'pending'}
+					<Badge variant="outline" class="mt-1.5 self-start">Waiting</Badge>
+				{:else if block.status === 'failed'}
+					<Badge variant="destructive" class="mt-1.5 self-start">Needs attention</Badge>
+				{:else if block.status === 'stale'}
+					<Badge variant="secondary" class="mt-1.5 self-start">May be out of date</Badge>
+				{/if}
 			</span>
-			{#if block.status === 'writing'}
-				<Badge variant="outline" class="gap-1.5">
-					<Spinner class="size-3" aria-label="Writing this block" />
-					Writing
-				</Badge>
-			{:else if block.status === 'pending'}
-				<Badge variant="outline">Waiting</Badge>
-			{:else if block.status === 'failed'}
-				<Badge variant="destructive">Needs attention</Badge>
-			{:else if block.status === 'stale'}
-				<Badge variant="secondary">May be out of date</Badge>
-			{/if}
 			<ChevronDownIcon
 				class="size-4 shrink-0 text-muted-foreground transition-transform duration-(--dur-fast) ease-(--ease-out) group-data-[state=open]:rotate-180"
 				aria-hidden="true"

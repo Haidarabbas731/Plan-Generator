@@ -56,7 +56,7 @@
 				</p>
 			{/if}
 		</div>
-		<a href="/plans/new" class={buttonVariants({ class: 'h-11 pressable px-4' })}>
+		<a href="/plans/new" class={buttonVariants({ class: 'h-11 px-4' })}>
 			<PlusIcon aria-hidden="true" />
 			New plan
 		</a>
@@ -88,7 +88,7 @@
 				</EmptyDescription>
 			</EmptyHeader>
 			<EmptyContent>
-				<a href="/plans/new" class={buttonVariants({ class: 'h-11 pressable px-4' })}>
+				<a href="/plans/new" class={buttonVariants({ class: 'h-11 px-4' })}>
 					Create your first plan
 				</a>
 			</EmptyContent>

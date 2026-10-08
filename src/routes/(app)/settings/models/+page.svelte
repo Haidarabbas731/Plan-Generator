@@ -22,6 +22,7 @@
 
 <svelte:head>
 	<title>Model defaults · Plan Generator</title>
+	<meta name="description" content="Choose the default provider and model for new plans." />
 </svelte:head>
 
 <section class="flex flex-col gap-6" aria-labelledby="defaults-heading">
@@ -68,7 +69,7 @@
 				modelError={errors.model}
 			/>
 			<div>
-				<Button type="submit" class="h-11 pressable px-5" disabled={saving || !model}>
+				<Button type="submit" class="h-11 px-5" disabled={saving || !model}>
 					{#if saving}<Spinner data-icon="inline-start" />{/if}
 					Save default
 				</Button>

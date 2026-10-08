@@ -35,9 +35,20 @@
 	class="flex flex-col gap-3 rounded-lg border border-highlight/30 bg-accent p-4"
 >
 	{#if today === null}
-		<Skeleton class="h-5 w-40" />
-		<Skeleton class="h-4 w-full" />
-		<Skeleton class="h-4 w-2/3" />
+		<div class="flex items-start gap-3" aria-hidden="true">
+			<Skeleton class="size-11 shrink-0 rounded-lg" />
+			<div class="flex min-h-[4.5rem] flex-1 flex-col gap-1.5 pt-1">
+				<Skeleton class="h-3.5 w-12" />
+				<Skeleton class="h-5 w-48 max-w-full" />
+				<Skeleton class="h-3.5 w-16" />
+			</div>
+		</div>
+		<div class="grid grid-cols-[4.5rem_1fr] gap-x-3 gap-y-3 sm:pl-14" aria-hidden="true">
+			{#each [0, 1, 2] as row (row)}
+				<Skeleton class="h-5 w-14" />
+				<Skeleton class="h-5 w-full" />
+			{/each}
+		</div>
 	{:else if today.kind === 'session'}
 		{#if day}
 			<div class="flex items-start gap-3">

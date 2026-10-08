@@ -18,3 +18,16 @@ export async function signUp(page: Page, name = 'E2E User') {
 	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
 	return email;
 }
+
+export async function createFakePlan(page: Page) {
+	await signUp(page);
+	await open(page, '/plans/new');
+	await page.getByLabel('What do you want to learn?').fill('Learn to cook risotto');
+	await page.getByLabel('Study sessions').fill('6');
+	await page.getByLabel('Days per block').fill('3');
+	await page.getByRole('button', { name: 'Model', exact: true }).click();
+	await page.getByRole('option', { name: 'Fake model' }).click();
+	await page.getByRole('button', { name: 'Generate plan' }).click();
+	await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}$/);
+	await expect(page.getByText('Day 6 · Lesson 6')).toBeAttached({ timeout: 30_000 });
+}

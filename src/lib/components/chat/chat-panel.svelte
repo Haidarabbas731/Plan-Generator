@@ -146,7 +146,7 @@
 			<Skeleton class="h-16 w-4/5" />
 		</div>
 	{:else}
-		<Conversation class="min-h-0 flex-1">
+		<Conversation class="min-h-0 flex-1" aria-label="Conversation" aria-busy={chat?.busy ?? false}>
 			<ConversationContent class="flex-1 gap-5 overflow-y-auto overscroll-contain">
 				{#if empty}
 					<div class="flex flex-col gap-3 py-2">
@@ -241,7 +241,7 @@
 				<Button
 					type="submit"
 					size="icon"
-					class="size-11 shrink-0 pressable"
+					class="size-11 shrink-0"
 					aria-label="Send"
 					disabled={!chat?.canSend || blockedReason !== null}
 				>

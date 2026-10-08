@@ -45,6 +45,7 @@
 
 <svelte:head>
 	<title>Data & privacy · Plan Generator</title>
+	<meta name="description" content="Export your data or delete your account." />
 </svelte:head>
 
 <div class="flex flex-col gap-10">
@@ -74,7 +75,7 @@
 			<Button
 				type="button"
 				variant="outline"
-				class="h-11 pressable gap-2 px-4"
+				class="h-11 gap-2 px-4"
 				disabled={exporting}
 				onclick={exportData}
 			>
@@ -95,7 +96,7 @@
 			<Button
 				type="button"
 				variant="destructive"
-				class="h-11 pressable px-4"
+				class="h-11 px-4"
 				onclick={() => (deleteOpen = true)}
 			>
 				Delete account

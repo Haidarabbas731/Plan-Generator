@@ -34,6 +34,7 @@
 	<InputGroupAddon align="inline-end">
 		<InputGroupButton
 			size="icon-xs"
+			class="relative after:absolute after:-inset-3 after:content-['']"
 			aria-label={visible ? 'Hide password' : 'Show password'}
 			aria-pressed={visible}
 			onclick={() => (visible = !visible)}

@@ -1,20 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { open, signUp } from './helpers.js';
+import { createFakePlan as createPlan } from './helpers.js';
 
 test.skip(process.env.AI_FAKE !== '1', 'needs the dev server to run with AI_FAKE=1');
-
-async function createPlan(page: Page) {
-	await signUp(page);
-	await open(page, '/plans/new');
-	await page.getByLabel('What do you want to learn?').fill('Learn to cook risotto');
-	await page.getByLabel('Study sessions').fill('6');
-	await page.getByLabel('Days per block').fill('3');
-	await page.getByRole('button', { name: 'Model', exact: true }).click();
-	await page.getByRole('option', { name: 'Fake model' }).click();
-	await page.getByRole('button', { name: 'Generate plan' }).click();
-	await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}$/);
-	await expect(page.getByText('Day 6 · Lesson 6')).toBeAttached({ timeout: 30_000 });
-}
 
 async function openChat(page: Page) {
 	await page.getByRole('button', { name: 'Ask' }).click();
