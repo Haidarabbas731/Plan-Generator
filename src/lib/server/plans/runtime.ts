@@ -66,3 +66,10 @@ export const chatService = createChatService({
 		return createLanguageModel(plan.provider, plan.model, key);
 	}
 });
+
+if (import.meta.hot) {
+	import.meta.hot.dispose(async () => {
+		await planQueue.close(true);
+		await planBus.close();
+	});
+}
