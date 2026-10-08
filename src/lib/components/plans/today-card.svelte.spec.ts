@@ -54,6 +54,36 @@ describe('TodayCard', () => {
 		expect(screen.getByText('90')).toBeInTheDocument();
 	});
 
+	it('says the plan is finished on the last day and pops the check only when asked', () => {
+		const { container, unmount } = render(TodayCard, {
+			props: {
+				today: { kind: 'session', day: 8 },
+				day: { ...day, completed: true },
+				allDone: true,
+				celebrate: false,
+				ontoggle: () => {}
+			}
+		});
+		expect(screen.getByText('You finished every day. Well done.')).toBeInTheDocument();
+		expect(container.querySelector('.complete-pop')).toBeNull();
+		unmount();
+		const celebrating = render(TodayCard, {
+			props: {
+				today: { kind: 'session', day: 8 },
+				day: { ...day, completed: true },
+				allDone: true,
+				celebrate: true,
+				ontoggle: () => {}
+			}
+		});
+		expect(celebrating.container.querySelector('.complete-pop')).not.toBeNull();
+	});
+
+	it('shows no finish line while days are still open', () => {
+		setup({ kind: 'session', day: 8 }, { day, allDone: false });
+		expect(screen.queryByText('You finished every day. Well done.')).not.toBeInTheDocument();
+	});
+
 	it('reflects a day that is already done', () => {
 		setup({ kind: 'session', day: 8 }, { day: { ...day, completed: true } });
 		expect(screen.getByRole('checkbox')).toHaveAttribute('aria-checked', 'true');

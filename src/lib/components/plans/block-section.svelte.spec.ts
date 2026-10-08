@@ -148,6 +148,28 @@ describe('BlockSection', () => {
 		expect(screen.getByLabelText('All days done')).toBeInTheDocument();
 	});
 
+	it('animates the day rows of a block that was just written, and only then', () => {
+		const { container, unmount } = render(BlockSection, {
+			props: {
+				block,
+				days,
+				dates,
+				open: true,
+				justWritten: true,
+				ontoggle: vi.fn(),
+				onretry: vi.fn()
+			}
+		});
+		const rows = [...container.querySelectorAll('li[data-today], ul > li')];
+		expect(rows.some((row) => (row as HTMLElement).style.animation.includes('reveal'))).toBe(true);
+		unmount();
+		const quiet = render(BlockSection, {
+			props: { block, days, dates, open: true, ontoggle: vi.fn(), onretry: vi.fn() }
+		});
+		const quietRows = [...quiet.container.querySelectorAll('ul > li')];
+		expect(quietRows.some((row) => (row as HTMLElement).style.animation !== '')).toBe(false);
+	});
+
 	it('uses a single day label for a one day block', () => {
 		setup({ startDay: 4, endDay: 4 });
 		expect(screen.getByText('Day 4', { exact: true })).toBeInTheDocument();

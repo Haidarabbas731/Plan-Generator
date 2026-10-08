@@ -15,10 +15,11 @@
 		today: TodayState | null;
 		day: PlanDayView | null;
 		allDone: boolean;
+		celebrate?: boolean;
 		ontoggle: (day: number, completed: boolean) => void;
 	}
 
-	let { today, day, allDone, ontoggle }: Props = $props();
+	let { today, day, allDone, celebrate = false, ontoggle }: Props = $props();
 
 	let touched = $state(false);
 
@@ -100,6 +101,17 @@
 					</div>
 				{/each}
 			</dl>
+			{#if allDone}
+				<p
+					class="flex items-center gap-2 border-t border-border/60 pt-4 text-sm font-medium text-success"
+				>
+					<CircleCheckIcon
+						class="size-5 shrink-0 {celebrate ? 'complete-pop' : ''}"
+						aria-hidden="true"
+					/>
+					You finished every day. Well done.
+				</p>
+			{/if}
 		{:else}
 			<p class="text-caption font-semibold text-highlight">Today</p>
 			<h2 class="text-xl font-semibold tracking-tight text-accent-foreground">Day {today.day}</h2>
@@ -129,7 +141,10 @@
 		</div>
 	{:else}
 		<div class="flex items-start gap-3">
-			<CircleCheckIcon class="mt-0.5 size-5 shrink-0 text-success" aria-hidden="true" />
+			<CircleCheckIcon
+				class="mt-0.5 size-5 shrink-0 text-success {celebrate ? 'complete-pop' : ''}"
+				aria-hidden="true"
+			/>
 			<div class="flex flex-col gap-0.5">
 				<p class="text-caption font-semibold text-highlight">Plan period over</p>
 				<h2 class="text-xl font-semibold tracking-tight text-accent-foreground">

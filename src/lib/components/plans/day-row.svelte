@@ -20,6 +20,7 @@
 		completed: boolean;
 		isToday?: boolean;
 		changed?: boolean;
+		revealIndex?: number | null;
 		ontoggle: (day: number, completed: boolean) => void;
 	}
 
@@ -34,6 +35,7 @@
 		completed,
 		isToday = false,
 		changed = false,
+		revealIndex = null,
 		ontoggle
 	}: Props = $props();
 
@@ -57,6 +59,9 @@
 			? 'bg-accent/50'
 			: ''}"
 	data-today={isToday ? '' : undefined}
+	style:animation={revealIndex === null
+		? undefined
+		: `reveal var(--dur-base) var(--ease-out) ${revealIndex * 40}ms both`}
 >
 	<Collapsible bind:open>
 		<div class="flex min-h-11 items-start gap-1">

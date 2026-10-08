@@ -2,6 +2,7 @@
 	import './layout.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import { ModeWatcher } from 'mode-watcher';
+	import { onNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import AppHeader from '#lib/components/shared/app-header.svelte';
 	import BottomNav from '#lib/components/shared/bottom-nav.svelte';
@@ -11,6 +12,21 @@
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
+
+	onNavigate((navigation) => {
+		if (!document.startViewTransition) return;
+		if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		const from = navigation.from?.route.id ?? '';
+		const to = navigation.to?.route.id ?? '';
+		if (from.startsWith('/(auth)') && to.startsWith('/(auth)')) return;
+		if (navigation.from?.url.pathname === navigation.to?.url.pathname) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	const tabBar = $derived(Boolean(data.user) && showsTabBar(page.url.pathname));
 	const onAuthPage = $derived(page.route.id?.startsWith('/(auth)') ?? false);

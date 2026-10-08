@@ -47,6 +47,10 @@
 	let busy = $state<'resume' | 'cancel' | null>(null);
 	let aboutOpen = $state(false);
 	let flashing = $state<ReadonlySet<number>>(new Set());
+	let writtenNow = $state<ReadonlySet<number>>(new Set());
+	let celebrate = $state(false);
+	let wasAllDone: boolean | null = null;
+	const seenStatus: Record<number, string> = {};
 	const seenDays: Record<number, string> = {};
 
 	let toggleForm = $state<HTMLFormElement | null>(null);
@@ -77,6 +81,7 @@
 	const status = $derived(stream.live.status);
 
 	const FLASH_MS = 1200;
+	const WRITTEN_MS = 1500;
 
 	const aboutLong = $derived((plan.overview ?? '').length > LIMITS.goalPreviewChars);
 
@@ -111,6 +116,29 @@
 		setTimeout(() => {
 			flashing = new Set([...untrack(() => flashing)].filter((day) => !changed.includes(day)));
 		}, FLASH_MS);
+	});
+
+	$effect(() => {
+		const now = allDone;
+		if (wasAllDone === false && now) celebrate = true;
+		wasAllDone = now;
+	});
+
+	$effect(() => {
+		const fresh: number[] = [];
+		for (const { block } of blockViews) {
+			const before = seenStatus[block.idx];
+			const ready = block.status === 'ready';
+			if (before !== undefined && before !== 'ready' && before !== 'stale' && ready) {
+				fresh.push(block.idx);
+			}
+			seenStatus[block.idx] = block.status;
+		}
+		if (fresh.length === 0) return;
+		writtenNow = new Set([...untrack(() => writtenNow), ...fresh]);
+		setTimeout(() => {
+			writtenNow = new Set([...untrack(() => writtenNow)].filter((idx) => !fresh.includes(idx)));
+		}, WRITTEN_MS);
 	});
 
 	const outline = $derived<OutlineItem[]>(
@@ -191,9 +219,7 @@
 </script>
 
 <div
-	class={dock.dragging
-		? 'select-none'
-		: 'transition-[padding] duration-(--dur-base) ease-(--ease-out) max-lg:transition-none'}
+	class={dock.dragging ? 'select-none' : ''}
 	style:padding-right={dock.docked ? `${dock.width}px` : undefined}
 	style:padding-bottom={phoneInset > 0 ? `${phoneInset}px` : undefined}
 >
@@ -231,7 +257,7 @@
 				/>
 			{/if}
 
-			<TodayCard today={todayInfo} day={todayView} {allDone} ontoggle={toggle} />
+			<TodayCard today={todayInfo} day={todayView} {allDone} {celebrate} ontoggle={toggle} />
 
 			{#if behind > 0}
 				<p class="text-sm text-muted-foreground" role="status">
@@ -260,6 +286,7 @@
 								{dates}
 								{todayDay}
 								changed={flashing}
+								justWritten={writtenNow.has(view.block.idx)}
 								bind:open={
 									() => openBlocks[view.block.idx] ?? false,
 									(value) => (openBlocks[view.block.idx] = value)

@@ -22,6 +22,7 @@
 		dates: string[];
 		todayDay?: number | null;
 		changed?: ReadonlySet<number>;
+		justWritten?: boolean;
 		open?: boolean;
 		retrying?: boolean;
 		ontoggle: (day: number, completed: boolean) => void;
@@ -34,12 +35,14 @@
 		dates,
 		todayDay = null,
 		changed = new Set<number>(),
+		justWritten = false,
 		open = $bindable(false),
 		retrying = false,
 		ontoggle,
 		onretry
 	}: Props = $props();
 
+	const REVEAL_CAP = 6;
 	const mode = createDisclosureMode();
 
 	const span = $derived(block.endDay - block.startDay + 1);
@@ -126,7 +129,7 @@
 
 				{#if isWritten}
 					<ul class="flex flex-col divide-y divide-border">
-						{#each days as day (day.day)}
+						{#each days as day, i (day.day)}
 							<DayRow
 								day={day.day}
 								title={day.title}
@@ -138,6 +141,7 @@
 								date={dates[day.day - 1] ?? null}
 								isToday={day.day === todayDay}
 								changed={changed.has(day.day)}
+								revealIndex={justWritten ? Math.min(i, REVEAL_CAP) : null}
 								{ontoggle}
 							/>
 						{/each}

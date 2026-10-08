@@ -26,6 +26,8 @@
 	let chatPending = $state<'undo' | 'restore' | 'model' | null>(null);
 	let chatActionError = $state<string | null>(null);
 	let mounted = $state(false);
+	let present = $state(false);
+	let closing = $state(false);
 
 	let undoForm = $state<HTMLFormElement | null>(null);
 	let undoRevisionId = $state('');
@@ -55,6 +57,21 @@
 		} catch {
 			chatLoadError = 'Could not load the conversation.';
 		}
+	}
+
+	$effect(() => {
+		if (dock.docked) {
+			present = true;
+			closing = false;
+		} else if (untrack(() => present)) {
+			closing = true;
+		}
+	});
+
+	function finishClose(event: AnimationEvent) {
+		if (!closing || event.target !== event.currentTarget) return;
+		present = false;
+		closing = false;
 	}
 
 	const showSheet = $derived(mounted && !dock.desktop.current && status !== 'generating');
@@ -121,11 +138,14 @@
 	/>
 {/snippet}
 
-{#if dock.docked}
+{#if present}
 	<aside
 		id="plan-chat"
-		class="fixed top-14 right-0 bottom-0 z-30 animate-in border-l bg-background transition-none fade-in-0 [animation-duration:var(--dur-base)] slide-in-from-right-6"
+		class="fixed top-14 right-0 bottom-0 z-30 border-l bg-background transition-none {closing
+			? 'animate-out fade-out-0 [animation-duration:var(--dur-fast)] slide-out-to-right-6'
+			: 'animate-in fade-in-0 [animation-duration:var(--dur-base)] slide-in-from-right-6'}"
 		style:width="{dock.width}px"
+		onanimationend={finishClose}
 	>
 		<div
 			role="slider"

@@ -19,8 +19,13 @@ test('the settings pages need a signed-in user', async ({ page }) => {
 test('the settings tabs lead to every page', async ({ page }) => {
 	await signUp(page);
 	const nav = page.getByRole('navigation', { name: 'Settings' });
+	const indicator = nav.locator('[data-tab-indicator]');
+	const first = await indicator.evaluate((node) => (node as HTMLElement).style.transform);
 	await nav.getByRole('link', { name: 'Model' }).click();
 	await expect(page).toHaveURL(/\/settings\/models$/);
+	await expect
+		.poll(() => indicator.evaluate((node) => (node as HTMLElement).style.transform))
+		.not.toBe(first);
 	await expect(page.getByRole('heading', { name: 'Default model' })).toBeVisible();
 	await nav.getByRole('link', { name: 'Account' }).click();
 	await expect(page).toHaveURL(/\/settings\/account$/);
@@ -28,6 +33,10 @@ test('the settings tabs lead to every page', async ({ page }) => {
 	await nav.getByRole('link', { name: 'Data & privacy' }).click();
 	await expect(page).toHaveURL(/\/settings\/data$/);
 	await expect(page.getByRole('heading', { name: 'What we keep' })).toBeVisible();
+
+	await page.emulateMedia({ reducedMotion: 'reduce' });
+	const moving = await indicator.evaluate((node) => getComputedStyle(node).transitionProperty);
+	expect(moving).not.toContain('transform');
 });
 
 test('changing the name is saved and kept after a reload', async ({ page }) => {
