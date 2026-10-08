@@ -20,7 +20,7 @@ const retryError = (lastError: unknown) =>
 describe('describeAiError', () => {
 	it('explains a rejected key', () => {
 		expect(describeAiError(apiError(401))).toContain('rejected your key');
-		expect(describeAiError(apiError(403))).toContain('rejected your key');
+		expect(describeAiError(apiError(403))).toContain('refused this request for this model');
 	});
 
 	it('explains an unknown model, rate limits and provider problems', () => {

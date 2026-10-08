@@ -3,6 +3,8 @@ import { randomBytes } from 'node:crypto';
 import { eq } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
+import { APICallError } from 'ai';
+import { MockLanguageModelV4 } from 'ai/test';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { PlanInputs } from '#lib/plan-types.js';
 import { createFakeModel } from '../ai/fake-model.js';
@@ -50,9 +52,23 @@ describe.skipIf(!databaseUrl || !redisUrl)(
 			await client.end();
 		});
 
+		const refusingModel = () =>
+			new MockLanguageModelV4({
+				doGenerate: async () => {
+					throw new APICallError({
+						message: 'The request is prohibited due to a violation of provider Terms Of Service.',
+						url: 'https://example.com',
+						requestBodyValues: {},
+						statusCode: 403,
+						isRetryable: false
+					});
+				}
+			});
+
 		function setup(
 			delayMs = 0,
-			timings: { lockDurationMs?: number; stalledIntervalMs?: number } = {}
+			timings: { lockDurationMs?: number; stalledIntervalMs?: number; lockRetryMs?: number } = {},
+			model: () => ReturnType<typeof createFakeModel> = () => createFakeModel({ delayMs })
 		) {
 			const queueName = `${name}-${randomBytes(3).toString('hex')}`;
 			const bus = createRedisEventBus(redisUrl!, `${queueName}-events`);
@@ -60,7 +76,7 @@ describe.skipIf(!databaseUrl || !redisUrl)(
 				client,
 				store,
 				bus,
-				resolveModel: async () => createFakeModel({ delayMs })
+				resolveModel: async () => model()
 			});
 			const queue = createPlanQueue({
 				url: redisUrl!,
@@ -104,6 +120,36 @@ describe.skipIf(!databaseUrl || !redisUrl)(
 			expect(await store.listDays(planId)).toHaveLength(15);
 			expect(types[0]).toBe('outline_ready');
 			expect(types.at(-1)).toBe('done');
+		});
+
+		it('runs a retry again right after the provider refused the first attempt', async () => {
+			const { queue } = setup(0, {}, refusingModel as never);
+			const planId = await newPlan();
+			await queue.enqueue(planId);
+			await waitForStatus(planId, 'failed');
+			const firstError = (await store.getPlan(planId))!.error;
+			expect(firstError).toContain('refused this request for this model');
+
+			await store.setPlanStatus(planId, 'generating');
+			await queue.enqueue(planId);
+			await waitForStatus(planId, 'failed');
+			expect((await store.getPlan(planId))!.error).toBe(firstError);
+		});
+
+		it('fails a plan visibly when a job cannot start because the plan stays locked', async () => {
+			const { queue } = setup(0, { lockRetryMs: 20 });
+			const planId = await newPlan();
+			const holder = await client.reserve();
+			await holder`select pg_advisory_lock(hashtext(${planId}))`;
+			try {
+				await store.setPlanStatus(planId, 'generating');
+				await queue.enqueue(planId);
+				await waitForStatus(planId, 'failed');
+				expect((await store.getPlan(planId))!.error).toContain('could not start writing');
+			} finally {
+				await holder`select pg_advisory_unlock(hashtext(${planId}))`;
+				holder.release();
+			}
 		});
 
 		it('cancels a running plan and leaves it paused', async () => {

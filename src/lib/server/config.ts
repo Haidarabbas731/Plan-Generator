@@ -31,7 +31,8 @@ export const PLAN_QUEUE = {
 	concurrency: 2,
 	lockDurationMs: 30_000,
 	stalledIntervalMs: 30_000,
-	maxStalledCount: 3
+	maxStalledCount: 3,
+	lockRetryMs: 1_000
 } as const;
 
 export const MODEL_LIST = {

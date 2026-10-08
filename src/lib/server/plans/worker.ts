@@ -1,6 +1,7 @@
 import type { LanguageModel } from 'ai';
 import type { Sql } from 'postgres';
 import { describeAiError } from '../ai/errors.js';
+import { logger } from '../logger.js';
 import type { EventBus } from './events.js';
 import { runGeneration, type RunOutcome } from './generation.js';
 import type { PlanRow, PlanStore } from './plan-store.js';
@@ -57,6 +58,9 @@ export function createPlanWorker(deps: WorkerDeps) {
 				error instanceof MissingKeyError
 					? 'Add a key for this provider in Settings, then resume.'
 					: describeAiError(error);
+			if (!(error instanceof MissingKeyError)) {
+				logger.error({ err: error, planId }, 'Could not prepare the model for a plan');
+			}
 			await store.setPlanStatus(planId, 'failed', message);
 			bus.emit({ type: 'failed', planId, message });
 			await unlock();
@@ -74,6 +78,7 @@ export function createPlanWorker(deps: WorkerDeps) {
 			emit: bus.emit
 		})
 			.catch(async (error): Promise<RunOutcome> => {
+				logger.error({ err: error, planId }, 'Plan generation crashed');
 				const message = describeAiError(error);
 				await store.setPlanStatus(planId, 'failed', message).catch(() => undefined);
 				bus.emit({ type: 'failed', planId, message });

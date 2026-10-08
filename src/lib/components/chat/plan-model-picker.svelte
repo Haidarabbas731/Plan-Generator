@@ -19,6 +19,8 @@
 		model: string;
 		disabled?: boolean;
 		disabledReason?: string;
+		label?: string;
+		variant?: 'ghost' | 'outline';
 		class?: string;
 		onselect: (provider: Provider, model: string) => void;
 	}
@@ -29,6 +31,8 @@
 		model,
 		disabled = false,
 		disabledReason,
+		label,
+		variant = 'ghost',
 		class: className,
 		onselect
 	}: Props = $props();
@@ -86,9 +90,9 @@
 		type="button"
 		title={disabled ? disabledReason : undefined}
 		aria-label={`Model: ${model}. Change model`}
-		class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), 'max-w-48 gap-1.5 px-2', className)}
+		class={cn(buttonVariants({ variant, size: 'sm' }), 'max-w-48 gap-1.5 px-2', className)}
 	>
-		<span class="truncate text-caption font-medium">{model}</span>
+		<span class="truncate text-caption font-medium">{label ?? model}</span>
 		<ChevronsUpDownIcon class="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
 	</Popover.Trigger>
 	<Popover.Content class="w-80 p-0" align="end">

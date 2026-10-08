@@ -44,7 +44,7 @@
 	let overrides = $state<Record<number, boolean>>({});
 	let openBlocks = $state<Record<number, boolean>>({});
 	let autoOpened = false;
-	let busy = $state<'resume' | 'cancel' | null>(null);
+	let busy = $state<'resume' | 'cancel' | 'model' | null>(null);
 	let aboutOpen = $state(false);
 	let flashing = $state<ReadonlySet<number>>(new Set());
 	let writtenNow = $state<ReadonlySet<number>>(new Set());
@@ -58,6 +58,15 @@
 	let toggleCompleted = $state('');
 	let resumeForm = $state<HTMLFormElement | null>(null);
 	let cancelForm = $state<HTMLFormElement | null>(null);
+	let modelForm = $state<HTMLFormElement | null>(null);
+	let modelProvider = $state('');
+	let modelName = $state('');
+
+	function switchModelAndResume(provider: string, model: string) {
+		modelProvider = provider;
+		modelName = model;
+		queueMicrotask(() => modelForm?.requestSubmit());
+	}
 
 	const studyDays = $derived(plan.inputs.studyDays);
 	const daysTotal = $derived(plan.inputs.daysTotal);
@@ -252,6 +261,10 @@
 						error: block.error
 					}))}
 					busy={busy !== null}
+					{providers}
+					provider={plan.provider}
+					model={plan.model}
+					onmodel={switchModelAndResume}
 					onresume={() => resumeForm?.requestSubmit()}
 					onpause={() => cancelForm?.requestSubmit()}
 				/>
@@ -384,6 +397,31 @@
 		};
 	}}
 ></form>
+
+<form
+	bind:this={modelForm}
+	method="POST"
+	action="?/model"
+	hidden
+	use:enhance={() => {
+		busy = 'model';
+		return async ({ result, update }) => {
+			if (result.type === 'failure') {
+				const data = result.data as { message?: string } | undefined;
+				toast.error(data?.message ?? 'Could not switch the model.');
+				await update({ reset: false });
+				busy = null;
+				return;
+			}
+			await update({ reset: false });
+			busy = null;
+			resumeForm?.requestSubmit();
+		};
+	}}
+>
+	<input type="hidden" name="provider" value={modelProvider} />
+	<input type="hidden" name="model" value={modelName} />
+</form>
 
 <form
 	bind:this={cancelForm}

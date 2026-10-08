@@ -36,6 +36,37 @@ function setup(
 	return { onresume, onpause };
 }
 
+describe('ActivityLine model switch', () => {
+	function withModel(status: PlanStatus) {
+		const onmodel = vi.fn();
+		render(ActivityLine, {
+			props: {
+				status,
+				error: 'The provider refused this request for this model.',
+				label: 'Stopped',
+				blocks: [],
+				providers: [{ id: 'openrouter', name: 'OpenRouter' }],
+				provider: 'openrouter',
+				model: 'anthropic/claude-haiku-5.5',
+				onresume: vi.fn(),
+				onpause: vi.fn(),
+				onmodel
+			}
+		});
+		return { onmodel };
+	}
+
+	it('offers a way to change the model when the plan stopped', () => {
+		withModel('failed');
+		expect(screen.getByRole('button', { name: /Change model/ })).toBeInTheDocument();
+	});
+
+	it('does not offer it while the plan is being written', () => {
+		withModel('generating');
+		expect(screen.queryByRole('button', { name: /Change model/ })).toBeNull();
+	});
+});
+
 describe('ActivityLine', () => {
 	it('announces progress politely', () => {
 		setup('generating');

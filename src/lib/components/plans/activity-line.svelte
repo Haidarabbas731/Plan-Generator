@@ -14,6 +14,8 @@
 	} from '#lib/components/ui/collapsible/index.js';
 	import { Spinner } from '#lib/components/ui/spinner/index.js';
 	import type { BlockStatus, PlanStatus } from '#lib/plan-types.js';
+	import type { Provider } from '#lib/providers.js';
+	import PlanModelPicker from '../chat/plan-model-picker.svelte';
 
 	interface TimelineBlock {
 		idx: number;
@@ -28,11 +30,27 @@
 		label: string;
 		blocks: TimelineBlock[];
 		busy?: boolean;
+		providers?: { id: Provider; name: string }[];
+		provider?: Provider;
+		model?: string;
 		onresume: () => void;
 		onpause: () => void;
+		onmodel?: (provider: Provider, model: string) => void;
 	}
 
-	let { status, error, label, blocks, busy = false, onresume, onpause }: Props = $props();
+	let {
+		status,
+		error,
+		label,
+		blocks,
+		busy = false,
+		providers = [],
+		provider,
+		model,
+		onresume,
+		onpause,
+		onmodel
+	}: Props = $props();
 
 	let open = $state(false);
 	const mode = createDisclosureMode();
@@ -42,7 +60,7 @@
 
 <section aria-label="Plan generation" class="rounded-lg border bg-card">
 	<div class="flex flex-wrap items-center gap-3 p-4">
-		<div class="flex min-w-0 flex-1 items-center gap-3">
+		<div class="flex min-w-0 flex-[1_1_14rem] items-center gap-3">
 			{#if status === 'generating'}
 				<Spinner class="size-4 shrink-0 text-primary" aria-label="Writing your plan" />
 			{:else if status === 'paused'}
@@ -62,7 +80,19 @@
 			</div>
 		</div>
 
-		<div class="flex items-center gap-2">
+		<div class="flex flex-wrap items-center gap-2">
+			{#if status !== 'generating' && onmodel && provider && model && providers.length > 0}
+				<PlanModelPicker
+					{providers}
+					{provider}
+					{model}
+					variant="outline"
+					label="Change model"
+					disabled={busy}
+					onselect={onmodel}
+					class="h-9"
+				/>
+			{/if}
 			{#if status === 'generating'}
 				<Button type="button" variant="outline" disabled={busy} onclick={onpause}>
 					{#if busy}<Spinner data-icon="inline-start" />{:else}<PauseIcon aria-hidden="true" />{/if}

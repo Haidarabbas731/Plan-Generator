@@ -14,6 +14,7 @@ export interface PlanQueueDeps {
 	name?: string;
 	concurrency?: number;
 	lockDurationMs?: number;
+	lockRetryMs?: number;
 	stalledIntervalMs?: number;
 }
 
@@ -32,7 +33,23 @@ export function createPlanQueue(deps: PlanQueueDeps) {
 	const processor = new Worker<{ planId: string }>(
 		name,
 		async (job) => {
-			await worker.run(job.data.planId, { countUsage: job.stalledCounter === 0 });
+			const { planId } = job.data;
+			const options = { countUsage: job.stalledCounter === 0 };
+			let result = await worker.run(planId, options);
+			if (result === 'locked') {
+				await new Promise((resolve) =>
+					setTimeout(resolve, deps.lockRetryMs ?? PLAN_QUEUE.lockRetryMs)
+				);
+				result = await worker.run(planId, options);
+			}
+			if (result !== 'locked' && result !== 'already-running' && result !== 'not-found') return;
+			logger.warn({ planId, result }, 'Plan job did nothing');
+			if (result === 'already-running' || worker.isRunning(planId)) return;
+			const plan = await store.getPlan(planId);
+			if (plan?.status !== 'generating') return;
+			const message = 'The plan could not start writing. Try again.';
+			await store.setPlanStatus(planId, 'failed', message);
+			bus.emit({ type: 'failed', planId, message });
 		},
 		{
 			connection: connect(),
