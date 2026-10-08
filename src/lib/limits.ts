@@ -13,6 +13,7 @@ export const LIMITS = {
 	goalMax: 2000,
 	goalPreviewChars: 220,
 	errorMax: 500,
+	providerMessageMax: 160,
 	doneLooksLikeMax: 300,
 	maxPlanDays: 365,
 	minMinutesPerDay: 15,

@@ -1,4 +1,5 @@
 import { APICallError, RetryError } from 'ai';
+import { LIMITS } from '#lib/limits.js';
 import { VaultError } from '../crypto/vault.js';
 
 const isTimeout = (error: unknown) =>
@@ -16,7 +17,9 @@ export function describeAiError(error: unknown): string {
 			return 'The provider rejected your key. Check it in Settings.';
 		}
 		if (status === 403) {
-			return 'The provider refused this request for this model. Try another model, or check the key in Settings.';
+			const said = root.message.trim().slice(0, LIMITS.providerMessageMax);
+			const detail = said ? ` It said: "${said}"` : '';
+			return `The provider refused this request for this model.${detail} Try another model, or check the key in Settings.`;
 		}
 		if (status === 404) {
 			return 'The provider does not know this model. Pick another one.';

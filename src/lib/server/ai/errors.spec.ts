@@ -23,6 +23,17 @@ describe('describeAiError', () => {
 		expect(describeAiError(apiError(403))).toContain('refused this request for this model');
 	});
 
+	it('repeats what the provider said when it refuses a request', () => {
+		const refused = new APICallError({
+			message: 'The request is prohibited due to a violation of provider Terms Of Service.',
+			url: 'https://example.com',
+			requestBodyValues: {},
+			statusCode: 403
+		});
+		expect(describeAiError(refused)).toContain('violation of provider Terms Of Service');
+		expect(describeAiError(refused)).toContain('Try another model');
+	});
+
 	it('explains an unknown model, rate limits and provider problems', () => {
 		expect(describeAiError(apiError(404))).toContain('does not know this model');
 		expect(describeAiError(apiError(429))).toContain('rate limiting');
