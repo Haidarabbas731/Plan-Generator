@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
 import { describe, expect, it, vi } from 'vitest';
-import type { PlanDayView } from '#lib/plan-types.js';
+import type { PlanDayView, PlanStatus } from '#lib/plan-types.js';
 import type { TodayState } from '#lib/schedule.js';
 import TodayCard from './today-card.svelte';
 
@@ -17,14 +17,40 @@ const day: PlanDayView = {
 
 function setup(
 	state: TodayState | null,
-	options: { day?: PlanDayView | null; allDone?: boolean } = {}
+	options: { day?: PlanDayView | null; allDone?: boolean; status?: PlanStatus } = {}
 ) {
 	const ontoggle = vi.fn();
 	render(TodayCard, {
-		props: { today: state, day: options.day ?? null, allDone: options.allDone ?? false, ontoggle }
+		props: {
+			today: state,
+			day: options.day ?? null,
+			allDone: options.allDone ?? false,
+			status: options.status,
+			ontoggle
+		}
 	});
 	return { ontoggle };
 }
+
+describe('TodayCard unwritten day', () => {
+	const session: TodayState = { kind: 'session', day: 1, date: '2026-10-08' } as TodayState;
+
+	it('says it is being written only while the plan is generating', () => {
+		setup(session, { status: 'generating' });
+		expect(screen.getByText('This day is still being written.')).toBeInTheDocument();
+	});
+
+	it('says writing stopped when the plan failed', () => {
+		setup(session, { status: 'failed' });
+		expect(screen.queryByText(/still being written/)).toBeNull();
+		expect(screen.getByText(/not written because writing stopped/)).toBeInTheDocument();
+	});
+
+	it('tells a paused plan to resume', () => {
+		setup(session, { status: 'paused' });
+		expect(screen.getByText(/Resume above to continue/)).toBeInTheDocument();
+	});
+});
 
 describe('TodayCard', () => {
 	it('shows placeholders until the local date is known', () => {

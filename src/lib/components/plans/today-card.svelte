@@ -8,7 +8,7 @@
 	import { Checkbox } from '#lib/components/ui/checkbox/index.js';
 	import { Skeleton } from '#lib/components/ui/skeleton/index.js';
 	import { formatDate } from '#lib/format.js';
-	import type { PlanDayView } from '#lib/plan-types.js';
+	import type { PlanDayView, PlanStatus } from '#lib/plan-types.js';
 	import type { TodayState } from '#lib/schedule.js';
 
 	interface Props {
@@ -16,10 +16,11 @@
 		day: PlanDayView | null;
 		allDone: boolean;
 		celebrate?: boolean;
+		status?: PlanStatus;
 		ontoggle: (day: number, completed: boolean) => void;
 	}
 
-	let { today, day, allDone, celebrate = false, ontoggle }: Props = $props();
+	let { today, day, allDone, celebrate = false, status = 'ready', ontoggle }: Props = $props();
 
 	let touched = $state(false);
 
@@ -116,7 +117,15 @@
 		{:else}
 			<p class="text-caption font-semibold text-highlight">Today</p>
 			<h2 class="text-xl font-semibold tracking-tight text-accent-foreground">Day {today.day}</h2>
-			<p class="text-sm text-muted-foreground">This day is still being written.</p>
+			<p class="text-sm text-muted-foreground">
+				{#if status === 'failed'}
+					This day was not written because writing stopped. Try again above.
+				{:else if status === 'paused'}
+					This day is not written yet. Resume above to continue.
+				{:else}
+					This day is still being written.
+				{/if}
+			</p>
 		{/if}
 	{:else if today.kind === 'rest'}
 		<div class="flex items-start gap-3">

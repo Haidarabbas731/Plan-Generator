@@ -270,7 +270,14 @@
 				/>
 			{/if}
 
-			<TodayCard today={todayInfo} day={todayView} {allDone} {celebrate} ontoggle={toggle} />
+			<TodayCard
+				{status}
+				today={todayInfo}
+				day={todayView}
+				{allDone}
+				{celebrate}
+				ontoggle={toggle}
+			/>
 
 			{#if behind > 0}
 				<p class="text-sm text-muted-foreground" role="status">
@@ -279,7 +286,11 @@
 				</p>
 			{/if}
 
-			{#if blockViews.length === 0}
+			{#if blockViews.length === 0 && status !== 'generating'}
+				<p class="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+					The outline was not written yet, so there are no blocks to show.
+				</p>
+			{:else if blockViews.length === 0}
 				<div class="flex flex-col gap-3" aria-hidden="true">
 					{#each [0, 1, 2] as key (key)}
 						<Skeleton class="h-20 w-full rounded-lg" />
