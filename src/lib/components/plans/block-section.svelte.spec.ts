@@ -79,23 +79,45 @@ describe('BlockSection', () => {
 		expect(screen.queryByText('Day 4 · Lesson 4')).not.toBeInTheDocument();
 	});
 
-	it('shows the milestone only after the days of the block are written', () => {
-		for (const status of ['pending', 'writing', 'failed'] as const) {
+	it('shows the milestone before the days exist, worded as a goal to reach', () => {
+		for (const status of ['pending', 'writing'] as const) {
 			const { unmount } = render(BlockSection, {
 				props: {
-					block: { ...block, status, error: status === 'failed' ? 'x' : null },
-					days,
+					block: { ...block, status },
+					days: [],
 					dates,
 					open: true,
 					ontoggle: vi.fn(),
 					onretry: vi.fn()
 				}
 			});
-			expect(screen.queryByText(/milestone · Word counter/)).not.toBeInTheDocument();
+			expect(screen.getByText(/By Day 6 · Word counter/)).toBeInTheDocument();
+			expect(screen.queryByText(/Day 6 milestone/)).not.toBeInTheDocument();
 			unmount();
 		}
-		setup({ status: 'stale' });
-		expect(screen.getByText(/milestone · Word counter/)).toBeInTheDocument();
+	});
+
+	it('hides the milestone when the block failed', () => {
+		setup({ status: 'failed', error: 'x' });
+		expect(screen.queryByText(/Word counter/)).not.toBeInTheDocument();
+	});
+
+	it('shows live days read-only while the block is still being written', () => {
+		render(BlockSection, {
+			props: {
+				block: { ...block, status: 'writing' },
+				days: days.slice(0, 1),
+				preview: true,
+				dates,
+				open: true,
+				ontoggle: vi.fn(),
+				onretry: vi.fn()
+			}
+		});
+		expect(screen.getByText(/Day 4 · /)).toBeInTheDocument();
+		expect(screen.getByRole('checkbox')).toBeDisabled();
+		expect(screen.queryByText('Writing this block now.')).not.toBeInTheDocument();
+		expect(screen.getByText('Still writing the rest of this block.')).toBeInTheDocument();
 	});
 
 	it('says a pending block is waiting', () => {

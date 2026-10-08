@@ -37,7 +37,31 @@ describe('TodayCard unwritten day', () => {
 
 	it('says it is being written only while the plan is generating', () => {
 		setup(session, { status: 'generating' });
-		expect(screen.getByText('This day is still being written.')).toBeInTheDocument();
+		expect(screen.getByText('Writing Day 1 now.')).toBeInTheDocument();
+	});
+
+	it('names the block theme and objective while the day is written', () => {
+		render(TodayCard, {
+			props: {
+				today: session,
+				day: null,
+				allDone: false,
+				status: 'generating',
+				upNext: { theme: 'Ownership', objective: 'Understand moves and borrows.' },
+				ontoggle: vi.fn()
+			}
+		});
+		expect(screen.getByText('Ownership.')).toBeInTheDocument();
+		expect(screen.getByText(/Understand moves and borrows/)).toBeInTheDocument();
+	});
+
+	it('shows a live day without a checkbox and says it is saving', () => {
+		render(TodayCard, {
+			props: { today: session, day, preview: true, allDone: false, ontoggle: vi.fn() }
+		});
+		expect(screen.getByText(/Lifetimes in structs/)).toBeInTheDocument();
+		expect(screen.getByText('Saving…')).toBeInTheDocument();
+		expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 	});
 
 	it('says writing stopped when the plan failed', () => {
@@ -118,7 +142,7 @@ describe('TodayCard', () => {
 
 	it('says the day is still being written when it does not exist yet', () => {
 		setup({ kind: 'session', day: 12 });
-		expect(screen.getByText('This day is still being written.')).toBeInTheDocument();
+		expect(screen.getByText('Writing Day 12 now.')).toBeInTheDocument();
 		expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 	});
 

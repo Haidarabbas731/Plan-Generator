@@ -1,6 +1,7 @@
-import { createContext } from 'svelte';
+import { createContext, untrack } from 'svelte';
 import {
 	applyLiveEvent,
+	keepLiveDays,
 	needsRefetch,
 	sameLive,
 	writingLabel,
@@ -31,7 +32,10 @@ export class PlanStream {
 	}
 
 	sync(initial: LiveState, totalBlocks: number) {
-		this.live = initial;
+		this.live = keepLiveDays(
+			untrack(() => this.live),
+			initial
+		);
 		this.totalBlocks = totalBlocks;
 	}
 

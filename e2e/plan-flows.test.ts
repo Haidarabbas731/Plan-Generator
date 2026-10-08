@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { createFakePlan, open, signUp } from './helpers.js';
+import { createFakePlan, open, openCustomize, signUp } from './helpers.js';
 
 test.skip(process.env.AI_FAKE !== '1', 'needs the dev server to run with AI_FAKE=1');
 
@@ -87,4 +87,25 @@ test('deleting a plan removes it from the list', async ({ page }) => {
 	const dialog = page.getByRole('alertdialog');
 	await dialog.getByRole('button', { name: 'Delete plan' }).click();
 	await expect(page.getByText('No plans yet')).toBeVisible();
+});
+
+test('Day 1 shows on the page while its block is still being written', async ({ page }) => {
+	await signUp(page);
+	await open(page, '/plans/new');
+	await page.getByLabel('What do you want to learn?').fill('Learn to cook risotto');
+	await page.getByLabel('Study sessions').fill('6');
+	await openCustomize(page);
+	await page.getByLabel('Days per block').fill('6');
+	await page.getByRole('button', { name: 'Model', exact: true }).click();
+	await page.getByRole('option', { name: 'Fake model' }).click();
+	await page.getByRole('button', { name: 'Generate plan' }).click();
+	await expect(page).toHaveURL(/\/plans\/[0-9a-f-]{36}$/);
+
+	await expect(page.getByText('Saving…')).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByRole('heading', { name: /Day 1 · Lesson 1/ })).toBeVisible();
+
+	await expect(
+		page.getByRole('checkbox', { name: 'Mark today done: Day 1, Lesson 1' })
+	).toBeVisible({ timeout: 30_000 });
+	await expect(page.getByText('Saving…')).toHaveCount(0);
 });

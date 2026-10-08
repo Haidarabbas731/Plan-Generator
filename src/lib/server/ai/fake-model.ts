@@ -9,6 +9,7 @@ export interface FakeModelOptions {
 	blockFirstAttemptFails?: Record<number, BlockFault>;
 	blockAlwaysFails?: number[];
 	delayMs?: number;
+	dayDelayMs?: number;
 }
 
 const RETRY_MARKER = 'Your previous answer had these problems';
@@ -86,41 +87,84 @@ function block(text: string, fault: BlockFault | undefined) {
 	return { days };
 }
 
+const USAGE = {
+	inputTokens: { total: 100, noCache: 100, cacheRead: 0, cacheWrite: 0 },
+	outputTokens: { total: 200, text: 200, reasoning: 0 }
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export function createFakeModel(options: FakeModelOptions = {}) {
+	const answer = (prompt: unknown) => {
+		const text = userText(prompt);
+		const retry = text.includes(RETRY_MARKER);
+
+		if (text.includes('<task>outline</task>')) {
+			const fail = options.outlineAlwaysFails || (options.outlineFirstAttemptFails && !retry);
+			return { kind: 'outline' as const, payload: JSON.stringify(outline(text, Boolean(fail))) };
+		}
+
+		const index = Number(pick(text, /<this_block index="(\d+)"/));
+		const always = options.blockAlwaysFails?.includes(index);
+		const first = !retry ? options.blockFirstAttemptFails?.[index] : undefined;
+		const fault = always ? 'missing-day' : first;
+		if (fault === 'invalid-json')
+			return { kind: 'block' as const, payload: 'this is not json', days: null };
+		const { days } = block(text, fault);
+		return { kind: 'block' as const, payload: JSON.stringify({ days }), days };
+	};
+
 	return new MockLanguageModelV4({
 		provider: 'fake',
 		modelId: 'fake-model',
 		doGenerate: async (callOptions) => {
-			if (options.delayMs) {
-				await new Promise((resolve) => setTimeout(resolve, options.delayMs));
-			}
+			if (options.delayMs) await sleep(options.delayMs);
 			callOptions.abortSignal?.throwIfAborted();
 
-			const text = userText(callOptions.prompt);
-			const retry = text.includes(RETRY_MARKER);
-			let payload: string;
-
-			if (text.includes('<task>outline</task>')) {
-				const fail = options.outlineAlwaysFails || (options.outlineFirstAttemptFails && !retry);
-				payload = JSON.stringify(outline(text, Boolean(fail)));
-			} else {
-				const index = Number(pick(text, /<this_block index="(\d+)"/));
-				const always = options.blockAlwaysFails?.includes(index);
-				const first = !retry ? options.blockFirstAttemptFails?.[index] : undefined;
-				const fault = always ? 'missing-day' : first;
-				payload =
-					fault === 'invalid-json' ? 'this is not json' : JSON.stringify(block(text, fault));
-			}
-
 			return {
-				content: [{ type: 'text' as const, text: payload }],
+				content: [{ type: 'text' as const, text: answer(callOptions.prompt).payload }],
 				finishReason: { unified: 'stop' as const, raw: 'stop' },
-				usage: {
-					inputTokens: { total: 100, noCache: 100, cacheRead: 0, cacheWrite: 0 },
-					outputTokens: { total: 200, text: 200, reasoning: 0 }
-				},
+				usage: USAGE,
 				warnings: []
 			};
+		},
+		doStream: async (callOptions) => {
+			if (options.delayMs) await sleep(options.delayMs);
+			callOptions.abortSignal?.throwIfAborted();
+
+			const result = answer(callOptions.prompt);
+			const pieces =
+				result.kind === 'block' && result.days
+					? result.days.map(
+							(day, i) =>
+								`${i === 0 ? '{"elements":[' : ','}${JSON.stringify(day)}${
+									i === result.days.length - 1 ? ']}' : ''
+								}`
+						)
+					: [result.payload];
+
+			const stream = new ReadableStream({
+				async start(controller) {
+					controller.enqueue({ type: 'stream-start', warnings: [] });
+					controller.enqueue({ type: 'text-start', id: 't1' });
+					for (const piece of pieces) {
+						if (options.dayDelayMs) await sleep(options.dayDelayMs);
+						if (callOptions.abortSignal?.aborted) {
+							controller.error(callOptions.abortSignal.reason);
+							return;
+						}
+						controller.enqueue({ type: 'text-delta', id: 't1', delta: piece });
+					}
+					controller.enqueue({ type: 'text-end', id: 't1' });
+					controller.enqueue({
+						type: 'finish',
+						usage: USAGE,
+						finishReason: { unified: 'stop', raw: 'stop' }
+					});
+					controller.close();
+				}
+			});
+			return { stream };
 		}
 	});
 }

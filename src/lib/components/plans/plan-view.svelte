@@ -80,7 +80,25 @@
 		today ? computeTodayState(plan.startDate, studyDays, daysTotal, today) : null
 	);
 	const todayDay = $derived(todayInfo?.kind === 'session' ? todayInfo.day : null);
-	const todayView = $derived(daysView.find((day) => day.day === todayDay) ?? null);
+	const liveDaysView = $derived(
+		blocks.flatMap((block) =>
+			(stream.live.blocks[block.idx]?.days ?? []).map((day) => ({
+				...day,
+				blockId: block.id,
+				completed: false
+			}))
+		)
+	);
+	const todaySaved = $derived(daysView.find((day) => day.day === todayDay) ?? null);
+	const todayLive = $derived(
+		todaySaved ? null : (liveDaysView.find((day) => day.day === todayDay) ?? null)
+	);
+	const todayView = $derived(todaySaved ?? todayLive);
+	const todayBlock = $derived(
+		blocks.find(
+			(block) => todayDay !== null && todayDay >= block.startDay && todayDay <= block.endDay
+		) ?? null
+	);
 	const streak = $derived(today ? computeStreak(plan.startDate, studyDays, daysView, today) : 0);
 	const behind = $derived(
 		today ? behindBy(plan.startDate, studyDays, daysTotal, daysView, today) : 0
@@ -97,13 +115,17 @@
 	const blockViews = $derived(
 		blocks.map((block) => {
 			const live = stream.live.blocks[block.idx];
-			const blockDays = daysView.filter((day) => day.blockId === block.id);
+			const savedDays = daysView.filter((day) => day.blockId === block.id);
+			const previewDays =
+				savedDays.length === 0 ? liveDaysView.filter((day) => day.blockId === block.id) : [];
+			const blockDays = savedDays.length > 0 ? savedDays : previewDays;
 			let blockStatus = live?.status ?? block.status;
 			if (blockStatus === 'ready' && blockDays.length === 0) blockStatus = 'writing';
 			if (blockStatus === 'writing' && status !== 'generating') blockStatus = 'pending';
 			return {
 				block: { ...block, status: blockStatus, error: live?.error ?? block.error },
-				days: blockDays
+				days: blockDays,
+				preview: previewDays.length > 0
 			};
 		})
 	);
@@ -274,6 +296,8 @@
 				{status}
 				today={todayInfo}
 				day={todayView}
+				preview={todayLive !== null}
+				upNext={todayBlock ? { theme: todayBlock.theme, objective: todayBlock.objective } : null}
 				{allDone}
 				{celebrate}
 				ontoggle={toggle}
@@ -307,6 +331,7 @@
 							<BlockSection
 								block={view.block}
 								days={view.days}
+								preview={view.preview}
 								{dates}
 								{todayDay}
 								changed={flashing}

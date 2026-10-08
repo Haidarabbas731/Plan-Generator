@@ -14,13 +14,24 @@
 	interface Props {
 		today: TodayState | null;
 		day: PlanDayView | null;
+		preview?: boolean;
+		upNext?: { theme: string; objective: string } | null;
 		allDone: boolean;
 		celebrate?: boolean;
 		status?: PlanStatus;
 		ontoggle: (day: number, completed: boolean) => void;
 	}
 
-	let { today, day, allDone, celebrate = false, status = 'ready', ontoggle }: Props = $props();
+	let {
+		today,
+		day,
+		preview = false,
+		upNext = null,
+		allDone,
+		celebrate = false,
+		status = 'ready',
+		ontoggle
+	}: Props = $props();
 
 	let touched = $state(false);
 
@@ -64,21 +75,25 @@
 			<div class="flex flex-col gap-1">
 				<div class="flex items-center justify-between gap-4">
 					<p class="text-caption font-semibold text-highlight">Today</p>
-					<label
-						class="-my-1.5 -mr-2 flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm font-medium text-accent-foreground select-none"
-					>
-						<Checkbox
-							checked={day.completed}
-							data-animate={touched ? '' : undefined}
-							aria-label="Mark today done: Day {day.day}, {day.title}"
-							class="size-6"
-							onCheckedChange={(value) => {
-								touched = true;
-								ontoggle(day.day, value);
-							}}
-						/>
-						{day.completed ? 'Done' : 'Mark done'}
-					</label>
+					{#if preview}
+						<p class="text-caption text-muted-foreground">Saving…</p>
+					{:else}
+						<label
+							class="-my-1.5 -mr-2 flex min-h-11 shrink-0 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm font-medium text-accent-foreground select-none"
+						>
+							<Checkbox
+								checked={day.completed}
+								data-animate={touched ? '' : undefined}
+								aria-label="Mark today done: Day {day.day}, {day.title}"
+								class="size-6"
+								onCheckedChange={(value) => {
+									touched = true;
+									ontoggle(day.day, value);
+								}}
+							/>
+							{day.completed ? 'Done' : 'Mark done'}
+						</label>
+					{/if}
 				</div>
 				<h2 class="text-xl font-semibold tracking-tight text-accent-foreground">
 					Day {day.day} · {day.title}
@@ -123,9 +138,15 @@
 				{:else if status === 'paused'}
 					This day is not written yet. Resume above to continue.
 				{:else}
-					This day is still being written.
+					Writing Day {today.day} now.
 				{/if}
 			</p>
+			{#if upNext && status === 'generating'}
+				<p class="text-sm text-foreground/85">
+					<span class="font-medium">{upNext.theme}.</span>
+					{upNext.objective}
+				</p>
+			{/if}
 		{/if}
 	{:else if today.kind === 'rest'}
 		<div class="flex items-start gap-3">

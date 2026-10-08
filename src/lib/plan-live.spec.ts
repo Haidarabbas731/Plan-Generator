@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	applyLiveEvent,
+	keepLiveDays,
 	liveFromData,
 	needsRefetch,
 	sameLive,
@@ -163,5 +164,58 @@ describe('sameLive', () => {
 		const a: LiveState = { ...base, blocks: { 0: { status: 'writing', error: null } } };
 		expect(sameLive(a, { ...a, blocks: { 0: { status: 'ready', error: null } } })).toBe(false);
 		expect(sameLive(base, a)).toBe(false);
+	});
+});
+
+describe('live days', () => {
+	const day = { day: 1, title: 'A', learn: 'l', practice: 'p', review: 'r', minutes: 60 };
+	const writing: LiveState = {
+		status: 'generating',
+		error: null,
+		blocks: { 0: { status: 'writing', error: null } }
+	};
+
+	it('collects days as they arrive and replaces a repeated day', () => {
+		let state = applyLiveEvent(writing, { type: 'day_ready', planId: 'p', index: 0, day });
+		state = applyLiveEvent(state, {
+			type: 'day_ready',
+			planId: 'p',
+			index: 0,
+			day: { ...day, day: 2, title: 'B' }
+		});
+		state = applyLiveEvent(state, {
+			type: 'day_ready',
+			planId: 'p',
+			index: 0,
+			day: { ...day, title: 'A2' }
+		});
+		expect(state.blocks[0].days?.map((d) => d.title).sort()).toEqual(['A2', 'B']);
+	});
+
+	it('drops the days when the block restarts, is ready, fails or the plan pauses', () => {
+		const withDay = applyLiveEvent(writing, { type: 'day_ready', planId: 'p', index: 0, day });
+		expect(
+			applyLiveEvent(withDay, { type: 'block_restarted', planId: 'p', index: 0 }).blocks[0].days
+		).toEqual([]);
+		expect(
+			applyLiveEvent(withDay, { type: 'block_ready', planId: 'p', index: 0 }).blocks[0].days
+		).toBeUndefined();
+		expect(
+			applyLiveEvent(withDay, { type: 'block_failed', planId: 'p', index: 0, message: 'x' })
+				.blocks[0].days
+		).toBeUndefined();
+		expect(applyLiveEvent(withDay, { type: 'paused', planId: 'p' }).blocks[0].days).toBeUndefined();
+	});
+
+	it('does not ask the page to reload for a day or a restart', () => {
+		expect(needsRefetch({ type: 'day_ready', planId: 'p', index: 0, day })).toBe(false);
+		expect(needsRefetch({ type: 'block_restarted', planId: 'p', index: 0 })).toBe(false);
+	});
+
+	it('keeps live days across a data refresh while the block is writing, not after it is ready', () => {
+		const withDay = applyLiveEvent(writing, { type: 'day_ready', planId: 'p', index: 0, day });
+		expect(keepLiveDays(withDay, writing).blocks[0].days).toHaveLength(1);
+		const ready: LiveState = { ...writing, blocks: { 0: { status: 'ready', error: null } } };
+		expect(keepLiveDays(withDay, ready).blocks[0].days).toBeUndefined();
 	});
 });

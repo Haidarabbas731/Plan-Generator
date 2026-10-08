@@ -12,6 +12,11 @@ import { createPlanStore } from './plan-store.js';
 
 const url = process.env.DATABASE_URL;
 
+const callsOf = (model: ReturnType<typeof createFakeModel>) => [
+	...model.doGenerateCalls,
+	...model.doStreamCalls
+];
+
 describe.skipIf(!url)('plan generation (real database, fake model)', () => {
 	const client = postgres(url ?? '', { max: 4 });
 	const db = drizzle(client, { schema });
@@ -87,19 +92,47 @@ describe.skipIf(!url)('plan generation (real database, fake model)', () => {
 		expect(plan.ledger).toHaveLength(30);
 		expect(plan.ledger[29]).toMatchObject({ day: 30, title: 'Lesson 30' });
 
-		expect(model.doGenerateCalls).toHaveLength(7);
+		expect(callsOf(model)).toHaveLength(7);
 		expect(events.map((event) => event.type)).toEqual([
 			'outline_ready',
-			...Array.from({ length: 6 }, () => ['block_started', 'block_ready']).flat(),
+			...Array.from({ length: 6 }, () => [
+				'block_started',
+				...Array.from({ length: 5 }, () => 'day_ready'),
+				'block_ready'
+			]).flat(),
 			'done'
 		]);
+	});
+
+	it('sends each day as it is written, before the block is saved', async () => {
+		const planId = await newPlan(10);
+		const { events, outcome } = run(planId);
+		expect(await outcome).toBe('ready');
+		const first = events.find((event) => event.type === 'day_ready');
+		expect(first).toMatchObject({ index: 0, day: { day: 1, title: 'Lesson 1' } });
+		expect(Object.keys((first as { day: object }).day).sort()).toEqual(
+			['day', 'learn', 'minutes', 'practice', 'review', 'title'].sort()
+		);
+		const types = events.map((event) => event.type);
+		expect(types.indexOf('day_ready')).toBeLessThan(types.indexOf('block_ready'));
+	});
+
+	it('tells the page to drop the preview when a block is written again', async () => {
+		const planId = await newPlan(10);
+		const { events, outcome } = run(planId, { blockFirstAttemptFails: { 0: 'missing-day' } });
+		expect(await outcome).toBe('ready');
+		const types = events.map((event) => event.type);
+		const restart = types.indexOf('block_restarted');
+		expect(restart).toBeGreaterThan(types.indexOf('day_ready'));
+		expect(types.slice(restart + 1)).toContain('day_ready');
+		expect(types.indexOf('block_ready')).toBeGreaterThan(restart);
 	});
 
 	it('writes a 90-day plan in 18 blocks with no repeated titles', async () => {
 		const planId = await newPlan(90);
 		const { model, outcome } = run(planId);
 		expect(await outcome).toBe('ready');
-		expect(model.doGenerateCalls).toHaveLength(19);
+		expect(callsOf(model)).toHaveLength(19);
 		const days = await store.listDays(planId);
 		expect(days).toHaveLength(90);
 		expect(new Set(days.map((day) => day.title)).size).toBe(90);
@@ -125,7 +158,7 @@ describe.skipIf(!url)('plan generation (real database, fake model)', () => {
 		const planId = await newPlan(30);
 		const { model, outcome } = run(planId, { blockFirstAttemptFails: { 1: 'duplicate-title' } });
 		expect(await outcome).toBe('ready');
-		expect(model.doGenerateCalls).toHaveLength(8);
+		expect(callsOf(model)).toHaveLength(8);
 		const days = await store.listDays(planId);
 		expect(new Set(days.map((day) => day.title)).size).toBe(30);
 	});
@@ -155,7 +188,7 @@ describe.skipIf(!url)('plan generation (real database, fake model)', () => {
 
 		const second = run(planId);
 		expect(await second.outcome).toBe('ready');
-		expect(second.model.doGenerateCalls).toHaveLength(4);
+		expect(callsOf(second.model)).toHaveLength(4);
 
 		const days = await store.listDays(planId);
 		expect(days.map((day) => day.day)).toEqual(Array.from({ length: 30 }, (_, i) => i + 1));
@@ -187,7 +220,7 @@ describe.skipIf(!url)('plan generation (real database, fake model)', () => {
 
 		const resumed = run(planId);
 		expect(await resumed.outcome).toBe('ready');
-		expect(resumed.model.doGenerateCalls).toHaveLength(4);
+		expect(callsOf(resumed.model)).toHaveLength(4);
 		expect(await store.listDays(planId)).toHaveLength(30);
 	});
 

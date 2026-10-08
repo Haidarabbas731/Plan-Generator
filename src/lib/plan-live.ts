@@ -1,8 +1,19 @@
 import type { BlockStatus, PlanStatus } from './plan-types.js';
 
+export interface LiveDay {
+	day: number;
+	title: string;
+	learn: string;
+	practice: string;
+	review: string;
+	minutes: number;
+}
+
 export type PlanEvent =
 	| { type: 'outline_ready'; planId: string }
 	| { type: 'block_started'; planId: string; index: number }
+	| { type: 'day_ready'; planId: string; index: number; day: LiveDay }
+	| { type: 'block_restarted'; planId: string; index: number }
 	| { type: 'block_ready'; planId: string; index: number }
 	| { type: 'block_failed'; planId: string; index: number; message: string }
 	| { type: 'paused'; planId: string }
@@ -22,6 +33,7 @@ export type LiveEvent = PlanEvent | SnapshotEvent;
 export interface LiveBlock {
 	status: BlockStatus;
 	error: string | null;
+	days?: LiveDay[];
 }
 
 export interface LiveState {
@@ -47,6 +59,23 @@ export function applyLiveEvent(state: LiveState, event: LiveEvent): LiveState {
 				...state,
 				status: 'generating',
 				blocks: { ...state.blocks, [event.index]: { status: 'writing', error: null } }
+			};
+		case 'day_ready': {
+			const days = (state.blocks[event.index]?.days ?? []).filter(
+				(day) => day.day !== event.day.day
+			);
+			return {
+				...state,
+				blocks: {
+					...state.blocks,
+					[event.index]: { status: 'writing', error: null, days: [...days, event.day] }
+				}
+			};
+		}
+		case 'block_restarted':
+			return {
+				...state,
+				blocks: { ...state.blocks, [event.index]: { status: 'writing', error: null, days: [] } }
 			};
 		case 'block_ready':
 			return {
@@ -96,7 +125,24 @@ export function sameLive(a: LiveState, b: LiveState): boolean {
 }
 
 export function needsRefetch(event: LiveEvent): boolean {
-	return event.type !== 'block_started';
+	return (
+		event.type !== 'block_started' && event.type !== 'day_ready' && event.type !== 'block_restarted'
+	);
+}
+
+export function keepLiveDays(previous: LiveState, next: LiveState): LiveState {
+	let changed = false;
+	const blocks: Record<number, LiveBlock> = {};
+	for (const [key, block] of Object.entries(next.blocks)) {
+		const days = previous.blocks[Number(key)]?.days;
+		if (block.status === 'writing' && days && days.length > 0) {
+			blocks[Number(key)] = { ...block, days };
+			changed = true;
+		} else {
+			blocks[Number(key)] = block;
+		}
+	}
+	return changed ? { ...next, blocks } : next;
 }
 
 export function writingLabel(state: LiveState, totalBlocks: number): string {

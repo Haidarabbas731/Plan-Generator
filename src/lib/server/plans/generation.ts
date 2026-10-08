@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
 import { planBlockRanges } from '#lib/plan-blocks.js';
-import { runBlockWriter } from '../ai/block-writer.js';
+import { runBlockWriterStream } from '../ai/block-writer.js';
 import { describeAiError } from '../ai/errors.js';
 import { GenerationError } from '../ai/generate.js';
 import { appendToLedger } from '../ai/ledger.js';
@@ -75,6 +75,7 @@ export async function runGeneration(args: {
 	};
 
 	await store.setPlanStatus(planId, 'generating');
+	const startedAt = Date.now();
 
 	let blocks = await store.listBlocks(planId);
 	if (blocks.length === 0) {
@@ -88,6 +89,7 @@ export async function runGeneration(args: {
 			});
 			await store.saveOutline(planId, outline);
 			emit({ type: 'outline_ready', planId });
+			logger.info({ planId, outlineMs: Date.now() - startedAt }, 'Outline written');
 		} catch (error) {
 			if (signal.aborted) return pausePlan();
 			if (error instanceof GenerationError) {
@@ -110,6 +112,8 @@ export async function runGeneration(args: {
 
 		await store.setBlockStatus(planId, block.idx, 'writing');
 		emit({ type: 'block_started', planId, index: block.idx });
+		const blockStartedAt = Date.now();
+		let firstDayMs: number | null = null;
 
 		try {
 			const current = (await store.getPlan(planId))!;
@@ -118,13 +122,30 @@ export async function runGeneration(args: {
 				? toBlockOutput(await store.listBlockDays(previousBlock.id))
 				: null;
 
-			const output = await runBlockWriter({
+			const output = await runBlockWriterStream({
 				model,
 				inputs: current.inputs,
 				outline: outlineFromRows(current, blocks),
 				block: outlineFromRows(current, [block]).blocks[0],
 				ledger: current.ledger,
 				previous,
+				onDay: (day) => {
+					firstDayMs ??= Date.now() - blockStartedAt;
+					emit({
+						type: 'day_ready',
+						planId,
+						index: block.idx,
+						day: {
+							day: day.day,
+							title: day.title,
+							learn: day.learn,
+							practice: day.practice,
+							review: day.review,
+							minutes: day.minutes
+						}
+					});
+				},
+				onRestart: () => emit({ type: 'block_restarted', planId, index: block.idx }),
 				abortSignal: signal
 			});
 
@@ -135,6 +156,10 @@ export async function runGeneration(args: {
 				appendToLedger(current.ledger, output.days)
 			);
 			emit({ type: 'block_ready', planId, index: block.idx });
+			logger.info(
+				{ planId, block: block.idx, firstDayMs, blockMs: Date.now() - blockStartedAt },
+				'Block written'
+			);
 		} catch (error) {
 			if (signal.aborted) {
 				await store.setBlockStatus(planId, block.idx, 'pending');

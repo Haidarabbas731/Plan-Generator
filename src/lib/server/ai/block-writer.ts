@@ -1,10 +1,11 @@
 import type { LanguageModel } from 'ai';
+import { LIMITS } from '#lib/limits.js';
 import type { LedgerEntry, PlanInputs } from '#lib/plan-types.js';
-import { generateValidated } from './generate.js';
+import { generateValidated, streamValidated } from './generate.js';
 import { findDuplicateTitles } from './ledger.js';
 import { BLOCK_WRITER_INSTRUCTIONS, blockWriterPrompt } from './prompts.js';
-import { blockOutputSchema } from './schemas.js';
-import type { BlockOutput, Outline, OutlineBlock } from './types.js';
+import { blockOutputSchema, daySchema } from './schemas.js';
+import type { DayOutput, BlockOutput, Outline, OutlineBlock } from './types.js';
 import { validateBlock } from './validators.js';
 
 export function runBlockWriter(args: {
@@ -29,4 +30,34 @@ export function runBlockWriter(args: {
 		],
 		abortSignal: args.abortSignal
 	});
+}
+
+export async function runBlockWriterStream(args: {
+	model: LanguageModel;
+	inputs: PlanInputs;
+	outline: Outline;
+	block: OutlineBlock;
+	ledger: LedgerEntry[];
+	previous: BlockOutput | null;
+	onDay: (day: DayOutput) => void;
+	onRestart: () => void;
+	abortSignal?: AbortSignal;
+}): Promise<BlockOutput> {
+	const { block, ledger, inputs } = args;
+	const days = await streamValidated<DayOutput>({
+		model: args.model,
+		instructions: BLOCK_WRITER_INSTRUCTIONS,
+		prompt: blockWriterPrompt(args),
+		element: daySchema,
+		minItems: 1,
+		maxItems: LIMITS.maxDaysPerBlock,
+		validate: (output) => [
+			...validateBlock({ days: output }, block, inputs.minutesPerDay),
+			...findDuplicateTitles(output, ledger).map((finding) => finding.message)
+		],
+		onElement: args.onDay,
+		onRestart: args.onRestart,
+		abortSignal: args.abortSignal
+	});
+	return { days };
 }

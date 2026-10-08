@@ -24,7 +24,7 @@ export const planWorker = createPlanWorker({
 	store: planStore,
 	bus: planBus,
 	resolveModel: async (plan) => {
-		if (AI_FAKE) return createFakeModel();
+		if (AI_FAKE) return createFakeModel({ dayDelayMs: 250 });
 		const key = await getKey(plan.userId, plan.provider);
 		if (!key) throw new MissingKeyError(plan.provider);
 		return createLanguageModel(plan.provider, plan.model, key);

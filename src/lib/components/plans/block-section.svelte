@@ -19,6 +19,7 @@
 	interface Props {
 		block: PlanBlockView;
 		days: PlanDayView[];
+		preview?: boolean;
 		dates: string[];
 		todayDay?: number | null;
 		changed?: ReadonlySet<number>;
@@ -32,6 +33,7 @@
 	let {
 		block,
 		days,
+		preview = false,
 		dates,
 		todayDay = null,
 		changed = new Set<number>(),
@@ -127,7 +129,7 @@
 			<div class="flex flex-col gap-4 px-4 pt-1 pb-4">
 				<p class="text-sm text-muted-foreground">{block.objective}</p>
 
-				{#if isWritten}
+				{#if isWritten || preview}
 					<ul class="flex flex-col divide-y divide-border">
 						{#each days as day, i (day.day)}
 							<DayRow
@@ -141,7 +143,8 @@
 								date={dates[day.day - 1] ?? null}
 								isToday={day.day === todayDay}
 								changed={changed.has(day.day)}
-								revealIndex={justWritten ? Math.min(i, REVEAL_CAP) : null}
+								revealIndex={preview ? 0 : justWritten ? Math.min(i, REVEAL_CAP) : null}
+								readonly={preview}
 								{ontoggle}
 							/>
 						{/each}
@@ -183,13 +186,20 @@
 					</p>
 				{/if}
 
-				{#if isWritten}
+				{#if preview}
+					<p class="text-caption text-muted-foreground">Still writing the rest of this block.</p>
+				{/if}
+
+				{#if block.status !== 'failed'}
 					<div
 						class="flex items-start gap-3 rounded-lg border border-highlight/30 bg-highlight/5 p-4 text-sm"
 					>
 						<FlagIcon class="mt-0.5 size-4 shrink-0 text-highlight" aria-hidden="true" />
 						<div class="flex flex-col gap-1">
-							<p class="font-medium">Day {block.endDay} milestone · {block.milestone.title}</p>
+							<p class="font-medium">
+								{isWritten ? `Day ${block.endDay} milestone` : `By Day ${block.endDay}`} · {block
+									.milestone.title}
+							</p>
 							<p class="text-foreground/85">{block.milestone.description}</p>
 							<p class="text-muted-foreground">
 								You are done when: {block.milestone.successCriteria}

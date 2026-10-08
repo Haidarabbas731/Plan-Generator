@@ -21,6 +21,7 @@
 		isToday?: boolean;
 		changed?: boolean;
 		revealIndex?: number | null;
+		readonly?: boolean;
 		ontoggle: (day: number, completed: boolean) => void;
 	}
 
@@ -36,6 +37,7 @@
 		isToday = false,
 		changed = false,
 		revealIndex = null,
+		readonly = false,
 		ontoggle
 	}: Props = $props();
 
@@ -71,6 +73,7 @@
 					data-animate={touched ? '' : undefined}
 					aria-label="Day {day} done: {title}"
 					class="size-5"
+					disabled={readonly}
 					onCheckedChange={(value) => {
 						touched = true;
 						ontoggle(day, value);
