@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
+	import { isCurrentPath } from '#lib/nav.js';
 	import Logo from './logo.svelte';
 	import ThemeToggle from './theme-toggle.svelte';
 	import UserMenu from './user-menu.svelte';
@@ -16,12 +17,21 @@
 		{ href: '/settings', label: 'Settings' }
 	];
 
-	const isCurrent = (href: string) =>
-		page.url.pathname === href || page.url.pathname.startsWith(`${href}/`);
+	let scrolled = $state(false);
+
+	$effect(() => {
+		const update = () => (scrolled = window.scrollY > 4);
+		update();
+		window.addEventListener('scroll', update, { passive: true });
+		return () => window.removeEventListener('scroll', update);
+	});
 </script>
 
-<header class="sticky top-0 z-40 border-b glass">
-	<div class="mx-auto flex h-14 w-full max-w-5xl items-center justify-between gap-4 px-4 sm:px-6">
+<header
+	data-scrolled={scrolled ? '' : undefined}
+	class="sticky top-0 z-40 border-b glass border-b-transparent transition-[border-color] duration-(--dur-fast) ease-(--ease-out) data-[scrolled]:border-b-border"
+>
+	<div class="frame flex h-14 items-center justify-between gap-4">
 		<a
 			href={user ? '/plans' : '/'}
 			class="inline-flex min-h-11 items-center rounded-md outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
@@ -34,7 +44,7 @@
 					{#each links as link (link.href)}
 						<a
 							href={link.href}
-							aria-current={isCurrent(link.href) ? 'page' : undefined}
+							aria-current={isCurrentPath(page.url.pathname, link.href) ? 'page' : undefined}
 							class="{buttonVariants({
 								variant: 'ghost',
 								class: 'h-11 px-4'

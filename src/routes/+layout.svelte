@@ -2,12 +2,17 @@
 	import './layout.css';
 	import favicon from '#lib/assets/favicon.svg';
 	import { ModeWatcher } from 'mode-watcher';
+	import { page } from '$app/state';
 	import AppHeader from '#lib/components/shared/app-header.svelte';
+	import BottomNav from '#lib/components/shared/bottom-nav.svelte';
 	import { Toaster } from '#lib/components/ui/sonner/index.js';
 	import * as Tooltip from '#lib/components/ui/tooltip/index.js';
+	import { showsTabBar } from '#lib/nav.js';
 	import type { LayoutProps } from './$types';
 
 	let { children, data }: LayoutProps = $props();
+
+	const tabBar = $derived(Boolean(data.user) && showsTabBar(page.url.pathname));
 
 	$effect(() => {
 		document.documentElement.setAttribute('data-hydrated', '');
@@ -31,7 +36,14 @@
 <Tooltip.Provider delayDuration={400}>
 	<AppHeader user={data.user} />
 
-	<main id="main">
+	<main
+		id="main"
+		class={tabBar ? 'pb-[calc(3.5rem+env(safe-area-inset-bottom))] sm:pb-0' : undefined}
+	>
 		{@render children()}
 	</main>
+
+	{#if tabBar}
+		<BottomNav />
+	{/if}
 </Tooltip.Provider>

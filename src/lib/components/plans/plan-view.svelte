@@ -147,89 +147,91 @@
 		: 'transition-[padding] duration-(--dur-base) ease-(--ease-out)'}
 	style:padding-right={dock.docked ? `${dock.width}px` : undefined}
 >
-	<div class="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10 sm:px-6">
-		<PlanHeader
-			id={plan.id}
-			title={plan.title}
-			goal={plan.goal}
-			topicTag={plan.topicTag}
-			provider={plan.provider}
-			model={plan.model}
-			startDate={plan.startDate}
-			done={progress.done}
-			total={daysTotal}
-			{streak}
-			chatOpen={dock.open}
-			onchat={() => dock.toggle()}
-		/>
-
-		{#if status !== 'ready'}
-			<ActivityLine
-				{status}
-				error={stream.live.error}
-				label={stream.label}
-				blocks={blockViews.map(({ block }) => ({
-					idx: block.idx,
-					theme: block.theme,
-					status: block.status,
-					error: block.error
-				}))}
-				busy={busy !== null}
-				onresume={() => resumeForm?.requestSubmit()}
-				onpause={() => cancelForm?.requestSubmit()}
+	<div class="frame py-10">
+		<div class="flex column-narrow flex-col gap-6">
+			<PlanHeader
+				id={plan.id}
+				title={plan.title}
+				goal={plan.goal}
+				topicTag={plan.topicTag}
+				provider={plan.provider}
+				model={plan.model}
+				startDate={plan.startDate}
+				done={progress.done}
+				total={daysTotal}
+				{streak}
+				chatOpen={dock.open}
+				onchat={() => dock.toggle()}
 			/>
-		{/if}
 
-		<TodayCard today={todayInfo} day={todayView} {allDone} ontoggle={toggle} />
+			{#if status !== 'ready'}
+				<ActivityLine
+					{status}
+					error={stream.live.error}
+					label={stream.label}
+					blocks={blockViews.map(({ block }) => ({
+						idx: block.idx,
+						theme: block.theme,
+						status: block.status,
+						error: block.error
+					}))}
+					busy={busy !== null}
+					onresume={() => resumeForm?.requestSubmit()}
+					onpause={() => cancelForm?.requestSubmit()}
+				/>
+			{/if}
 
-		{#if behind > 0}
-			<p class="text-sm text-muted-foreground" role="status">
-				You are <span class="font-medium text-foreground tabular-nums">{behind}</span>
-				{behind === 1 ? 'session' : 'sessions'} behind. There is no rush; finish them at your own pace.
-			</p>
-		{/if}
+			<TodayCard today={todayInfo} day={todayView} {allDone} ontoggle={toggle} />
 
-		{#if plan.overview || plan.finalOutcome}
-			<section aria-label="About this plan" class="flex flex-col gap-3 text-sm">
-				{#if plan.overview}<p class="whitespace-pre-line text-foreground/85">
-						{plan.overview}
-					</p>{/if}
-				{#if plan.finalOutcome}
-					<p>
-						<span class="font-medium">By the end:</span>
-						<span class="whitespace-pre-line text-foreground/85">{plan.finalOutcome}</span>
-					</p>
-				{/if}
-			</section>
-		{/if}
+			{#if behind > 0}
+				<p class="text-sm text-muted-foreground" role="status">
+					You are <span class="font-medium text-foreground tabular-nums">{behind}</span>
+					{behind === 1 ? 'session' : 'sessions'} behind. There is no rush; finish them at your own pace.
+				</p>
+			{/if}
 
-		{#if blockViews.length === 0}
-			<div class="flex flex-col gap-3" aria-hidden="true">
-				{#each [0, 1, 2] as key (key)}
-					<Skeleton class="h-20 w-full rounded-lg" />
-				{/each}
-			</div>
-		{:else}
-			<ol class="flex flex-col gap-3">
-				{#each blockViews as view, i (view.block.id)}
-					<li class="reveal" style="--reveal-i: {Math.min(i, 5)}">
-						<BlockSection
-							block={view.block}
-							days={view.days}
-							{dates}
-							{todayDay}
-							bind:open={
-								() => openBlocks[view.block.idx] ?? false,
-								(value) => (openBlocks[view.block.idx] = value)
-							}
-							retrying={busy === 'resume'}
-							ontoggle={toggle}
-							onretry={() => resumeForm?.requestSubmit()}
-						/>
-					</li>
-				{/each}
-			</ol>
-		{/if}
+			{#if plan.overview || plan.finalOutcome}
+				<section aria-label="About this plan" class="flex flex-col gap-3 text-sm">
+					{#if plan.overview}<p class="whitespace-pre-line text-foreground/85">
+							{plan.overview}
+						</p>{/if}
+					{#if plan.finalOutcome}
+						<p>
+							<span class="font-medium">By the end:</span>
+							<span class="whitespace-pre-line text-foreground/85">{plan.finalOutcome}</span>
+						</p>
+					{/if}
+				</section>
+			{/if}
+
+			{#if blockViews.length === 0}
+				<div class="flex flex-col gap-3" aria-hidden="true">
+					{#each [0, 1, 2] as key (key)}
+						<Skeleton class="h-20 w-full rounded-lg" />
+					{/each}
+				</div>
+			{:else}
+				<ol class="flex flex-col gap-3">
+					{#each blockViews as view, i (view.block.id)}
+						<li class="reveal" style="--reveal-i: {Math.min(i, 5)}">
+							<BlockSection
+								block={view.block}
+								days={view.days}
+								{dates}
+								{todayDay}
+								bind:open={
+									() => openBlocks[view.block.idx] ?? false,
+									(value) => (openBlocks[view.block.idx] = value)
+								}
+								retrying={busy === 'resume'}
+								ontoggle={toggle}
+								onretry={() => resumeForm?.requestSubmit()}
+							/>
+						</li>
+					{/each}
+				</ol>
+			{/if}
+		</div>
 	</div>
 </div>
 

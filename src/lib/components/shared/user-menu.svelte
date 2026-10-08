@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 
 	interface Props {
@@ -33,11 +32,6 @@
 			<span class="truncate text-caption text-muted-foreground">{email}</span>
 		</DropdownMenu.Label>
 		<DropdownMenu.Separator />
-		<DropdownMenu.Group class="sm:hidden">
-			<DropdownMenu.Item onSelect={() => goto('/plans')}>Plans</DropdownMenu.Item>
-			<DropdownMenu.Item onSelect={() => goto('/settings')}>Settings</DropdownMenu.Item>
-			<DropdownMenu.Separator />
-		</DropdownMenu.Group>
 		<DropdownMenu.Item onSelect={() => signOutForm?.requestSubmit()}>Sign out</DropdownMenu.Item>
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

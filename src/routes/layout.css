@@ -257,6 +257,51 @@
 	}
 }
 
+@utility frame {
+	margin-inline: auto;
+	width: 100%;
+	max-width: 64rem;
+	padding-inline: 1rem;
+
+	@media (min-width: 40rem) {
+		padding-inline: 1.5rem;
+	}
+}
+
+@utility column-narrow {
+	max-width: 48rem;
+}
+
+@utility surface-flat {
+	border: 1px solid var(--border);
+	background: var(--card);
+}
+
+@utility surface-raised {
+	border: 1px solid var(--border);
+	background: var(--card);
+	box-shadow: var(--shadow-sm);
+}
+
+@utility surface-floating {
+	border: 1px solid var(--border);
+	background: var(--popover);
+	box-shadow: var(--shadow-lg);
+}
+
+@utility surface-interactive {
+	transition:
+		border-color var(--dur-fast) var(--ease-out),
+		box-shadow var(--dur-fast) var(--ease-out);
+
+	@media (hover: hover) {
+		&:hover {
+			box-shadow: var(--shadow-md);
+			border-color: color-mix(in oklab, var(--ring) 45%, var(--border));
+		}
+	}
+}
+
 @keyframes check-draw {
 	from {
 		stroke-dasharray: 24;

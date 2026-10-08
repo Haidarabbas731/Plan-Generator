@@ -42,6 +42,24 @@ test('a new user sees an empty history and can start a plan', async ({ page }) =
 	await signUp(page);
 	await open(page, '/plans');
 	await expect(page.getByText('No plans yet')).toBeVisible();
+
+	const header = page.locator('header').first();
+	await expect(header).not.toHaveAttribute('data-scrolled', '');
+	await page.setViewportSize({ width: 390, height: 844 });
+	const bar = page.getByRole('navigation', { name: 'Main' });
+	await expect(bar.getByRole('link', { name: 'Plans' })).toHaveAttribute('aria-current', 'page');
+	await page.getByRole('button', { name: 'Account menu' }).click();
+	await expect(page.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();
+	await expect(page.getByRole('menuitem', { name: 'Settings' })).toHaveCount(0);
+	await page.keyboard.press('Escape');
+	await bar.getByRole('link', { name: 'Settings' }).click();
+	await expect(page).toHaveURL(/\/settings/);
+	await expect(bar.getByRole('link', { name: 'Settings' })).toHaveAttribute('aria-current', 'page');
+	await page.evaluate(() => window.scrollTo(0, 400));
+	await expect(header).toHaveAttribute('data-scrolled', '');
+	await bar.getByRole('link', { name: 'Plans' }).click();
+	await page.setViewportSize({ width: 1280, height: 720 });
+	await expect(page).toHaveURL(/\/plans$/);
 	await page.getByRole('link', { name: 'New plan' }).click();
 	await expect(page).toHaveURL(/\/plans\/new$/);
 	await expect(page.getByRole('heading', { name: 'New plan' })).toBeVisible();

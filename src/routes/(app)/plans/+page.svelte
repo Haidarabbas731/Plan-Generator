@@ -6,6 +6,7 @@
 	import { toast } from 'svelte-sonner';
 	import DeletePlanDialog from '#lib/components/plans/delete-plan-dialog.svelte';
 	import PlanCard from '#lib/components/plans/plan-card.svelte';
+	import PageHeader from '#lib/components/shared/page-header.svelte';
 	import { Alert, AlertDescription, AlertTitle } from '#lib/components/ui/alert/index.js';
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
 	import {
@@ -44,22 +45,23 @@
 	<meta name="description" content="Your saved study plans and progress." />
 </svelte:head>
 
-<div class="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-10 sm:px-6">
-	<div class="flex flex-wrap items-center justify-between gap-3">
-		<div class="flex flex-col">
-			<h1 class="text-title">Your plans</h1>
-			{#if nearLimit}
-				<p class="text-sm text-muted-foreground" role="status">
-					<span class="tabular-nums">{data.plans.length}</span> of
-					<span class="tabular-nums">{data.planLimit}</span> plans. Delete one you no longer need to make
-					room.
-				</p>
-			{/if}
-		</div>
-		<a href="/plans/new" class={buttonVariants({ class: 'h-11 px-4' })}>
-			<PlusIcon aria-hidden="true" />
-			New plan
-		</a>
+<div class="frame flex flex-col gap-6 py-10">
+	<div class="flex flex-col gap-1">
+		<PageHeader title="Your plans">
+			{#snippet actions()}
+				<a href="/plans/new" class={buttonVariants({ class: 'h-11 px-4' })}>
+					<PlusIcon aria-hidden="true" />
+					New plan
+				</a>
+			{/snippet}
+		</PageHeader>
+		{#if nearLimit}
+			<p class="text-sm text-muted-foreground" role="status">
+				<span class="tabular-nums">{data.plans.length}</span> of
+				<span class="tabular-nums">{data.planLimit}</span> plans. Delete one you no longer need to make
+				room.
+			</p>
+		{/if}
 	</div>
 
 	{#if !data.hasKeys}

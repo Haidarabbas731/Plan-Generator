@@ -27,7 +27,7 @@
 	/>
 </svelte:head>
 
-<div class="mx-auto w-full max-w-5xl px-4 sm:px-6">
+<div class="frame">
 	<section class="grid gap-12 py-14 sm:py-20 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
 		<div class="flex flex-col items-start gap-6">
 			<h1 class="text-display">Turn a goal into a day-by-day plan</h1>
@@ -81,7 +81,7 @@
 </div>
 
 <footer class="border-t">
-	<p class="mx-auto w-full max-w-5xl px-4 py-8 text-caption text-muted-foreground sm:px-6">
+	<p class="frame py-8 text-caption text-muted-foreground">
 		Plan Generator. Your plans and chats live in your account, and you can export or delete them at
 		any time.
 	</p>
