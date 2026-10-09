@@ -1,8 +1,14 @@
-import { APICallError, createAgentUIStreamResponse, type LanguageModel } from 'ai';
+import {
+	APICallError,
+	createAgentUIStreamResponse,
+	InvalidToolInputError,
+	type LanguageModel
+} from 'ai';
 import type { Provider } from '#lib/providers.js';
 import type { ChatUIMessage } from '#lib/chat-types.js';
 import { CHAT } from '../config.js';
 import { rootAiError } from '../ai/errors.js';
+import { logger } from '../logger.js';
 import type { PlanRow, PlanStore } from '../plans/plan-store.js';
 import { limitMessage, type UsageGuard } from '../usage-guard.js';
 import type { ChatStore, StoredMessage } from './chat-store.js';
@@ -166,9 +172,13 @@ export function createChatService(deps: ChatServiceDeps) {
 			messageMetadata: ({ part }) =>
 				part.type === 'start' ? { provider: plan.provider, model: plan.model } : undefined,
 			onError: (error) => {
+				logger.warn({ planId, err: error }, 'Chat answer failed');
 				if (looksLikeUnsupportedTools(error)) {
 					rememberUnsupported(key);
 					return TOOLS_UNSUPPORTED_MESSAGE;
+				}
+				if (InvalidToolInputError.isInstance(error)) {
+					return 'The model sent a request this step could not read.';
 				}
 				return 'Something went wrong while answering. Try again.';
 			},

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
 	lastEditRevision,
 	lastEditRevisionId,
+	recoveredStepKeys,
 	stepsOf,
 	textOf,
 	toAgentStep,
@@ -160,5 +161,34 @@ describe('message helpers', () => {
 			])
 		];
 		expect(lastEditRevision(messages)).toEqual({ id: 'r2', number: 2 });
+	});
+});
+
+describe('recoveredStepKeys', () => {
+	const failed = {
+		type: 'tool-revise_blocks',
+		toolCallId: 'a',
+		state: 'output-error',
+		errorText: 'boom'
+	};
+	const done = (id: string, tool = 'revise_blocks') => ({
+		type: `tool-${tool}`,
+		toolCallId: id,
+		state: 'output-available',
+		output: { ok: true, revisionId: 'r1' }
+	});
+
+	it('marks a failed step that the same tool later completed', () => {
+		const steps = stepsOf(message([failed, done('b')]));
+		expect([...recoveredStepKeys(steps)]).toEqual(['a']);
+	});
+
+	it('keeps a failure nothing recovered', () => {
+		expect(recoveredStepKeys(stepsOf(message([failed])))).toEqual(new Set());
+	});
+
+	it('does not count a different tool or an earlier success', () => {
+		expect(recoveredStepKeys(stepsOf(message([failed, done('b', 'get_plan')])))).toEqual(new Set());
+		expect(recoveredStepKeys(stepsOf(message([done('b'), failed])))).toEqual(new Set());
 	});
 });

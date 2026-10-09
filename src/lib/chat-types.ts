@@ -129,6 +129,19 @@ export function toAgentStep(part: ToolPartLike): AgentStep | null {
 	};
 }
 
+export function recoveredStepKeys(steps: AgentStep[]): Set<string> {
+	const keys = new Set<string>();
+	steps.forEach((step, index) => {
+		if (step.state !== 'failed') return;
+		if (
+			steps.slice(index + 1).some((later) => later.tool === step.tool && later.state === 'done')
+		) {
+			keys.add(step.key);
+		}
+	});
+	return keys;
+}
+
 export function stepsOf(message: ChatUIMessage): AgentStep[] {
 	return message.parts.flatMap((part) => {
 		const step = toAgentStep(part as ToolPartLike);

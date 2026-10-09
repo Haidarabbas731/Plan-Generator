@@ -107,8 +107,10 @@ export function createOrchestrator(options: OrchestratorOptions) {
 				instruction: z
 					.string()
 					.min(1)
-					.max(500)
-					.describe("What should change, in the learner's terms")
+					.max(CHAT.maxInstructionChars)
+					.describe(
+						`What should change, in the learner's terms, under ${CHAT.maxInstructionChars} characters`
+					)
 			}),
 			execute: async ({ fromBlock, toBlock, instruction }) =>
 				edit(
@@ -123,7 +125,13 @@ export function createOrchestrator(options: OrchestratorOptions) {
 			description:
 				'Change the outline of the whole plan (themes, objectives, milestones) following an instruction, for example "focus more on speaking". It does not change the number of days. Blocks whose outline changed become out of date and need to be rewritten with revise_blocks.',
 			inputSchema: z.object({
-				instruction: z.string().min(1).max(500).describe('What should change in the outline')
+				instruction: z
+					.string()
+					.min(1)
+					.max(CHAT.maxInstructionChars)
+					.describe(
+						`What should change in the outline, under ${CHAT.maxInstructionChars} characters`
+					)
 			}),
 			execute: async ({ instruction }) =>
 				edit(

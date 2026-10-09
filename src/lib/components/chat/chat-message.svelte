@@ -5,6 +5,8 @@
 		MessageResponse
 	} from '#lib/components/ai-elements/message/index.js';
 	import {
+		recoveredStepKeys,
+		stepsOf,
 		toAgentStep,
 		type AgentStep as AgentStepData,
 		type ChatUIMessage
@@ -34,6 +36,7 @@
 		| { kind: 'step'; index: number; step: AgentStepData };
 
 	const parts = $derived.by(() => {
+		const recovered = recoveredStepKeys(stepsOf(message));
 		const result: RenderPart[] = [];
 		message.parts.forEach((part, index) => {
 			if (part.type === 'text') {
@@ -41,7 +44,7 @@
 				return;
 			}
 			const step = toAgentStep(part as Parameters<typeof toAgentStep>[0]);
-			if (step) result.push({ kind: 'step', index, step });
+			if (step && !recovered.has(step.key)) result.push({ kind: 'step', index, step });
 		});
 		return result;
 	});

@@ -50,7 +50,8 @@ export const CHAT = {
 	historyMessages: 20,
 	maxSteps: 6,
 	maxReviseBlocks: 3,
-	maxMessageChars: 2000
+	maxMessageChars: 2000,
+	maxInstructionChars: 1500
 } as const;
 
 export const REVISION_KEEP = 30;
