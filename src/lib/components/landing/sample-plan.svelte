@@ -8,6 +8,7 @@
 	import { Progress } from '#lib/components/ui/progress/index.js';
 
 	const TOTAL_DAYS = 30;
+	const MINUTES_PER_DAY = 90;
 	const START_DONE = 7;
 
 	const titles: Record<number, string> = {
@@ -42,7 +43,7 @@
 		<Card.Title class="text-xl font-bold tracking-tight">
 			Learn Rust well enough to build a CLI
 		</Card.Title>
-		<Card.Description>30 days · 90 minutes a day</Card.Description>
+		<Card.Description>{TOTAL_DAYS} days · {MINUTES_PER_DAY} minutes a day</Card.Description>
 	</Card.Header>
 
 	<Card.Content class="flex flex-col gap-5">
