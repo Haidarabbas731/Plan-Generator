@@ -15,30 +15,71 @@ Each person brings their own AI key (Gemini, OpenRouter, Anthropic or OpenAI). K
 
 SvelteKit 3 (Svelte 5 runes), TypeScript, Tailwind CSS v4, shadcn-svelte on Bits UI, Svelte AI Elements for the chat, Bun. Drizzle with PostgreSQL, Better Auth, Vercel AI SDK v7 with zod, BullMQ on Redis, pino for logs.
 
-## Setup
+## Quick start (run it on your own computer)
 
-Requires [Bun](https://bun.sh) and [Docker](https://www.docker.com).
+You need three things installed: [Bun](https://bun.sh) (runs the project), [Docker](https://www.docker.com) (runs the database) and [Git](https://git-scm.com). You do not need to install PostgreSQL or Redis yourself.
+
+**1. Get the code and install packages**
 
 ```sh
+git clone <this repository's URL>
+cd Plan-Generator
 bun install
+```
+
+**2. Create your settings file**
+
+```sh
 cp .env.example .env
 ```
 
-Fill in `BETTER_AUTH_SECRET` and `ENCRYPTION_KEY` in `.env` (`openssl rand -base64 32` for each), then start everything:
+Open `.env` and fill in the two secrets. Each one is a random 32-byte string. Make them with either command (run it twice, once per secret):
+
+```sh
+openssl rand -base64 32
+# no openssl (for example on Windows)? use Node instead:
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+```
+
+- `BETTER_AUTH_SECRET` signs your login sessions.
+- `ENCRYPTION_KEY` encrypts the AI keys people save. **Keep a copy somewhere safe.** If you lose it, every saved AI key becomes unreadable.
+
+Leave everything else as it is. The Google, GitHub and email settings are optional (see below).
+
+**3. Start everything**
 
 ```sh
 docker compose up -d
-```
-
-This runs PostgreSQL (host port 5433), Redis (host port 6379) and the dev server at <http://localhost:5173> with live reload. Apply the database migrations from your machine:
-
-```sh
 bun run db:migrate
 ```
 
-After adding a package, rebuild the app container with `docker compose up -d --build`.
+The first command starts PostgreSQL (port 5433), Redis (port 6379) and the app. The second creates the database tables. Open <http://localhost:5173> and create an account.
 
-To run only the services and use the dev server on your machine instead, start `docker compose up -d postgres redis` and then `bun run dev`. `.env` uses `localhost` URLs, which works for that and for the tests; the compose file swaps in the container hostnames for the app container.
+**4. Add an AI key**
+
+The app does not include an AI. Each person brings their own key from one of the four providers below, then pastes it in **Settings → AI keys**. Keys are stored encrypted, and only the last four characters are shown.
+
+| Provider      | Where to get a key                            | Good to know                                                         |
+| ------------- | --------------------------------------------- | -------------------------------------------------------------------- |
+| Google Gemini | <https://aistudio.google.com/apikey>          | Has a free tier                                                      |
+| OpenRouter    | <https://openrouter.ai/keys>                  | One key for many models; some models are free but often rate limited |
+| Anthropic     | <https://console.anthropic.com/settings/keys> | Paid                                                                 |
+| OpenAI        | <https://platform.openai.com/api-keys>        | Paid                                                                 |
+
+Then choose **New plan**, describe your goal, pick a model and generate.
+
+**Something not working?** See [Troubleshooting](#troubleshooting).
+
+### Running without Docker for the app
+
+If you would rather run the dev server on your machine (faster reloads), start only the services and then the server:
+
+```sh
+docker compose up -d postgres redis
+bun run dev
+```
+
+`.env` uses `localhost` addresses, which works for this and for the tests. The compose file swaps in the container names for the app container. After adding a package, rebuild the app container with `docker compose up -d --build`.
 
 ## Scripts
 
@@ -67,13 +108,14 @@ src/
     (app)/plans/            list, new plan form, plan page, chat, exports, live stream
     (app)/settings/         AI keys, model default, account, data and privacy, data export
   lib/
-    limits.ts, prefs-validation.ts, plan-validation.ts, plan-summary.ts
-                            validation and limits shared by server and client
+    limits.ts, messages.ts, prefs-validation.ts, plan-validation.ts, plan-summary.ts
+                            limits, shared messages and validation used by server and client
     client/                 chat state, live plan stream, chat dock, drag to dismiss
     components/             ui (shadcn-svelte), ai-elements, chat, plans, settings, shared
     server/
       db/                   Drizzle schema and client
       ai/                   prompts, outliner, block writer, validators, ledger,
+                            provider registry, provider error handling,
                             model list and compatibility check, fake models
       plans/                store, worker, Redis queue and events, plan service, revisions
       chat/                 chat service and store, orchestrator, plan editing tools
@@ -122,7 +164,25 @@ The server learns its public address from the proxy's `X-Forwarded-Proto` and `X
 
 ### Sign-in with Google or GitHub (optional)
 
-Create an OAuth app with each provider and set the callback URL to `<BETTER_AUTH_URL>/api/auth/callback/google` and `<BETTER_AUTH_URL>/api/auth/callback/github`. Put the client id and secret in the Environment tab. A button appears only when both values are set.
+Email and password sign-in works without any of this. Each button appears only when **both** its id and its secret are set, so you can add one provider at a time. In every case the callback URL is your public address plus `/api/auth/callback/<provider>` (use `http://localhost:5173` while testing locally). Put the values in `.env` (local) or the Environment tab (Dokploy), then restart or redeploy.
+
+**Google** (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`)
+
+1. Open the [Google Cloud console](https://console.cloud.google.com), pick or create a project.
+2. **APIs & Services → OAuth consent screen**: choose External, enter an app name and your email. While the app is in _Testing_, only the Google accounts you list under **Test users** can sign in. Publish it to allow everyone; with the scopes below no Google review is needed.
+3. Scopes: only `openid`, `.../auth/userinfo.email` and `.../auth/userinfo.profile`. These are the defaults and are all sign-in needs. Do not add others.
+4. **APIs & Services → Credentials → Create credentials → OAuth client ID**, type **Web application**.
+5. **Authorised JavaScript origins**: your public address, for example `https://plans.example.com` (no trailing slash).
+6. **Authorised redirect URIs**: `https://plans.example.com/api/auth/callback/google`. It must match exactly, otherwise Google answers `redirect_uri_mismatch`. Changes can take a few minutes to apply.
+7. Copy the **Client ID** and **Client secret**.
+
+**GitHub** (`GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`)
+
+1. GitHub → **Settings → Developer settings → OAuth Apps → New OAuth App**.
+2. **Homepage URL**: your public address. **Authorization callback URL**: `https://plans.example.com/api/auth/callback/github`.
+3. Register the app, copy the **Client ID**, then **Generate a new client secret** and copy it straight away (GitHub shows it once).
+
+Signing in with Google or GitHub links to an existing password account only when that account's email is verified, which needs the email setup below.
 
 ### Email (optional)
 
@@ -154,3 +214,19 @@ Add `AI_FAKE: '1'` under `environment:` in the override to also run the tests th
 ### Updating
 
 Redeploy from Dokploy. Migrations run on start and are safe to repeat. Existing plans, chats and saved keys are kept in the Postgres volume.
+
+## Troubleshooting
+
+| What you see                                          | Why and what to do                                                                                                                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "Connect your AI key first" on **New plan**           | You have not saved a key yet. Add one in **Settings → AI keys** (see the table in Quick start).                                                         |
+| A plan stays on "Writing" and nothing happens         | Make sure Redis is running (`docker compose ps`). After editing server code in dev, restart the app: `docker compose restart app`.                      |
+| "The provider is rate limiting this model or key"     | The provider is busy or you reached its limit. Free models on OpenRouter hit this often. Wait a minute, or switch model with **Change model**.          |
+| "The provider refused this request"                   | The provider said no for this model and key. The message includes the provider's own words; try another model or check the key.                         |
+| "Cross-site POST form submissions are forbidden"      | Behind a proxy: `BETTER_AUTH_URL` must be the exact public address, and the proxy must send `X-Forwarded-Proto` and `X-Forwarded-Host` (see Deploying). |
+| Google says `redirect_uri_mismatch`                   | The redirect URI in the Google console does not match `<BETTER_AUTH_URL>/api/auth/callback/google` character for character.                             |
+| The Google or GitHub button is missing                | Both the id and the secret must be set; then restart or redeploy.                                                                                       |
+| Saved AI keys stopped working after a restore or move | `ENCRYPTION_KEY` is different from the one that encrypted them. Use the original key, or add the AI keys again.                                         |
+| The database tables are missing                       | Run `bun run db:migrate` (local). In Docker deployments migrations run on every start.                                                                  |
+| A Docker build stops or is killed on a small server   | Usually out of memory. Add swap (for example 2 GB) or build on a larger machine.                                                                        |
+| Port 5433, 6379 or 5173 is already in use             | Stop the other program using it, or change the port in `docker-compose.yml`.                                                                            |
