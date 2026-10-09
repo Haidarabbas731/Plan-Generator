@@ -1,4 +1,5 @@
 import type { Provider } from '#lib/providers.js';
+import { classifyStatus, extractDetail } from './provider-error.js';
 
 export type ProviderFailureReason = 'rejected' | 'rate_limited' | 'unreachable';
 
@@ -14,21 +15,29 @@ export const UNREACHABLE: ProviderFailure = {
 	message: 'Could not reach the provider. Check your connection and try again.'
 };
 
-export function failureFromStatus(status: number): ProviderFailure {
-	if (status === 429) {
+export async function failureFromResponse(response: Response): Promise<ProviderFailure> {
+	const errorClass = classifyStatus(response.status);
+	const body = await response.text().catch(() => '');
+	const detail = extractDetail(body);
+	const said = detail ? ` It said: "${detail}"` : '';
+	if (errorClass === 'rate_limited') {
 		return {
 			ok: false,
 			reason: 'rate_limited',
-			message: 'The provider is rate limiting this key. Try again in a minute.'
+			message: `The provider is rate limiting this key.${said} Try again in a minute.`
 		};
 	}
-	if (status === 400 || status === 401 || status === 403) {
-		return { ok: false, reason: 'rejected', message: 'The provider rejected this key.' };
+	if (errorClass === 'auth' || errorClass === 'refused' || response.status === 400) {
+		return {
+			ok: false,
+			reason: 'rejected',
+			message: `The provider rejected this key.${said}`
+		};
 	}
 	return {
 		ok: false,
 		reason: 'unreachable',
-		message: 'The provider could not answer right now. Try again later.'
+		message: `The provider could not answer right now.${said} Try again later.`
 	};
 }
 

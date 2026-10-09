@@ -3,7 +3,7 @@ import type { Provider } from '#lib/providers.js';
 import { MODEL_LIST } from '../config.js';
 import {
 	authHeaders,
-	failureFromStatus,
+	failureFromResponse,
 	MODELS_URL,
 	UNREACHABLE,
 	type ProviderFailure
@@ -149,7 +149,7 @@ export function createModelCatalog(
 		} catch {
 			return UNREACHABLE;
 		}
-		if (!response.ok) return failureFromStatus(response.status);
+		if (!response.ok) return await failureFromResponse(response);
 
 		let body: unknown;
 		try {

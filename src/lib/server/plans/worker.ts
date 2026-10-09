@@ -1,6 +1,6 @@
 import type { LanguageModel } from 'ai';
 import type { Sql } from 'postgres';
-import { describeAiError } from '../ai/errors.js';
+import { describeAiError } from '../ai/provider-error.js';
 import { logger } from '../logger.js';
 import type { EventBus } from './events.js';
 import { runGeneration, type RunOutcome } from './generation.js';

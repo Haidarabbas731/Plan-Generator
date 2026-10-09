@@ -1,14 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import {
-	APICallError,
-	createAgentUIStreamResponse,
-	InvalidToolInputError,
-	type LanguageModel
-} from 'ai';
+import { createAgentUIStreamResponse, InvalidToolInputError, type LanguageModel } from 'ai';
 import type { Provider } from '#lib/providers.js';
 import type { ChatSummary, ChatUIMessage } from '#lib/chat-types.js';
 import { CHAT } from '../config.js';
-import { rootAiError } from '../ai/errors.js';
+import { interpretAiError, type ErrorClass } from '../ai/provider-error.js';
 import { logger } from '../logger.js';
 import type { PlanRow, PlanStore } from '../plans/plan-store.js';
 import { limitMessage, type UsageGuard } from '../usage-guard.js';
@@ -53,13 +48,7 @@ export function toUiMessage(message: StoredMessage): ChatUIMessage {
 	};
 }
 
-function looksLikeUnsupportedTools(error: unknown): boolean {
-	const root = rootAiError(error);
-	if (!APICallError.isInstance(root)) return false;
-	const status = root.statusCode;
-	if (status === undefined || ![400, 404, 422].includes(status)) return false;
-	return /tool|function/i.test(`${root.message} ${root.responseBody ?? ''}`);
-}
+const TOOL_REJECTION_CLASSES: ReadonlySet<ErrorClass> = new Set(['bad_request', 'not_found']);
 
 const TOOLS_UNSUPPORTED_MESSAGE =
 	"This model can't use tools, so it can't edit plans. Send your message again and it will answer without making changes.";
@@ -240,18 +229,19 @@ export function createChatService(deps: ChatServiceDeps) {
 				part.type === 'start' ? { provider: plan.provider, model: plan.model } : undefined,
 			onError: (error) => {
 				logger.warn({ planId, err: error }, 'Chat answer failed');
-				if (looksLikeUnsupportedTools(error)) {
-					rememberUnsupported(key);
-					return TOOLS_UNSUPPORTED_MESSAGE;
-				}
+				const interpreted = interpretAiError(error);
 				if (InvalidToolInputError.isInstance(error)) {
 					return 'The model sent a request this step could not read.';
 				}
-				const root = rootAiError(error);
-				if (APICallError.isInstance(root) && root.statusCode === 429) {
-					return 'This model is busy or rate limited right now. Wait a moment and try again, or switch model.';
+				if (mode === 'tools' && TOOL_REJECTION_CLASSES.has(interpreted.class)) {
+					rememberUnsupported(key);
+					const said = interpreted.detail ? ` It said: "${interpreted.detail}"` : '';
+					return `${TOOLS_UNSUPPORTED_MESSAGE}${said}`;
 				}
-				return 'Something went wrong while answering. Try again.';
+				if (interpreted.class === 'unknown') {
+					return 'Something went wrong while answering. Try again.';
+				}
+				return interpreted.message;
 			},
 			onFinish: async ({ responseMessage, isAborted }) => {
 				if (responseMessage.parts.length === 0 && isAborted) return;

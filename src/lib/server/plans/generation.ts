@@ -1,7 +1,7 @@
 import type { LanguageModel } from 'ai';
 import { planBlockRanges } from '#lib/plan-blocks.js';
 import { runBlockWriterStream } from '../ai/block-writer.js';
-import { describeAiError } from '../ai/errors.js';
+import { describeAiError } from '../ai/provider-error.js';
 import { GenerationError } from '../ai/generate.js';
 import { appendToLedger } from '../ai/ledger.js';
 import { runOutliner } from '../ai/outliner.js';

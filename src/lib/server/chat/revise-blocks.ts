@@ -3,7 +3,7 @@ import { and, eq, gt, inArray } from 'drizzle-orm';
 import { rangeText } from '#lib/chat-types.js';
 import type { LedgerEntry } from '#lib/plan-types.js';
 import { runBlockWriter } from '../ai/block-writer.js';
-import { describeAiError } from '../ai/errors.js';
+import { describeAiError } from '../ai/provider-error.js';
 import { GenerationError } from '../ai/generate.js';
 import { ledgerBefore, ledgerEntriesFrom, replaceLedgerRange } from '../ai/ledger.js';
 import type { BlockOutput } from '../ai/types.js';

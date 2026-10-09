@@ -1,7 +1,7 @@
 import { generateText, NoObjectGeneratedError, Output, type LanguageModel } from 'ai';
 import { z } from 'zod';
 import { MODEL_COMPAT } from '../config.js';
-import { describeAiError } from './errors.js';
+import { describeAiError } from './provider-error.js';
 
 export type CompatResult =
 	{ ok: true } | { ok: false; kind: 'incompatible' | 'error'; message: string };

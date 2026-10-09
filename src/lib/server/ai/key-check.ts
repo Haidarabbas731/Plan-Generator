@@ -2,7 +2,7 @@ import type { Provider } from '#lib/providers.js';
 import { KEY_CHECK_TIMEOUT_MS } from '../config.js';
 import {
 	authHeaders,
-	failureFromStatus,
+	failureFromResponse,
 	KEY_CHECK_URL,
 	UNREACHABLE,
 	type ProviderFailure
@@ -28,5 +28,5 @@ export async function checkKey(
 		return UNREACHABLE;
 	}
 
-	return response.ok ? { ok: true } : failureFromStatus(response.status);
+	return response.ok ? { ok: true } : await failureFromResponse(response);
 }

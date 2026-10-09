@@ -2,7 +2,7 @@ import type { LanguageModel } from 'ai';
 import { eq } from 'drizzle-orm';
 import { rangeText } from '#lib/chat-types.js';
 import { planBlockRanges } from '#lib/plan-blocks.js';
-import { describeAiError } from '../ai/errors.js';
+import { describeAiError } from '../ai/provider-error.js';
 import { GenerationError } from '../ai/generate.js';
 import { runOutliner } from '../ai/outliner.js';
 import * as schema from '../db/schema.js';
