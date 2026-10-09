@@ -155,10 +155,30 @@
 		</form>
 	</div>
 
+	<p class="mx-auto max-w-xs text-center text-caption text-muted-foreground">
+		Already registered with this address? We emailed you a sign-in link instead of a code.
+	</p>
+
 	{#snippet footer()}
-		Wrong address?
-		<a href="/signup" class="font-medium text-primary underline-offset-4 hover:underline">
-			Start again
-		</a>
+		<span class="flex flex-col items-center gap-1">
+			<span>
+				Wrong address?
+				<a
+					href="/signup"
+					class="-my-1.5 inline-block py-1.5 font-medium text-primary underline-offset-4 hover:underline"
+				>
+					Start again
+				</a>
+			</span>
+			<span>
+				Already have an account?
+				<a
+					href="/login"
+					class="-my-1.5 inline-block py-1.5 font-medium text-primary underline-offset-4 hover:underline"
+				>
+					Sign in
+				</a>
+			</span>
+		</span>
 	{/snippet}
 </AuthCard>

@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import {
+	clearSendHistory,
 	codeInput,
 	emailVerificationOn,
 	readCode,
+	readSubject,
 	typeCode,
 	verifyWithEmailedCode
 } from './email.js';
@@ -101,4 +103,51 @@ test('the code boxes follow the keyboard and show the typed digits', async ({ pa
 	await expect(keys.nth(0)).toHaveText('1');
 	await expect(keys.nth(2)).toHaveText('3');
 	await expect(keys.nth(3)).toHaveAttribute('data-active', 'true');
+});
+
+test('signing up again with an unverified address sends a fresh code that works', async ({
+	page
+}) => {
+	const email = uniqueEmail();
+	await startSignUp(page, email);
+	await clearSendHistory(email);
+
+	await startSignUp(page, email);
+	await typeCode(page, await readCode(email));
+	await expect(page).toHaveURL(/\/plans$/);
+});
+
+test('signing up with an address that already has an account explains how to sign in', async ({
+	page,
+	browser
+}) => {
+	const email = uniqueEmail();
+	await startSignUp(page, email);
+	await typeCode(page, await readCode(email));
+	await expect(page).toHaveURL(/\/plans$/);
+	await clearSendHistory(email);
+
+	const stranger = await (await browser.newContext()).newPage();
+	await startSignUp(stranger, email);
+	await expect(await readSubject(email)).toContain('already have');
+	await expect(stranger.getByText('Already registered with this address?')).toBeVisible();
+	await stranger.getByRole('link', { name: 'Sign in' }).click();
+	await expect(stranger).toHaveURL(/\/login$/);
+	await stranger.context().close();
+});
+
+test('a resent code keeps the address even when the page script did not run', async ({
+	page,
+	request
+}) => {
+	const email = uniqueEmail();
+	await startSignUp(page, email);
+	await clearSendHistory(email);
+
+	const response = await request.post(`/verify-email?/resend&email=${encodeURIComponent(email)}`, {
+		form: { email },
+		headers: { accept: 'text/html' },
+		maxRedirects: 0
+	});
+	expect(response.status()).toBe(200);
 });

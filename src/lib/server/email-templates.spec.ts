@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
 	escapeHtml,
+	renderAlreadyRegisteredEmail,
 	renderPasswordResetEmail,
 	renderVerificationCodeEmail,
 	spaceCode
@@ -91,5 +92,30 @@ describe('password reset email', () => {
 
 	it('reassures a reader who did not ask for it', () => {
 		expect(mail.text).toContain('If you did not ask for this');
+	});
+});
+
+describe('already registered email', () => {
+	const mail = renderAlreadyRegisteredEmail({
+		to: 'ada@example.com',
+		signInUrl: 'https://plans.example.com/login',
+		resetUrl: 'https://plans.example.com/forgot-password'
+	});
+
+	it('links to sign in and to a password reset, in HTML and plain text', () => {
+		expect(mail.html).toContain('href="https://plans.example.com/login"');
+		expect(mail.html).toContain('href="https://plans.example.com/forgot-password"');
+		expect(mail.text).toContain('https://plans.example.com/login');
+		expect(mail.text).toContain('https://plans.example.com/forgot-password');
+	});
+
+	it('reassures a reader who did not try to sign up', () => {
+		expect(mail.text).toContain('If this was not you, ignore this email');
+		expect(mail.subject).toContain('already have');
+	});
+
+	it('has a dark variant and the inline logo like the other emails', () => {
+		expect(mail.html).toContain('prefers-color-scheme: dark');
+		expect(mail.inlineLogo).toBe(true);
 	});
 });
