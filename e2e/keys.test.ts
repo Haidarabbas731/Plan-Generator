@@ -1,7 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { open, signUp as signUpUser } from './helpers.js';
 
-const signUp = (page: Page) => signUpUser(page, 'Keys User');
+async function signUp(page: Page) {
+	await signUpUser(page, 'Keys User');
+	await open(page, '/settings/keys');
+}
 
 function card(page: Page, name: string) {
 	return page.locator('[data-slot="card"]').filter({ hasText: name });
@@ -12,9 +15,8 @@ test('the keys page requires sign-in', async ({ page }) => {
 	await expect(page).toHaveURL(/\/login\?redirectTo=%2Fsettings%2Fkeys$/);
 });
 
-test('a new user lands on a welcome prompt with every provider not connected', async ({ page }) => {
+test('a new user sees every provider as not connected', async ({ page }) => {
 	await signUp(page);
-	await expect(page.getByText('Connect your AI key to start')).toBeVisible();
 	for (const name of ['Google Gemini', 'OpenRouter', 'Anthropic', 'OpenAI']) {
 		await expect(card(page, name).getByText('Not connected')).toBeVisible();
 		await expect(card(page, name).getByRole('link', { name: /Get a key/ })).toHaveAttribute(

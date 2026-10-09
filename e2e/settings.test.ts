@@ -18,6 +18,7 @@ test('the settings pages need a signed-in user', async ({ page }) => {
 
 test('the settings tabs lead to every page', async ({ page }) => {
 	await signUp(page);
+	await open(page, '/settings/keys');
 	const nav = page.getByRole('navigation', { name: 'Settings' });
 	const indicator = nav.locator('[data-tab-indicator]');
 	const first = await indicator.evaluate((node) => (node as HTMLElement).style.transform);

@@ -16,7 +16,7 @@ interface KeyActionResult {
 
 const failure = (data: KeyActionResult) => fail(400, data);
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const user = requireUser(locals);
 	const keys = await listKeys(user.id);
 	const providers = PROVIDERS.map((id) => {
@@ -26,11 +26,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			key: key ? { last4: key.last4, updatedAt: key.updatedAt } : null
 		};
 	});
-	return {
-		providers,
-		hasKeys: keys.length > 0,
-		welcome: url.searchParams.get('welcome') === '1'
-	};
+	return { providers };
 };
 
 export const actions: Actions = {

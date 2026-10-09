@@ -111,7 +111,7 @@
 	<div class="flex flex-col items-center gap-2 text-sm text-muted-foreground">
 		<form
 			method="POST"
-			action="?/resend"
+			action="?/resend&email={encodeURIComponent(data.email)}&next={encodeURIComponent(data.next)}"
 			use:enhance={() => {
 				resending = true;
 				return async ({ result, update }) => {

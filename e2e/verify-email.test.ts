@@ -53,7 +53,7 @@ test('a wrong code shakes, says so, clears the boxes and lets you try again', as
 	await expect(page).toHaveURL(/\/verify-email/);
 
 	await typeCode(page, real);
-	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
+	await expect(page).toHaveURL(/\/plans$/);
 });
 
 test('a code can be pasted with a space in it', async ({ page, context }) => {
@@ -68,7 +68,7 @@ test('a code can be pasted with a space in it', async ({ page, context }) => {
 	);
 	await codeInput(page).focus();
 	await page.keyboard.press('ControlOrMeta+V');
-	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
+	await expect(page).toHaveURL(/\/plans$/);
 });
 
 test('signing in before verifying sends you to the code page', async ({ page }) => {
