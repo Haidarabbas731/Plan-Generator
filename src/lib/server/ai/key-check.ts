@@ -1,12 +1,7 @@
 import type { Provider } from '#lib/providers.js';
 import { KEY_CHECK_TIMEOUT_MS } from '../config.js';
-import {
-	authHeaders,
-	failureFromResponse,
-	KEY_CHECK_URL,
-	UNREACHABLE,
-	type ProviderFailure
-} from './provider-api.js';
+import { failureFromResponse, UNREACHABLE, type ProviderFailure } from './provider-api.js';
+import { PROVIDER_REGISTRY } from './provider-registry.js';
 
 export type KeyCheckResult = { ok: true } | ProviderFailure;
 
@@ -19,9 +14,9 @@ export async function checkKey(
 ): Promise<KeyCheckResult> {
 	let response: Response;
 	try {
-		response = await fetchImpl(KEY_CHECK_URL[provider], {
+		response = await fetchImpl(PROVIDER_REGISTRY[provider].keyCheckUrl, {
 			method: 'GET',
-			headers: authHeaders(provider, apiKey),
+			headers: PROVIDER_REGISTRY[provider].authHeaders(apiKey),
 			signal: AbortSignal.timeout(KEY_CHECK_TIMEOUT_MS)
 		});
 	} catch {

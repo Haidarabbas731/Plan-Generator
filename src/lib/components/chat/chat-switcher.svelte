@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatMonthDayTime } from '#lib/format.js';
 	import { untrack } from 'svelte';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
@@ -18,13 +19,6 @@
 	let open = $state(false);
 	let confirming = $state<string | null>(null);
 	let deleting = $state<string | null>(null);
-
-	const time = new Intl.DateTimeFormat('en', {
-		month: 'short',
-		day: 'numeric',
-		hour: 'numeric',
-		minute: '2-digit'
-	});
 
 	$effect(() => {
 		if (!open) {
@@ -104,7 +98,7 @@
 								<span class="flex min-w-0 flex-1 flex-col">
 									<span class="truncate text-sm font-medium">{item.title}</span>
 									<span class="text-caption text-muted-foreground">
-										{time.format(new Date(item.lastMessageAt))}
+										{formatMonthDayTime(new Date(item.lastMessageAt))}
 									</span>
 								</span>
 								{#if item.id === chat.conversationId}

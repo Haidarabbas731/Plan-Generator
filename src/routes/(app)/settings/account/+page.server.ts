@@ -1,6 +1,6 @@
 import { fail } from '@sveltejs/kit';
 import { auth, email, oauthProviders } from '#lib/server/auth.js';
-import { describeAuthError } from '#lib/server/auth-errors.js';
+import { changePasswordMessage, describeAuthError } from '#lib/server/auth-errors.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { LIMITS } from '#lib/limits.js';
 import { validatePassword } from '#lib/validation.js';
@@ -63,13 +63,7 @@ export const actions: Actions = {
 				headers: request.headers
 			});
 		} catch (error) {
-			const failure = describeAuthError(error);
-			const message =
-				failure?.status === 429
-					? 'Too many attempts. Wait a minute and try again.'
-					: failure && failure.status < 500
-						? 'The current password is not correct.'
-						: 'Could not change the password. Try again.';
+			const message = changePasswordMessage(describeAuthError(error));
 			return fail(400, { section: 'password', error: message });
 		}
 		return { section: 'password', saved: true };

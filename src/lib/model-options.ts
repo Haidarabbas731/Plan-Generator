@@ -1,3 +1,4 @@
+import { LOCALE } from './format.js';
 export interface ModelPricing {
 	input: number;
 	output: number;
@@ -16,7 +17,7 @@ export function isFreeModel(option: ModelOption): boolean {
 }
 
 export function formatPrice(perMillion: number): string {
-	return new Intl.NumberFormat('en-US', {
+	return new Intl.NumberFormat(LOCALE, {
 		style: 'currency',
 		currency: 'USD',
 		minimumFractionDigits: Number.isInteger(perMillion) ? 0 : 2,

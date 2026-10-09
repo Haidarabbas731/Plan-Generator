@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatMonthDayTime } from '#lib/format.js';
 	import HistoryIcon from '@lucide/svelte/icons/history';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as Popover from '#lib/components/ui/popover/index.js';
@@ -42,13 +43,6 @@
 	let items = $state.raw<RevisionItem[]>([]);
 	let status = $state<'idle' | 'loading' | 'ready' | 'error'>('idle');
 	let confirming = $state<number | null>(null);
-
-	const time = new Intl.DateTimeFormat('en', {
-		month: 'short',
-		day: 'numeric',
-		hour: 'numeric',
-		minute: '2-digit'
-	});
 
 	$effect(() => {
 		if (!open) {
@@ -117,7 +111,7 @@
 								</span>
 								<span class="text-caption text-muted-foreground">
 									<span class="tabular-nums">#{item.number}</span> · {SOURCE_LABEL[item.source]} ·
-									{time.format(new Date(item.createdAt))}
+									{formatMonthDayTime(new Date(item.createdAt))}
 								</span>
 							</div>
 							{#if item.number === currentRevision}

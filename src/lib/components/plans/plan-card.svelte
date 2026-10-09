@@ -7,7 +7,7 @@
 	import { buttonVariants } from '#lib/components/ui/button/index.js';
 	import * as DropdownMenu from '#lib/components/ui/dropdown-menu/index.js';
 	import type { PlanSummary } from '#lib/plan-types.js';
-	import { plural } from '#lib/format.js';
+	import { formatMonthDay, plural } from '#lib/format.js';
 	import { PROVIDER_INFO } from '#lib/providers.js';
 	import ProgressRing from './progress-ring.svelte';
 
@@ -30,9 +30,7 @@
 	let { plan, ondelete }: Props = $props();
 
 	const ratio = $derived(plan.daysTotal === 0 ? 0 : plan.daysDone / plan.daysTotal);
-	const updated = $derived(
-		new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(plan.updatedAt)
-	);
+	const updated = $derived(formatMonthDay(plan.updatedAt));
 	const statusLabel = $derived(
 		plan.status === 'generating'
 			? 'Writing'

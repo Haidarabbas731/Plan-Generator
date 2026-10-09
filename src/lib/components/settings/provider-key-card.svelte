@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { formatMediumDate } from '#lib/format.js';
 	import { enhance } from '$app/forms';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import ExternalLinkIcon from '@lucide/svelte/icons/external-link';
@@ -30,11 +31,7 @@
 	let removeOpen = $state(false);
 
 	const connected = $derived(provider.key !== null);
-	const saved = $derived(
-		provider.key
-			? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(provider.key.updatedAt)
-			: ''
-	);
+	const saved = $derived(provider.key ? formatMediumDate(provider.key.updatedAt) : '');
 
 	function submit(action: Action) {
 		return () => {
