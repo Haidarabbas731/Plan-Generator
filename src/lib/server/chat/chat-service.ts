@@ -247,6 +247,10 @@ export function createChatService(deps: ChatServiceDeps) {
 				if (InvalidToolInputError.isInstance(error)) {
 					return 'The model sent a request this step could not read.';
 				}
+				const root = rootAiError(error);
+				if (APICallError.isInstance(root) && root.statusCode === 429) {
+					return 'This model is busy or rate limited right now. Wait a moment and try again, or switch model.';
+				}
 				return 'Something went wrong while answering. Try again.';
 			},
 			onFinish: async ({ responseMessage, isAborted }) => {
