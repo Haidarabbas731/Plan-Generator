@@ -33,7 +33,8 @@
 	const hidden = $derived(live ? Math.max(0, steps.length - LIVE_ROWS) : 0);
 	const rows = $derived(steps.slice(hidden));
 	const failed = $derived(steps.some((step) => step.state === 'failed'));
-	const expanded = $derived(live || open);
+	const foldable = $derived(steps.length > 1 || steps[0]?.detail != null);
+	const expanded = $derived(live || open || !foldable);
 	const edits = $derived(
 		steps.filter(
 			(step) =>
@@ -55,10 +56,10 @@
 </script>
 
 <div class="flex flex-col gap-2" role="status" aria-live="polite">
-	{#if !live}
+	{#if !live && foldable}
 		<button
 			type="button"
-			class="-ml-1 flex min-h-9 max-w-full items-center gap-1.5 self-start rounded-md px-1 py-0.5 text-caption text-muted-foreground transition-[color,transform] duration-150 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.97] motion-reduce:transition-none"
+			class="relative -ml-1 flex min-h-9 max-w-full items-center gap-1.5 self-start rounded-md px-1 py-0.5 text-caption text-muted-foreground transition-[color,transform] duration-150 after:absolute after:inset-x-0 after:-inset-y-1 after:content-[''] hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none active:scale-[0.97] motion-reduce:transition-none"
 			aria-expanded={open}
 			onclick={() => (open = !open)}
 		>

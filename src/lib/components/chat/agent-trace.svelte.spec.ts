@@ -41,6 +41,12 @@ describe('AgentTrace', () => {
 		expect(toggle).toHaveAttribute('aria-expanded', 'true');
 	});
 
+	it('shows a lone step as a plain row instead of a fold', () => {
+		render(AgentTrace, { props: { steps: [edit] } });
+		expect(screen.getByText('Rewrote block 2')).toBeInTheDocument();
+		expect(screen.queryByRole('button', { name: /Rewrote block 2/ })).not.toBeInTheDocument();
+	});
+
 	it('shows rows without a toggle while the agent works', () => {
 		render(AgentTrace, {
 			props: { steps: [{ ...edit, state: 'running', label: 'Rewriting block 2' }], live: true }
