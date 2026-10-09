@@ -1,3 +1,4 @@
+import { LIMITS } from './limits.js';
 import { formatDate } from './format.js';
 import { planBlockRanges } from './plan-blocks.js';
 import { endDate, isRealDate, weeksSpanned } from './schedule.js';
@@ -20,7 +21,7 @@ export function summarizePlan(input: {
 }): PlanSummary | null {
 	const { daysTotal: days, hoursPerDay: hours, blockSize: size, studyDays, startDate } = input;
 	if (!days || !hours || !size) return null;
-	if (!Number.isInteger(days) || days < 1 || days > input.maxPlanDays) return null;
+	if (!Number.isInteger(days) || days < LIMITS.minPlanDays || days > input.maxPlanDays) return null;
 	if (hours <= 0 || studyDays.length === 0 || !isRealDate(startDate)) return null;
 	const weekdays = studyDays.map(Number);
 	const end = endDate(startDate, weekdays, days);

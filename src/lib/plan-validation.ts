@@ -58,8 +58,8 @@ export function validatePlanRequest(
 	}
 
 	const daysTotal = asInt(raw.daysTotal);
-	if (daysTotal === null || daysTotal < 1 || daysTotal > LIMITS.maxPlanDays) {
-		errors.daysTotal = `Choose between 1 and ${LIMITS.maxPlanDays} days.`;
+	if (daysTotal === null || daysTotal < LIMITS.minPlanDays || daysTotal > LIMITS.maxPlanDays) {
+		errors.daysTotal = `Choose between ${LIMITS.minPlanDays} and ${LIMITS.maxPlanDays} days.`;
 	}
 
 	const minutesPerDay = asInt(raw.minutesPerDay);

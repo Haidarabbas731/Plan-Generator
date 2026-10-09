@@ -208,7 +208,7 @@
 					label="Study sessions"
 					type="number"
 					inputmode="numeric"
-					min="1"
+					min={data.limits.minPlanDays}
 					max={data.limits.maxPlanDays}
 					step="1"
 					bind:value={daysTotal}
@@ -220,9 +220,9 @@
 					label="Hours per session"
 					type="number"
 					inputmode="decimal"
-					min="0.5"
-					max="12"
-					step="0.5"
+					min={data.limits.minMinutesPerDay / 60}
+					max={data.limits.maxMinutesPerDay / 60}
+					step="0.25"
 					bind:value={hoursPerDay}
 					error={errors.hoursPerDay}
 				/>

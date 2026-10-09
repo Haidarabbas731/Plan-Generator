@@ -1,3 +1,5 @@
+import { LIMITS } from '#lib/limits.js';
+
 export const AUTH_RATE_LIMIT = {
 	windowSeconds: 60,
 	maxRequests: 100,
@@ -8,7 +10,7 @@ export const AUTH_RATE_LIMIT = {
 } as const;
 
 export const EMAIL_CODE = {
-	length: 6,
+	length: LIMITS.emailCodeLength,
 	expiresSeconds: 600,
 	allowedAttempts: 5
 } as const;

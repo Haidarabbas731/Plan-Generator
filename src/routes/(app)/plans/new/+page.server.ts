@@ -28,7 +28,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		limits: {
 			goalMax: LIMITS.goalMax,
 			doneLooksLikeMax: LIMITS.doneLooksLikeMax,
+			minPlanDays: LIMITS.minPlanDays,
 			maxPlanDays: LIMITS.maxPlanDays,
+			minMinutesPerDay: LIMITS.minMinutesPerDay,
+			maxMinutesPerDay: LIMITS.maxMinutesPerDay,
 			minBlockDays: LIMITS.minBlockDays,
 			maxBlockDays: LIMITS.maxBlockDays
 		}

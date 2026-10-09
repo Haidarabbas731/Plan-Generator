@@ -1,5 +1,7 @@
 <script lang="ts" module>
-	export const OTP_LENGTH = 6;
+	import { LIMITS } from '#lib/limits.js';
+
+	export const OTP_LENGTH = LIMITS.emailCodeLength;
 	export type OtpStatus = 'idle' | 'verifying' | 'success' | 'error';
 	const PASTE_STAGGER_MS = 30;
 </script>

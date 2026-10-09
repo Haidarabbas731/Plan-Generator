@@ -15,6 +15,7 @@ export const LIMITS = {
 	errorMax: 500,
 	providerMessageMax: 160,
 	doneLooksLikeMax: 300,
+	minPlanDays: 1,
 	maxPlanDays: 365,
 	minMinutesPerDay: 15,
 	maxMinutesPerDay: 720,
@@ -25,5 +26,6 @@ export const LIMITS = {
 	dayPracticeMax: 1200,
 	dayReviewMax: 400,
 	minDayMinutes: 5,
-	chatTitleMax: 60
+	chatTitleMax: 60,
+	emailCodeLength: 6
 } as const;
