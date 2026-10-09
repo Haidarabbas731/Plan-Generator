@@ -165,7 +165,7 @@ export const conversations = pgTable(
 			.references(() => user.id, { onDelete: 'cascade' }),
 		createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 	},
-	(table) => [unique('conversations_plan_unique').on(table.planId)]
+	(table) => [index('conversations_plan_created_idx').on(table.planId, table.createdAt)]
 );
 
 export const messages = pgTable(

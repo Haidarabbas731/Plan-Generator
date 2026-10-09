@@ -26,6 +26,18 @@ function fakeChat(overrides: Record<string, unknown> = {}) {
 		send: vi.fn(),
 		stop: vi.fn(),
 		dismissError: vi.fn(),
+		conversationId: 'c1',
+		title: 'New chat',
+		fresh: true,
+		canSwitch: true,
+		chats: [],
+		chatLimit: 30,
+		listStatus: 'ready',
+		switchError: null,
+		loadChats: vi.fn(),
+		startNew: vi.fn(() => true),
+		select: vi.fn(),
+		remove: vi.fn(),
 		...overrides
 	} as unknown as ChatState;
 }
@@ -261,5 +273,38 @@ describe('ChatPanel on a phone', () => {
 		});
 		expect(screen.getByRole('status', { name: '' })).toBeInTheDocument();
 		expect(screen.getByText('Thinking')).toBeInTheDocument();
+	});
+});
+
+describe('ChatPanel chat controls', () => {
+	it('shows the chat title as the switcher and keeps the panel heading for screen readers', () => {
+		setup({ chat: fakeChat({ title: 'Make block 2 easier' }) });
+		expect(
+			screen.getByRole('button', { name: 'Chat: Make block 2 easier. Switch chat' })
+		).toBeInTheDocument();
+		expect(screen.getByRole('heading', { name: 'Ask about this plan' })).toBeInTheDocument();
+	});
+
+	it('starts a new chat from the plus button', async () => {
+		const startNew = vi.fn(() => true);
+		setup({ chat: fakeChat({ fresh: false, startNew }) });
+		await fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+		expect(startNew).toHaveBeenCalled();
+	});
+
+	it('does not offer another new chat while this one is still empty', () => {
+		setup({ chat: fakeChat({ fresh: true }) });
+		expect(screen.getByRole('button', { name: 'New chat' })).toBeDisabled();
+	});
+
+	it('locks the chat controls while a reply is on its way', () => {
+		setup({ chat: fakeChat({ fresh: false, busy: true, canSwitch: false }) });
+		expect(screen.getByRole('button', { name: 'New chat' })).toBeDisabled();
+		expect(screen.getByRole('button', { name: /Switch chat/ })).toBeDisabled();
+	});
+
+	it('names the revisions popover Plan versions so it is not confused with chats', () => {
+		setup();
+		expect(screen.getByRole('button', { name: 'Plan versions' })).toBeInTheDocument();
 	});
 });

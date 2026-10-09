@@ -24,5 +24,6 @@ export const LIMITS = {
 	dayLearnMax: 600,
 	dayPracticeMax: 1200,
 	dayReviewMax: 400,
-	minDayMinutes: 5
+	minDayMinutes: 5,
+	chatTitleMax: 60
 } as const;

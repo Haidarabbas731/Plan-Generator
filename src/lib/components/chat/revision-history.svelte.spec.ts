@@ -31,7 +31,7 @@ function stubFetch(ok = true) {
 }
 
 async function openHistory() {
-	await fireEvent.click(screen.getByRole('button', { name: 'Revision history' }));
+	await fireEvent.click(screen.getByRole('button', { name: 'Plan versions' }));
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -80,7 +80,7 @@ describe('RevisionHistory', () => {
 		stubFetch(false);
 		render(RevisionHistory, { props: { planId: 'p1', currentRevision: 3, onrestore: () => {} } });
 		await openHistory();
-		expect(await screen.findByText('Could not load the history.')).toBeInTheDocument();
+		expect(await screen.findByText('Could not load the plan versions.')).toBeInTheDocument();
 	});
 
 	it('cannot be opened while the plan is being written', () => {
@@ -88,6 +88,6 @@ describe('RevisionHistory', () => {
 		render(RevisionHistory, {
 			props: { planId: 'p1', currentRevision: 3, disabled: true, onrestore: () => {} }
 		});
-		expect(screen.getByRole('button', { name: 'Revision history' })).toBeDisabled();
+		expect(screen.getByRole('button', { name: 'Plan versions' })).toBeDisabled();
 	});
 });

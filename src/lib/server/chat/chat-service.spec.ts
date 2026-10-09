@@ -1,4 +1,4 @@
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { APICallError } from 'ai';
 import { MockLanguageModelV4 } from 'ai/test';
 import { count, eq } from 'drizzle-orm';
@@ -196,7 +196,7 @@ describe.skipIf(!url)('chat service (real database, fake chat model)', () => {
 			'stale'
 		]);
 
-		const conversationId = (await chatStore.findConversation(userId, planId))!;
+		const conversationId = (await chatStore.latestConversation(userId, planId))!;
 		const stored = await chatStore.listMessages(conversationId);
 		const reply = stored[stored.length - 1];
 		expect(reply.role).toBe('assistant');
@@ -228,7 +228,7 @@ describe.skipIf(!url)('chat service (real database, fake chat model)', () => {
 		const model = createFakeChatModel();
 		const service = serviceWith(model);
 		const planId = await readyPlan();
-		const conversationId = (await chatStore.getOrCreateConversation(userId, planId))!;
+		const conversationId = (await chatStore.createConversation(userId, planId, randomUUID()))!;
 		for (let i = 0; i < 30; i++) {
 			await chatStore.saveMessage({
 				conversationId,
@@ -273,5 +273,116 @@ describe.skipIf(!url)('chat service (real database, fake chat model)', () => {
 		expect(second.body).toContain('Q&A only');
 		expect(second.body).not.toContain('revise_blocks');
 		expect((await store.getPlan(planId))?.currentRevision).toBe(1);
+	});
+	describe('several chats per plan', () => {
+		const send = (
+			service: ReturnType<typeof serviceWith>,
+			planId: string,
+			text: string,
+			conversationId?: string,
+			user = userId
+		) => service.send({ userId: user, planId, text, conversationId });
+
+		it('creates a chat on its first message and keeps chats apart', async () => {
+			const service = serviceWith();
+			const planId = await readyPlan();
+			const first = randomUUID();
+			const second = randomUUID();
+			expect(await service.history(userId, planId, first)).toBeNull();
+
+			await (await send(service, planId, 'explain day 1', first)).text();
+			await (await send(service, planId, 'explain day 2', second)).text();
+			await (await send(service, planId, 'and day 3', first)).text();
+
+			const one = await service.history(userId, planId, first);
+			const two = await service.history(userId, planId, second);
+			expect(one?.map((m) => m.role)).toEqual(['user', 'assistant', 'user', 'assistant']);
+			expect(two?.map((m) => m.role)).toEqual(['user', 'assistant']);
+			expect(JSON.stringify(two)).not.toContain('explain day 1');
+		});
+
+		it('opens the chat with the newest message, and an empty one when there is none', async () => {
+			const service = serviceWith();
+			const planId = await readyPlan();
+			expect(await service.open(userId, planId)).toEqual({ conversationId: null, messages: [] });
+
+			const first = randomUUID();
+			const second = randomUUID();
+			await (await send(service, planId, 'one', first)).text();
+			await (await send(service, planId, 'two', second)).text();
+			await (await send(service, planId, 'three', first)).text();
+			expect((await service.open(userId, planId))?.conversationId).toBe(first);
+		});
+
+		it('adds to the latest chat when no chat id is sent', async () => {
+			const service = serviceWith();
+			const planId = await readyPlan();
+			await (await send(service, planId, 'one')).text();
+			await (await send(service, planId, 'two')).text();
+			const list = await service.list(userId, planId);
+			expect(list?.chats).toHaveLength(1);
+			expect(list?.chats[0]).toMatchObject({ title: 'one', messageCount: 4 });
+		});
+
+		it('rejects a chat id that is not an id, and one that belongs to someone else', async () => {
+			const service = serviceWith();
+			const planId = await readyPlan();
+			expect((await send(service, planId, 'hi', 'not-an-id')).status).toBe(400);
+
+			const mine = randomUUID();
+			await (await send(service, planId, 'hi', mine)).text();
+			const theirs = await store.createPlan(otherId, {
+				inputs,
+				provider: 'google',
+				model: 'fake-chat-model',
+				startDate: '2026-10-05'
+			});
+			await store.setPlanStatus(theirs, 'ready');
+			expect((await send(service, theirs, 'hi', mine, otherId)).status).toBe(404);
+			expect(await service.history(otherId, theirs, mine)).toBeNull();
+			expect(await service.history(otherId, planId, mine)).toBeNull();
+		});
+
+		it('refuses a new chat past the limit but still answers in an existing one', async () => {
+			const service = createChatService({
+				store,
+				chatStore,
+				editor,
+				resolveModel: async () => createFakeChatModel(),
+				maxConversations: 2
+			});
+			const planId = await readyPlan();
+			const first = randomUUID();
+			await (await send(service, planId, 'a', first)).text();
+			await (await send(service, planId, 'b', randomUUID())).text();
+
+			const blocked = await send(service, planId, 'c', randomUUID());
+			expect(blocked.status).toBe(409);
+			expect(await blocked.json()).toMatchObject({ error: 'too-many-chats' });
+			expect((await service.list(userId, planId))?.limit).toBe(2);
+
+			expect((await send(service, planId, 'again', first)).status).toBe(200);
+		});
+
+		it('lists chats newest first and deletes one without touching the plan', async () => {
+			const service = serviceWith();
+			const planId = await readyPlan();
+			const first = randomUUID();
+			const second = randomUUID();
+			await (await send(service, planId, 'make block 2 easier', first)).text();
+			await (await send(service, planId, 'what is day 1?', second)).text();
+
+			const list = await service.list(userId, planId);
+			expect(list?.chats.map((chat) => chat.title)).toEqual([
+				'what is day 1?',
+				'make block 2 easier'
+			]);
+
+			expect(await service.remove(otherId, planId, first)).toBe(false);
+			expect(await service.remove(userId, planId, first)).toBe(true);
+			expect(await service.history(userId, planId, first)).toBeNull();
+			expect((await service.list(userId, planId))?.chats).toHaveLength(1);
+			expect((await store.getPlan(planId))?.currentRevision).toBe(2);
+		});
 	});
 });

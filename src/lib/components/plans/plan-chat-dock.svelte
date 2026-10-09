@@ -46,9 +46,13 @@
 		try {
 			const response = await fetch(`/plans/${plan.id}/chat`);
 			if (!response.ok) throw new Error('failed');
-			const body = (await response.json()) as { messages: ChatUIMessage[] };
+			const body = (await response.json()) as {
+				conversationId: string | null;
+				messages: ChatUIMessage[];
+			};
 			chat = new ChatState({
 				planId: plan.id,
+				conversationId: body.conversationId,
 				initial: body.messages,
 				onFinished: () => {
 					void invalidate(`plan:${plan.id}`);

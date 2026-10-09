@@ -1,4 +1,5 @@
 import type { UIMessage } from 'ai';
+import { LIMITS } from './limits.js';
 import type { Provider } from './providers.js';
 
 export interface ChatMessageMetadata {
@@ -7,6 +8,27 @@ export interface ChatMessageMetadata {
 }
 
 export type ChatUIMessage = UIMessage<ChatMessageMetadata>;
+
+export interface ChatSummary {
+	id: string;
+	title: string;
+	lastMessageAt: string;
+	messageCount: number;
+}
+
+export const NEW_CHAT_TITLE = 'New chat';
+
+export function chatTitle(parts: UIMessage['parts']): string {
+	const text = parts
+		.flatMap((part) => (part.type === 'text' ? [part.text] : []))
+		.join(' ')
+		.replace(/\s+/g, ' ')
+		.trim();
+	if (!text) return NEW_CHAT_TITLE;
+	return text.length > LIMITS.chatTitleMax
+		? `${text.slice(0, LIMITS.chatTitleMax - 1).trimEnd()}…`
+		: text;
+}
 
 export type StepState = 'running' | 'done' | 'failed';
 

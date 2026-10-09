@@ -87,14 +87,14 @@
 	<Popover.Trigger
 		{disabled}
 		type="button"
-		aria-label="Revision history"
+		aria-label="Plan versions"
 		class={cn(buttonVariants({ variant: 'ghost', size: 'icon-sm' }), 'size-9', className)}
 	>
 		<HistoryIcon aria-hidden="true" />
 	</Popover.Trigger>
 	<Popover.Content class="w-80 p-0" align="end">
 		<div class="border-b px-3 py-2.5">
-			<p class="text-sm font-medium">History</p>
+			<p class="text-sm font-medium">Plan versions</p>
 			<p class="text-caption text-muted-foreground">Every change to the plan, newest first.</p>
 		</div>
 		<div class="max-h-72 overflow-y-auto p-1.5">
@@ -105,7 +105,7 @@
 				</div>
 			{:else if status === 'error'}
 				<p class="px-3 py-6 text-center text-sm text-muted-foreground">
-					Could not load the history.
+					Could not load the plan versions.
 				</p>
 			{:else}
 				<ul class="flex flex-col">

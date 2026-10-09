@@ -46,6 +46,31 @@ test('a chat edit can be undone', async ({ page }) => {
 	await expect(page.getByText('Revised: Make block 1 easier')).toHaveCount(0);
 });
 
+test('chats stay apart: start a new one, switch back and delete', async ({ page }) => {
+	await createPlan(page);
+	const chat = await openChat(page);
+	const box = chat.getByRole('textbox', { name: 'Message' });
+	await box.fill('How long is each session?');
+	await chat.getByRole('button', { name: 'Send' }).click();
+	await expect(chat.getByText('Fake answer: How long is each session?')).toBeVisible();
+
+	await chat.getByRole('button', { name: 'New chat' }).click();
+	await expect(chat.getByText('Fake answer: How long is each session?')).toHaveCount(0);
+	await box.fill('What is block 2?');
+	await chat.getByRole('button', { name: 'Send' }).click();
+	await expect(chat.getByText('Fake answer: What is block 2?')).toBeVisible();
+
+	await chat.getByRole('button', { name: /Switch chat/ }).click();
+	await page.getByRole('button', { name: /^How long is each session\?/ }).click();
+	await expect(chat.getByText('Fake answer: How long is each session?')).toBeVisible();
+	await expect(chat.getByText('Fake answer: What is block 2?')).toHaveCount(0);
+
+	await chat.getByRole('button', { name: /Switch chat/ }).click();
+	await page.getByRole('button', { name: 'Delete What is block 2?' }).click();
+	await page.getByRole('button', { name: 'Confirm delete What is block 2?' }).click();
+	await expect(page.getByRole('button', { name: 'Delete What is block 2?' })).toHaveCount(0);
+});
+
 test('the chat works with the keyboard alone', async ({ page }) => {
 	await createPlan(page);
 	await page.getByRole('button', { name: 'Ask' }).focus();

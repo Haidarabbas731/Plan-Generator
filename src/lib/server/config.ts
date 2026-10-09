@@ -51,7 +51,8 @@ export const CHAT = {
 	maxSteps: 6,
 	maxReviseBlocks: 3,
 	maxMessageChars: 2000,
-	maxInstructionChars: 1500
+	maxInstructionChars: 1500,
+	maxConversationsPerPlan: 30
 } as const;
 
 export const REVISION_KEEP = 30;

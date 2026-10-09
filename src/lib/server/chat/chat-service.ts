@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import {
 	APICallError,
 	createAgentUIStreamResponse,
@@ -5,7 +6,7 @@ import {
 	type LanguageModel
 } from 'ai';
 import type { Provider } from '#lib/providers.js';
-import type { ChatUIMessage } from '#lib/chat-types.js';
+import type { ChatSummary, ChatUIMessage } from '#lib/chat-types.js';
 import { CHAT } from '../config.js';
 import { rootAiError } from '../ai/errors.js';
 import { logger } from '../logger.js';
@@ -28,8 +29,14 @@ export interface ChatServiceDeps {
 	resolveModel: (plan: PlanRow) => Promise<LanguageModel>;
 	maxToolSupportEntries?: number;
 	maxMessageChars?: number;
+	maxConversations?: number;
 	guard?: Pick<UsageGuard, 'check'>;
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export const isConversationId = (value: unknown): value is string =>
+	typeof value === 'string' && UUID.test(value);
 
 const json = (body: unknown, status: number, headers: Record<string, string> = {}) =>
 	new Response(JSON.stringify(body), {
@@ -60,6 +67,7 @@ const TOOLS_UNSUPPORTED_MESSAGE =
 export function createChatService(deps: ChatServiceDeps) {
 	const { store, chatStore, editor, resolveModel, guard } = deps;
 	const maxMessageChars = deps.maxMessageChars ?? CHAT.maxMessageChars;
+	const maxConversations = deps.maxConversations ?? CHAT.maxConversationsPerPlan;
 	const maxEntries = deps.maxToolSupportEntries ?? 500;
 	const toolsSupport = new Map<string, boolean>();
 
@@ -71,18 +79,52 @@ export function createChatService(deps: ChatServiceDeps) {
 		while (toolsSupport.size > maxEntries) toolsSupport.delete(toolsSupport.keys().next().value!);
 	}
 
-	async function history(userId: string, planId: string): Promise<ChatUIMessage[] | null> {
+	async function open(
+		userId: string,
+		planId: string,
+		conversationId?: string
+	): Promise<{ conversationId: string | null; messages: ChatUIMessage[] } | null> {
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return null;
-		const conversationId = await chatStore.findConversation(userId, planId);
-		if (!conversationId) return [];
-		return (await chatStore.listMessages(conversationId)).map(toUiMessage);
+		const id = conversationId
+			? await chatStore.findConversation(userId, planId, conversationId)
+			: await chatStore.latestConversation(userId, planId);
+		if (!id) return conversationId ? null : { conversationId: null, messages: [] };
+		return { conversationId: id, messages: (await chatStore.listMessages(id)).map(toUiMessage) };
+	}
+
+	async function history(
+		userId: string,
+		planId: string,
+		conversationId?: string
+	): Promise<ChatUIMessage[] | null> {
+		return (await open(userId, planId, conversationId))?.messages ?? null;
+	}
+
+	async function list(
+		userId: string,
+		planId: string
+	): Promise<{ chats: ChatSummary[]; limit: number } | null> {
+		const plan = await store.getOwnedPlan(userId, planId);
+		if (!plan) return null;
+		const rows = await chatStore.listConversations(userId, planId);
+		return {
+			chats: rows.map((row) => ({ ...row, lastMessageAt: row.lastMessageAt.toISOString() })),
+			limit: maxConversations
+		};
+	}
+
+	async function remove(userId: string, planId: string, conversationId: string): Promise<boolean> {
+		const plan = await store.getOwnedPlan(userId, planId);
+		if (!plan) return false;
+		return chatStore.deleteConversation(userId, planId, conversationId);
 	}
 
 	async function send(args: {
 		userId: string;
 		planId: string;
 		text: string;
+		conversationId?: string;
 		signal?: AbortSignal;
 	}): Promise<Response> {
 		const { userId, planId, signal } = args;
@@ -90,6 +132,9 @@ export function createChatService(deps: ChatServiceDeps) {
 
 		const plan = await store.getOwnedPlan(userId, planId);
 		if (!plan) return json({ error: 'not-found', message: 'Plan not found.' }, 404);
+		if (args.conversationId !== undefined && !isConversationId(args.conversationId)) {
+			return json({ error: 'bad-chat', message: 'That chat does not exist.' }, 400);
+		}
 		if (!text) return json({ error: 'empty', message: 'Write a message first.' }, 400);
 		if (text.length > maxMessageChars) {
 			return json(
@@ -133,7 +178,29 @@ export function createChatService(deps: ChatServiceDeps) {
 			throw error;
 		}
 
-		const conversationId = (await chatStore.getOrCreateConversation(userId, planId))!;
+		const existing = args.conversationId
+			? await chatStore.findConversation(userId, planId, args.conversationId)
+			: await chatStore.latestConversation(userId, planId);
+		let conversationId = existing;
+		if (!conversationId) {
+			if ((await chatStore.countConversations(userId, planId)) >= maxConversations) {
+				return json(
+					{
+						error: 'too-many-chats',
+						message: `This plan has ${maxConversations} chats. Delete an old one to start a new one.`
+					},
+					409
+				);
+			}
+			conversationId = await chatStore.createConversation(
+				userId,
+				planId,
+				args.conversationId ?? randomUUID()
+			);
+			if (!conversationId) {
+				return json({ error: 'not-found', message: 'That chat does not exist.' }, 404);
+			}
+		}
 		await chatStore.saveMessage({
 			conversationId,
 			role: 'user',
@@ -197,7 +264,7 @@ export function createChatService(deps: ChatServiceDeps) {
 		});
 	}
 
-	return { history, send };
+	return { open, history, list, remove, send };
 }
 
 export type ChatService = ReturnType<typeof createChatService>;

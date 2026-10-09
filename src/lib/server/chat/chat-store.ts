@@ -1,5 +1,6 @@
 import type { UIMessage } from 'ai';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, count, desc, eq, inArray, max } from 'drizzle-orm';
+import { chatTitle, NEW_CHAT_TITLE } from '#lib/chat-types.js';
 import type { Provider } from '#lib/providers.js';
 import * as schema from '../db/schema.js';
 import type { Db } from '../db/types.js';
@@ -14,6 +15,13 @@ export interface StoredMessage {
 	model: string | null;
 	revisionId: string | null;
 	createdAt: Date;
+}
+
+export interface ConversationSummary {
+	id: string;
+	title: string;
+	lastMessageAt: Date;
+	messageCount: number;
 }
 
 export interface NewMessage {
@@ -37,7 +45,11 @@ const columns = {
 
 export function createChatStore(db: Db) {
 	return {
-		async getOrCreateConversation(userId: string, planId: string): Promise<string | null> {
+		async createConversation(
+			userId: string,
+			planId: string,
+			conversationId: string
+		): Promise<string | null> {
 			const [owned] = await db
 				.select({ id: plans.id })
 				.from(plans)
@@ -45,28 +57,108 @@ export function createChatStore(db: Db) {
 				.limit(1);
 			if (!owned) return null;
 
-			const [created] = await db
+			await db
 				.insert(conversations)
-				.values({ planId, userId })
-				.onConflictDoNothing({ target: conversations.planId })
-				.returning({ id: conversations.id });
-			if (created) return created.id;
-
-			const [existing] = await db
-				.select({ id: conversations.id })
-				.from(conversations)
-				.where(eq(conversations.planId, planId))
-				.limit(1);
-			return existing.id;
+				.values({ id: conversationId, planId, userId })
+				.onConflictDoNothing({ target: conversations.id });
+			return this.findConversation(userId, planId, conversationId);
 		},
 
-		async findConversation(userId: string, planId: string): Promise<string | null> {
+		async findConversation(
+			userId: string,
+			planId: string,
+			conversationId: string
+		): Promise<string | null> {
 			const [row] = await db
 				.select({ id: conversations.id })
 				.from(conversations)
-				.where(and(eq(conversations.planId, planId), eq(conversations.userId, userId)))
+				.where(
+					and(
+						eq(conversations.id, conversationId),
+						eq(conversations.planId, planId),
+						eq(conversations.userId, userId)
+					)
+				)
 				.limit(1);
 			return row?.id ?? null;
+		},
+
+		async latestConversation(userId: string, planId: string): Promise<string | null> {
+			const [row] = await db
+				.select({ id: conversations.id })
+				.from(conversations)
+				.innerJoin(messages, eq(messages.conversationId, conversations.id))
+				.where(and(eq(conversations.planId, planId), eq(conversations.userId, userId)))
+				.groupBy(conversations.id)
+				.orderBy(desc(max(messages.createdAt)))
+				.limit(1);
+			return row?.id ?? null;
+		},
+
+		async countConversations(userId: string, planId: string): Promise<number> {
+			const [row] = await db
+				.select({ n: count() })
+				.from(conversations)
+				.where(and(eq(conversations.planId, planId), eq(conversations.userId, userId)));
+			return row?.n ?? 0;
+		},
+
+		async listConversations(userId: string, planId: string): Promise<ConversationSummary[]> {
+			const rows = await db
+				.select({
+					id: conversations.id,
+					lastMessageAt: max(messages.createdAt),
+					messageCount: count(messages.id)
+				})
+				.from(conversations)
+				.innerJoin(messages, eq(messages.conversationId, conversations.id))
+				.where(and(eq(conversations.planId, planId), eq(conversations.userId, userId)))
+				.groupBy(conversations.id)
+				.orderBy(desc(max(messages.createdAt)), desc(conversations.id));
+			if (rows.length === 0) return [];
+
+			const firsts = await db
+				.selectDistinctOn([messages.conversationId], {
+					conversationId: messages.conversationId,
+					parts: messages.parts
+				})
+				.from(messages)
+				.where(
+					and(
+						inArray(
+							messages.conversationId,
+							rows.map((row) => row.id)
+						),
+						eq(messages.role, 'user')
+					)
+				)
+				.orderBy(messages.conversationId, asc(messages.createdAt), asc(messages.id));
+			const titles = new Map(firsts.map((row) => [row.conversationId, chatTitle(row.parts)]));
+
+			return rows.map((row) => ({
+				id: row.id,
+				title: titles.get(row.id) ?? NEW_CHAT_TITLE,
+				lastMessageAt: row.lastMessageAt!,
+				messageCount: row.messageCount
+			}));
+		},
+
+		async deleteConversation(
+			userId: string,
+			planId: string,
+			conversationId: string
+		): Promise<boolean> {
+			const removed = await db
+				.delete(conversations)
+				.where(
+					and(
+						eq(conversations.id, conversationId),
+						eq(conversations.planId, planId),
+						eq(conversations.userId, userId)
+					)
+				)
+				.returning({ id: conversations.id });
+			return removed.length > 0;
 		},
 
 		async saveMessage(input: NewMessage): Promise<StoredMessage> {

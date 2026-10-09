@@ -1,6 +1,8 @@
 <script lang="ts">
+	import { tick } from 'svelte';
 	import ArrowUpIcon from '@lucide/svelte/icons/arrow-up';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
+	import PlusIcon from '@lucide/svelte/icons/plus';
 	import SparklesIcon from '@lucide/svelte/icons/sparkles';
 	import SquareIcon from '@lucide/svelte/icons/square';
 	import XIcon from '@lucide/svelte/icons/x';
@@ -18,6 +20,7 @@
 	import type { PlanStatus } from '#lib/plan-types.js';
 	import type { Provider } from '#lib/providers.js';
 	import ChatMessage from './chat-message.svelte';
+	import ChatSwitcher from './chat-switcher.svelte';
 	import PlanModelPicker from './plan-model-picker.svelte';
 	import RevisionHistory from './revision-history.svelte';
 
@@ -89,6 +92,12 @@
 	const lastMessage = $derived(chat?.messages[chat.messages.length - 1] ?? null);
 	const waiting = $derived(chat?.status === 'submitted');
 	const empty = $derived(chat !== null && chat.messages.length === 0);
+	let composer = $state<HTMLTextAreaElement | null>(null);
+
+	function newChat() {
+		if (!chat?.startNew()) return;
+		if (!isCoarsePointer()) void tick().then(() => composer?.focus());
+	}
 
 	function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -143,7 +152,24 @@
 			? 'border-b'
 			: ''}"
 	>
-		<h2 class="min-w-0 flex-1 truncate text-sm font-semibold">Ask about this plan</h2>
+		{#if chat}
+			<h2 class="sr-only">Ask about this plan</h2>
+			<ChatSwitcher {chat} />
+			<Button
+				type="button"
+				variant="ghost"
+				size="icon-sm"
+				class="size-9 shrink-0"
+				aria-label="New chat"
+				title={chat.busy ? 'Wait for the reply to finish' : undefined}
+				disabled={!chat.canSwitch || chat.fresh}
+				onclick={newChat}
+			>
+				<PlusIcon aria-hidden="true" />
+			</Button>
+		{:else}
+			<h2 class="min-w-0 flex-1 truncate text-sm font-semibold">Ask about this plan</h2>
+		{/if}
 		<RevisionHistory
 			{planId}
 			{currentRevision}
@@ -190,69 +216,71 @@
 				<Skeleton class="h-16 w-4/5" />
 			</div>
 		{:else}
-			<Conversation
-				class="min-h-0 flex-1"
-				aria-label="Conversation"
-				aria-busy={chat?.busy ?? false}
-			>
-				<ConversationContent class="flex-1 gap-5 overflow-y-auto overscroll-contain">
-					{#if empty}
-						<div class="flex flex-col gap-4 py-2">
-							<div class="flex items-start gap-3">
-								<span
-									class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground"
-								>
-									<SparklesIcon class="size-4" aria-hidden="true" />
-								</span>
-								<p class="pt-1.5 text-sm text-muted-foreground">
-									Ask a question, or ask for a change. Every change can be undone.
-								</p>
-							</div>
-							{#if layout === 'panel'}
-								<div class="flex flex-col gap-2">
-									{#each SUGGESTIONS as suggestion (suggestion)}
-										<button
-											type="button"
-											class="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm outline-none surface-flat hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50"
-											disabled={blockedReason !== null || chat.busy}
-											onclick={() => chat.send(suggestion)}
-										>
-											<SparklesIcon class="size-4 shrink-0 text-primary" aria-hidden="true" />
-											{suggestion}
-										</button>
-									{/each}
+			{#key chat.conversationId}
+				<Conversation
+					class="min-h-0 flex-1 animate-in fade-in-0 [animation-duration:var(--dur-fast)]"
+					aria-label="Conversation"
+					aria-busy={chat?.busy ?? false}
+				>
+					<ConversationContent class="flex-1 gap-5 overflow-y-auto overscroll-contain">
+						{#if empty}
+							<div class="flex flex-col gap-4 py-2">
+								<div class="flex items-start gap-3">
+									<span
+										class="flex size-9 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground"
+									>
+										<SparklesIcon class="size-4" aria-hidden="true" />
+									</span>
+									<p class="pt-1.5 text-sm text-muted-foreground">
+										Ask a question, or ask for a change. Every change can be undone.
+									</p>
 								</div>
-							{/if}
-						</div>
-					{/if}
-					{#each chat.messages as message, i (message.id)}
-						<ChatMessage
-							{message}
-							streaming={chat.busy && i === chat.messages.length - 1}
-							undoableRevisionId={planStatus !== 'generating' &&
-							chat.lastRevisionNumber === currentRevision
-								? chat.lastRevisionId
-								: null}
-							undoing={pending === 'undo'}
-							{onundo}
-							onupdate={updateBlocks}
-						/>
-					{/each}
-					{#if waiting && lastMessage?.role === 'user'}
-						<div class="flex items-center gap-1.5 py-1" role="status">
-							<span class="sr-only">Thinking</span>
-							{#each [0, 1, 2] as dot (dot)}
-								<span
-									class="typing-dot size-1.5 rounded-full bg-muted-foreground"
-									style="--i: {dot}"
-									aria-hidden="true"
-								></span>
-							{/each}
-						</div>
-					{/if}
-				</ConversationContent>
-				<ConversationScrollButton />
-			</Conversation>
+								{#if layout === 'panel'}
+									<div class="flex flex-col gap-2">
+										{#each SUGGESTIONS as suggestion (suggestion)}
+											<button
+												type="button"
+												class="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm outline-none surface-flat hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50"
+												disabled={blockedReason !== null || chat.busy}
+												onclick={() => chat.send(suggestion)}
+											>
+												<SparklesIcon class="size-4 shrink-0 text-primary" aria-hidden="true" />
+												{suggestion}
+											</button>
+										{/each}
+									</div>
+								{/if}
+							</div>
+						{/if}
+						{#each chat.messages as message, i (message.id)}
+							<ChatMessage
+								{message}
+								streaming={chat.busy && i === chat.messages.length - 1}
+								undoableRevisionId={planStatus !== 'generating' &&
+								chat.lastRevisionNumber === currentRevision
+									? chat.lastRevisionId
+									: null}
+								undoing={pending === 'undo'}
+								{onundo}
+								onupdate={updateBlocks}
+							/>
+						{/each}
+						{#if waiting && lastMessage?.role === 'user'}
+							<div class="flex items-center gap-1.5 py-1" role="status">
+								<span class="sr-only">Thinking</span>
+								{#each [0, 1, 2] as dot (dot)}
+									<span
+										class="typing-dot size-1.5 rounded-full bg-muted-foreground"
+										style="--i: {dot}"
+										aria-hidden="true"
+									></span>
+								{/each}
+							</div>
+						{/if}
+					</ConversationContent>
+					<ConversationScrollButton />
+				</Conversation>
+			{/key}
 		{/if}
 	</div>
 
@@ -307,6 +335,7 @@
 			onsubmit={submit}
 		>
 			<Textarea
+				bind:ref={composer}
 				bind:value={() => chat?.input ?? '', (value) => chat && (chat.input = value)}
 				{onkeydown}
 				onfocus={oncomposerfocus}

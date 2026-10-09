@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+	chatTitle,
 	lastEditRevision,
 	lastEditRevisionId,
 	recoveredStepKeys,
@@ -201,5 +202,24 @@ describe('summarizeSteps', () => {
 		expect(summarizeSteps([step('A')])).toBe('A');
 		expect(summarizeSteps([step('A'), step('B')])).toBe('A · B');
 		expect(summarizeSteps([step('A'), step('B'), step('C')])).toBe('A · B · +1 more');
+	});
+});
+
+describe('chatTitle', () => {
+	const text = (value: string) => [{ type: 'text' as const, text: value }];
+
+	it('uses the first words, on one line', () => {
+		expect(chatTitle(text('  Make block 2\n  easier '))).toBe('Make block 2 easier');
+	});
+
+	it('cuts a long first message to the title limit with an ellipsis', () => {
+		const title = chatTitle(text('word '.repeat(40)));
+		expect(title.length).toBeLessThanOrEqual(60);
+		expect(title.endsWith('…')).toBe(true);
+	});
+
+	it('falls back to New chat when there is no text', () => {
+		expect(chatTitle([])).toBe('New chat');
+		expect(chatTitle(text('   '))).toBe('New chat');
 	});
 });
