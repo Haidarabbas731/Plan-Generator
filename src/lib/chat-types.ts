@@ -142,6 +142,12 @@ export function recoveredStepKeys(steps: AgentStep[]): Set<string> {
 	return keys;
 }
 
+export function summarizeSteps(steps: AgentStep[], shown = 2): string {
+	const labels = steps.map((step) => step.label);
+	const head = labels.slice(0, shown).join(' · ');
+	return labels.length > shown ? `${head} · +${labels.length - shown} more` : head;
+}
+
 export function stepsOf(message: ChatUIMessage): AgentStep[] {
 	return message.parts.flatMap((part) => {
 		const step = toAgentStep(part as ToolPartLike);

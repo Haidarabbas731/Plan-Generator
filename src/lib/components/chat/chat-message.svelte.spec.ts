@@ -46,7 +46,7 @@ describe('ChatMessage', () => {
 		render(ChatMessage, {
 			props: { message: make('assistant', [editStep, { type: 'text', text: 'Done.' }]) }
 		});
-		expect(screen.getByText('Rewrote block 2')).toBeInTheDocument();
+		expect(screen.getByRole('button', { name: /Rewrote block 2/ })).toBeInTheDocument();
 		expect(screen.getByText('Done.')).toBeInTheDocument();
 	});
 

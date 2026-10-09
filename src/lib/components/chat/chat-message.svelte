@@ -11,7 +11,7 @@
 		type AgentStep as AgentStepData,
 		type ChatUIMessage
 	} from '#lib/chat-types.js';
-	import AgentStep from './agent-step.svelte';
+	import AgentTrace from './agent-trace.svelte';
 
 	interface Props {
 		message: ChatUIMessage;
@@ -33,7 +33,7 @@
 
 	type RenderPart =
 		| { kind: 'text'; index: number; text: string }
-		| { kind: 'step'; index: number; step: AgentStepData };
+		| { kind: 'trace'; index: number; steps: AgentStepData[] };
 
 	const parts = $derived.by(() => {
 		const recovered = recoveredStepKeys(stepsOf(message));
@@ -44,7 +44,10 @@
 				return;
 			}
 			const step = toAgentStep(part as Parameters<typeof toAgentStep>[0]);
-			if (step && !recovered.has(step.key)) result.push({ kind: 'step', index, step });
+			if (!step || recovered.has(step.key)) return;
+			const last = result[result.length - 1];
+			if (last?.kind === 'trace') last.steps.push(step);
+			else result.push({ kind: 'trace', index, steps: [step] });
 		});
 		return result;
 	});
@@ -52,7 +55,7 @@
 </script>
 
 <Message from={message.role} class="gap-2">
-	{#each parts as part (part.index)}
+	{#each parts as part, position (part.index)}
 		{#if part.kind === 'text'}
 			<MessageContent>
 				{#if message.role === 'assistant'}
@@ -62,11 +65,10 @@
 				{/if}
 			</MessageContent>
 		{:else}
-			<AgentStep
-				step={part.step}
-				canUndo={part.step.revisionId !== null &&
-					part.step.revisionId === undoableRevisionId &&
-					!streaming}
+			<AgentTrace
+				steps={part.steps}
+				live={streaming && position === parts.length - 1}
+				undoableRevisionId={streaming ? null : undoableRevisionId}
 				{undoing}
 				{onundo}
 				{onupdate}

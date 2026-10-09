@@ -4,6 +4,7 @@ import {
 	lastEditRevisionId,
 	recoveredStepKeys,
 	stepsOf,
+	summarizeSteps,
 	textOf,
 	toAgentStep,
 	type ChatUIMessage
@@ -190,5 +191,15 @@ describe('recoveredStepKeys', () => {
 	it('does not count a different tool or an earlier success', () => {
 		expect(recoveredStepKeys(stepsOf(message([failed, done('b', 'get_plan')])))).toEqual(new Set());
 		expect(recoveredStepKeys(stepsOf(message([done('b'), failed])))).toEqual(new Set());
+	});
+});
+
+describe('summarizeSteps', () => {
+	const step = (label: string) => ({ label }) as Parameters<typeof summarizeSteps>[0][number];
+
+	it('joins the first labels and counts the rest', () => {
+		expect(summarizeSteps([step('A')])).toBe('A');
+		expect(summarizeSteps([step('A'), step('B')])).toBe('A · B');
+		expect(summarizeSteps([step('A'), step('B'), step('C')])).toBe('A · B · +1 more');
 	});
 });
