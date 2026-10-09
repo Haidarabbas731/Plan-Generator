@@ -1,4 +1,4 @@
-export const FIRST_RUN_PATH = '/settings/keys?welcome=1';
+export const FIRST_RUN_PATH = '/plans';
 
 export function verifyEmailPath(email: string, next?: string): string {
 	const base = `/verify-email?email=${encodeURIComponent(email)}`;

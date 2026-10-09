@@ -51,5 +51,5 @@ export async function typeCode(page: Page, code: string) {
 export async function verifyWithEmailedCode(page: Page, address: string) {
 	await expect(page).toHaveURL(/\/verify-email\?email=/);
 	await typeCode(page, await readCode(address));
-	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
+	await expect(page).toHaveURL(/\/plans$/);
 }

@@ -16,9 +16,9 @@ export async function signUp(page: Page, name = 'E2E User') {
 	await page.getByLabel('Email').fill(email);
 	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
 	await page.getByRole('button', { name: 'Create account' }).click();
-	await page.waitForURL(/\/(settings\/keys\?welcome=1|verify-email\?)/);
+	await page.waitForURL(/\/(plans$|verify-email\?)/);
 	if (page.url().includes('/verify-email')) await verifyWithEmailedCode(page, email);
-	await expect(page).toHaveURL(/\/settings\/keys\?welcome=1$/);
+	await expect(page).toHaveURL(/\/plans$/);
 	return email;
 }
 

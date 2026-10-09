@@ -12,7 +12,7 @@ describe('verifyEmailPath', () => {
 		);
 	});
 
-	it('keeps the first-run page for brand new accounts', () => {
-		expect(FIRST_RUN_PATH).toBe('/settings/keys?welcome=1');
+	it('sends brand new accounts to their plans, which explains how to start', () => {
+		expect(FIRST_RUN_PATH).toBe('/plans');
 	});
 });
