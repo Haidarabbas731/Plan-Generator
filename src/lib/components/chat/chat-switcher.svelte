@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import CheckIcon from '@lucide/svelte/icons/check';
 	import ChevronDownIcon from '@lucide/svelte/icons/chevron-down';
 	import { Button, buttonVariants } from '#lib/components/ui/button/index.js';
@@ -30,7 +31,7 @@
 			confirming = null;
 			return;
 		}
-		void chat.loadChats();
+		untrack(() => void chat.loadChats());
 	});
 
 	async function choose(id: string) {
@@ -45,8 +46,9 @@
 		}
 		confirming = null;
 		deleting = id;
-		await chat.remove(id);
+		const removed = await chat.remove(id);
 		deleting = null;
+		if (removed && chat.chats.length === 0) open = false;
 	}
 </script>
 
@@ -111,9 +113,13 @@
 							</button>
 							<Button
 								type="button"
-								variant={confirming === item.id ? 'destructive' : 'ghost'}
+								variant="destructive"
 								size="sm"
-								class="h-9 shrink-0 px-2.5"
+								class={cn(
+									'h-9 shrink-0 px-2.5',
+									confirming === item.id &&
+										'bg-destructive text-white hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90'
+								)}
 								disabled={deleting !== null}
 								aria-label="{confirming === item.id ? 'Confirm delete' : 'Delete'} {item.title}"
 								onclick={() => remove(item.id)}

@@ -75,7 +75,7 @@
 			/>
 		{/if}
 	{/each}
-	{#if model && !streaming}
+	{#if model && !streaming && parts.length > 0}
 		<p class="text-caption text-muted-foreground">{model}</p>
 	{/if}
 </Message>

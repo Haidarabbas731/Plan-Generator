@@ -90,7 +90,13 @@
 				: `${aiLeft} AI ${aiLeft === 1 ? 'request' : 'requests'} left this hour.`
 	);
 	const lastMessage = $derived(chat?.messages[chat.messages.length - 1] ?? null);
-	const waiting = $derived(chat?.status === 'submitted');
+	const waiting = $derived(
+		chat?.busy === true &&
+			(lastMessage?.role === 'user' ||
+				lastMessage?.parts.every((part) =>
+					part.type === 'text' ? !part.text : !part.type.startsWith('tool-')
+				))
+	);
 	const empty = $derived(chat !== null && chat.messages.length === 0);
 	let composer = $state<HTMLTextAreaElement | null>(null);
 
@@ -265,7 +271,7 @@
 								onupdate={updateBlocks}
 							/>
 						{/each}
-						{#if waiting && lastMessage?.role === 'user'}
+						{#if waiting}
 							<div class="flex items-center gap-1.5 py-1" role="status">
 								<span class="sr-only">Thinking</span>
 								{#each [0, 1, 2] as dot (dot)}
