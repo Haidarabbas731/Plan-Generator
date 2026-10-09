@@ -4,7 +4,6 @@ import {
 	codeInput,
 	emailVerificationOn,
 	readCode,
-	readSubject,
 	typeCode,
 	verifyWithEmailedCode
 } from './email.js';
@@ -117,7 +116,7 @@ test('signing up again with an unverified address sends a fresh code that works'
 	await expect(page).toHaveURL(/\/plans$/);
 });
 
-test('signing up with an address that already has an account explains how to sign in', async ({
+test('signing up with an address that already has an account says so instead of asking for a code', async ({
 	page,
 	browser
 }) => {
@@ -125,14 +124,16 @@ test('signing up with an address that already has an account explains how to sig
 	await startSignUp(page, email);
 	await typeCode(page, await readCode(email));
 	await expect(page).toHaveURL(/\/plans$/);
-	await clearSendHistory(email);
 
 	const stranger = await (await browser.newContext()).newPage();
-	await startSignUp(stranger, email);
-	await expect(await readSubject(email)).toContain('already have');
-	await expect(stranger.getByText('Already registered with this address?')).toBeVisible();
-	await stranger.getByRole('link', { name: 'Sign in' }).click();
-	await expect(stranger).toHaveURL(/\/login$/);
+	await open(stranger, '/signup');
+	await stranger.getByLabel('Name').fill('Code Tester');
+	await stranger.getByLabel('Email').fill(email);
+	await stranger.getByLabel('Password', { exact: true }).fill(PASSWORD);
+	await stranger.getByRole('button', { name: 'Create account' }).click();
+	await expect(stranger.getByText('An account with this email already exists')).toBeVisible();
+	await expect(stranger).toHaveURL(/\/signup$/);
+	await expect(codeInput(stranger)).toHaveCount(0);
 	await stranger.context().close();
 });
 

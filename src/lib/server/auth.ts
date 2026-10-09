@@ -25,11 +25,7 @@ import { db } from './db/index.js';
 import * as schema from './db/schema.js';
 import { createEmailSender } from './email.js';
 import { createRedisOutbox } from './email-outbox.js';
-import {
-	renderAlreadyRegisteredEmail,
-	renderPasswordResetEmail,
-	renderVerificationCodeEmail
-} from './email-templates.js';
+import { renderPasswordResetEmail, renderVerificationCodeEmail } from './email-templates.js';
 import { logger } from './logger.js';
 import { redis } from './redis.js';
 import { assertPasswordStrong } from './password-hook.js';
@@ -60,24 +56,9 @@ export const auth = betterAuth({
 		resetPasswordTokenExpiresIn: PASSWORD_RESET_EXPIRY_MINUTES * 60,
 		...(email.enabled && {
 			onExistingUserSignUp: async ({ user }) => {
-				if (!user.emailVerified) {
-					await auth.api.sendVerificationOTP({
-						body: { email: user.email, type: 'email-verification' }
-					});
-					return;
-				}
-				const turn = await sendGate.take(user.email).catch((error) => {
-					logger.warn({ err: error }, 'Could not check the email send limits');
-					return { ok: true } as const;
-				});
-				if (!turn.ok) return;
-				void email.send({
-					to: user.email,
-					...renderAlreadyRegisteredEmail({
-						to: user.email,
-						signInUrl: new URL('/login', BETTER_AUTH_URL).toString(),
-						resetUrl: new URL('/forgot-password', BETTER_AUTH_URL).toString()
-					})
+				if (user.emailVerified) return;
+				await auth.api.sendVerificationOTP({
+					body: { email: user.email, type: 'email-verification' }
 				});
 			},
 			sendResetPassword: async ({ user, url }) => {

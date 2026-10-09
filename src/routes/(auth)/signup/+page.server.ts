@@ -1,7 +1,12 @@
 import { fail, redirect } from '@sveltejs/kit';
 import { FIRST_RUN_PATH, verifyEmailPath } from '#lib/auth-paths.js';
 import { auth, email as mailer, oauthProviders } from '#lib/server/auth.js';
-import { describeAuthError, signUpMessage } from '#lib/server/auth-errors.js';
+import {
+	ACCOUNT_EXISTS_MESSAGE,
+	describeAuthError,
+	signUpMessage
+} from '#lib/server/auth-errors.js';
+import { accountState } from '#lib/server/services/accounts.js';
 import { validateSignUp, type FieldErrors, type SignUpInput } from '#lib/validation.js';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -28,6 +33,10 @@ export const actions: Actions = {
 
 		const errors = validateSignUp({ name, email, password });
 		if (Object.keys(errors).length > 0) return failure({ errors, values });
+
+		if ((await accountState(email)) === 'verified') {
+			return failure({ errors: { email: ACCOUNT_EXISTS_MESSAGE }, values });
+		}
 
 		try {
 			await auth.api.signUpEmail({ body: { name, email, password }, headers: request.headers });

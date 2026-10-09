@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { emailVerificationOn, verifyWithEmailedCode } from './email.js';
+import { verifyWithEmailedCode } from './email.js';
 import { open, PASSWORD } from './helpers.js';
 
 function uniqueEmail() {
@@ -101,7 +101,7 @@ test('the sign-up endpoint itself refuses a weak password', async ({ request }) 
 	expect((await response.json()).code).toBe('PASSWORD_TOO_WEAK');
 });
 
-test('sign up with an email that already has an account is rejected', async ({ page, request }) => {
+test('sign up with an email that already has an account is rejected', async ({ page }) => {
 	const email = uniqueEmail();
 	await signUp(page, email);
 	await signOut(page);
@@ -112,13 +112,8 @@ test('sign up with an email that already has an account is rejected', async ({ p
 	await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
 	await page.getByRole('button', { name: 'Create account' }).click();
 
-	if (await emailVerificationOn(request)) {
-		await expect(page).toHaveURL(/\/verify-email\?email=/);
-		await expect(page.getByRole('heading', { name: 'Check your email' })).toBeVisible();
-	} else {
-		await expect(page.getByText('An account with this email already exists.')).toBeVisible();
-		await expect(page).toHaveURL(/\/signup/);
-	}
+	await expect(page.getByText('An account with this email already exists.')).toBeVisible();
+	await expect(page).toHaveURL(/\/signup/);
 });
 
 test('the password can be shown and hidden', async ({ page }) => {

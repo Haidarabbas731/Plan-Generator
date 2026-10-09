@@ -15,6 +15,8 @@ const TOO_MANY_ATTEMPTS = 'Too many attempts. Wait a minute and try again.';
 
 const isRateLimited = (failure: AuthFailure | null) => failure?.status === 429;
 
+export const ACCOUNT_EXISTS_MESSAGE = 'An account with this email already exists. Sign in instead.';
+
 export const EMAIL_NOT_VERIFIED = 'EMAIL_NOT_VERIFIED';
 
 export function isEmailNotVerified(failure: AuthFailure | null): boolean {
@@ -38,7 +40,7 @@ export function signUpMessage(failure: AuthFailure | null): {
 	if (failure?.status === 422 || failure?.code?.includes('USER_ALREADY_EXISTS')) {
 		return {
 			field: 'email',
-			message: 'An account with this email already exists. Sign in instead.'
+			message: ACCOUNT_EXISTS_MESSAGE
 		};
 	}
 	if (failure && failure.status < 500) {

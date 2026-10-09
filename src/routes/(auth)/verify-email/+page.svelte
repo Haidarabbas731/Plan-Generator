@@ -155,10 +155,6 @@
 		</form>
 	</div>
 
-	<p class="mx-auto max-w-xs text-center text-caption text-muted-foreground">
-		Already registered with this address? We emailed you a sign-in link instead of a code.
-	</p>
-
 	{#snippet footer()}
 		<span class="flex flex-col items-center gap-1">
 			<span>
