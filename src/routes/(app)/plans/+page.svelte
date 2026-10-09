@@ -27,9 +27,8 @@
 	let pendingDelete = $state<{ id: string; title: string } | null>(null);
 	let deleteOpen = $state(false);
 
-	const NEAR_LIMIT_RATIO = 0.8;
 	const showSearch = $derived(data.plans.length >= LIMITS.searchMinPlans);
-	const nearLimit = $derived(data.plans.length >= data.planLimit * NEAR_LIMIT_RATIO);
+	const nearLimit = $derived(data.plans.length >= data.planLimit * LIMITS.nearPlanLimitRatio);
 
 	const filtered = $derived.by(() => {
 		const needle = query.trim().toLowerCase();

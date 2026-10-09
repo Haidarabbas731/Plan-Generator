@@ -27,5 +27,7 @@ export const LIMITS = {
 	dayReviewMax: 400,
 	minDayMinutes: 5,
 	chatTitleMax: 60,
-	emailCodeLength: 6
+	emailCodeLength: 6,
+	lowAiLeft: 5,
+	nearPlanLimitRatio: 0.8
 } as const;

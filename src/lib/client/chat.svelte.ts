@@ -9,6 +9,7 @@ import {
 	type ChatSummary,
 	type ChatUIMessage
 } from '#lib/chat-types.js';
+import { MESSAGES } from '#lib/messages.js';
 
 export function errorText(error: unknown): string {
 	const raw = error instanceof Error ? error.message : String(error ?? '');
@@ -170,7 +171,7 @@ export class ChatState {
 			this.#open(conversationId, body.messages);
 			return true;
 		} catch {
-			this.switchError = 'Could not open that chat.';
+			this.switchError = MESSAGES.chatOpenFailed;
 			return false;
 		} finally {
 			this.switching = false;
@@ -186,7 +187,7 @@ export class ChatState {
 			});
 			if (!response.ok && response.status !== 404) throw new Error('failed');
 		} catch {
-			this.switchError = 'Could not delete that chat.';
+			this.switchError = MESSAGES.chatDeleteFailed;
 			return false;
 		}
 		this.chats = this.chats.filter((chat) => chat.id !== conversationId);

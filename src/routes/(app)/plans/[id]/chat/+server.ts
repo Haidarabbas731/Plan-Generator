@@ -3,13 +3,14 @@ import { chatService } from '#lib/server/plans/runtime.js';
 import { isConversationId } from '#lib/server/chat/chat-service.js';
 import { requireUser } from '#lib/server/require-user.js';
 import type { RequestHandler } from './$types';
+import { MESSAGES } from '#lib/messages.js';
 
 export const GET: RequestHandler = async ({ locals, params, url }) => {
 	const user = requireUser(locals);
 	const requested = url.searchParams.get('conversation');
 	if (requested !== null && !isConversationId(requested)) error(400, 'That chat does not exist');
 	const opened = await chatService.open(user.id, params.id, requested ?? undefined);
-	if (!opened) error(404, requested ? 'Chat not found' : 'Plan not found');
+	if (!opened) error(404, requested ? 'Chat not found' : MESSAGES.planNotFound);
 	return json(opened);
 };
 

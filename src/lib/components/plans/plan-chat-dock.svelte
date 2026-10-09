@@ -7,9 +7,11 @@
 	import type { ChatDock } from '#lib/client/chat-dock.svelte.js';
 	import ChatPanel from '#lib/components/chat/chat-panel.svelte';
 	import ChatSheet from '#lib/components/chat/chat-sheet.svelte';
+	import { chatSuggestions } from '#lib/chat-suggestions.js';
 	import type { ChatUIMessage } from '#lib/chat-types.js';
 	import type { PlanDetail, PlanStatus } from '#lib/plan-types.js';
 	import type { Provider } from '#lib/providers.js';
+	import { MESSAGES } from '#lib/messages.js';
 
 	interface Props {
 		dock: ChatDock;
@@ -59,7 +61,7 @@
 				}
 			});
 		} catch {
-			chatLoadError = 'Could not load the conversation.';
+			chatLoadError = MESSAGES.chatLoadFailed;
 		}
 	}
 
@@ -92,7 +94,7 @@
 			return async ({ result, update }) => {
 				if (result.type === 'failure') {
 					const data = result.data as { message?: string } | undefined;
-					chatActionError = data?.message ?? 'That did not work. Try again.';
+					chatActionError = data?.message ?? MESSAGES.actionFailed;
 				}
 				await update({ reset: false });
 				chatPending = null;
@@ -124,6 +126,7 @@
 		model={plan.model}
 		{providers}
 		{aiLeft}
+		suggestions={chatSuggestions(plan.inputs)}
 		currentRevision={plan.currentRevision}
 		{chat}
 		loadError={chatLoadError}

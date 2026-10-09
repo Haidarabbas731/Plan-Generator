@@ -20,6 +20,7 @@
 	import PlanHeader from './plan-header.svelte';
 	import PlanOutline, { type OutlineItem } from './plan-outline.svelte';
 	import TodayCard from './today-card.svelte';
+	import { MESSAGES } from '#lib/messages.js';
 
 	interface Props {
 		plan: PlanDetail;
@@ -408,7 +409,7 @@
 		return async ({ result }) => {
 			if (result.type === 'success') return;
 			overrides = { ...overrides, [day]: !completed };
-			toast.error('Could not save that day. Try again.');
+			toast.error(MESSAGES.daySaveFailed);
 		};
 	}}
 >
@@ -426,7 +427,7 @@
 		return async ({ result, update }) => {
 			if (result.type === 'failure') {
 				const data = result.data as { message?: string } | undefined;
-				toast.error(data?.message ?? 'Could not resume the plan.');
+				toast.error(data?.message ?? MESSAGES.resumeFailed);
 			}
 			await update({ reset: false });
 			busy = null;
@@ -444,7 +445,7 @@
 		return async ({ result, update }) => {
 			if (result.type === 'failure') {
 				const data = result.data as { message?: string } | undefined;
-				toast.error(data?.message ?? 'Could not switch the model.');
+				toast.error(data?.message ?? MESSAGES.switchModelFailed);
 				await update({ reset: false });
 				busy = null;
 				return;
@@ -467,7 +468,7 @@
 	use:enhance={() => {
 		busy = 'cancel';
 		return async ({ result, update }) => {
-			if (result.type === 'failure') toast.error('The plan is not being written right now.');
+			if (result.type === 'failure') toast.error(MESSAGES.planNotWriting);
 			await update({ reset: false });
 			busy = null;
 		};

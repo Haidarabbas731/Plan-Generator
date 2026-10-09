@@ -9,6 +9,7 @@ import { requireUser } from '#lib/server/require-user.js';
 import { getPrefs } from '#lib/server/services/prefs.js';
 import { listKeys } from '#lib/server/services/provider-keys.js';
 import type { Actions, PageServerLoad } from './$types';
+import { addProviderKey } from '#lib/messages.js';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = requireUser(locals);
@@ -91,7 +92,7 @@ export const actions: Actions = {
 		}
 		if (result.reason === 'no-key') {
 			const errors: FormErrors = {
-				provider: `Add a ${PROVIDER_INFO[result.provider].name} key in Settings first.`
+				provider: addProviderKey(PROVIDER_INFO[result.provider].name)
 			};
 			return failForm(400, values, errors);
 		}

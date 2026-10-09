@@ -8,6 +8,7 @@
 	import { filterModels, type ModelOption } from '#lib/model-options.js';
 	import { PROVIDER_INFO, type Provider } from '#lib/providers.js';
 	import { cn } from '#lib/utils.js';
+	import { MESSAGES } from '#lib/messages.js';
 
 	interface Props {
 		providers: { id: Provider; name: string }[];
@@ -68,7 +69,7 @@
 			})
 			.catch((error: unknown) => {
 				if (error instanceof DOMException && error.name === 'AbortError') return;
-				message = 'Could not load the model list.';
+				message = MESSAGES.modelListFailed;
 				status = 'error';
 			});
 

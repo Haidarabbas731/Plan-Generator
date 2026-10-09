@@ -7,13 +7,14 @@ import { toBlockView, toDayView } from '#lib/server/plans/views.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { getKey, listKeys } from '#lib/server/services/provider-keys.js';
 import type { Actions, PageServerLoad } from './$types';
+import { addProviderKey, MESSAGES } from '#lib/messages.js';
 
 export const load: PageServerLoad = async ({ locals, params, depends }) => {
 	const user = requireUser(locals);
 	depends(`plan:${params.id}`);
 
 	const plan = await planStore.getOwnedPlan(user.id, params.id);
-	if (!plan) error(404, 'Plan not found');
+	if (!plan) error(404, MESSAGES.planNotFound);
 
 	const [blocks, days, keys, allowance] = await Promise.all([
 		planStore.listBlocks(plan.id),
@@ -53,18 +54,17 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const day = Number(form.get('day'));
 		const completed = form.get('completed') === 'true';
-		if (!Number.isInteger(day) || day < 1)
-			return fail(400, { message: 'That day does not exist.' });
+		if (!Number.isInteger(day) || day < 1) return fail(400, { message: MESSAGES.dayNotFound });
 
 		const found = await planStore.setDayCompleted(user.id, params.id, day, completed);
-		if (!found) return fail(404, { message: 'That day does not exist.' });
+		if (!found) return fail(404, { message: MESSAGES.dayNotFound });
 		return { day, completed };
 	},
 
 	resume: async ({ locals, params }) => {
 		const user = requireUser(locals);
 		const result = await planService.resumePlan(user.id, params.id);
-		if (result === 'not-found') error(404, 'Plan not found');
+		if (result === 'not-found') error(404, MESSAGES.planNotFound);
 		if (typeof result === 'object') return fail(429, { message: result.message });
 		return { resumed: result };
 	},
@@ -72,16 +72,16 @@ export const actions: Actions = {
 	cancel: async ({ locals, params }) => {
 		const user = requireUser(locals);
 		const stopped = await planService.cancelPlan(user.id, params.id);
-		if (!stopped) return fail(409, { message: 'The plan is not being written right now.' });
+		if (!stopped) return fail(409, { message: MESSAGES.planNotWriting });
 		return { cancelled: true };
 	},
 
 	undo: async ({ request, locals, params }) => {
 		const user = requireUser(locals);
 		const plan = await planStore.getOwnedPlan(user.id, params.id);
-		if (!plan) error(404, 'Plan not found');
+		if (!plan) error(404, MESSAGES.planNotFound);
 		if (plan.status === 'generating') {
-			return fail(409, { message: 'Wait until the plan has finished writing.' });
+			return fail(409, { message: MESSAGES.waitForWriting });
 		}
 		const revisionId = String((await request.formData()).get('revisionId') ?? '');
 		const number = await revisionStore.findRevisionNumber(plan.id, revisionId);
@@ -96,9 +96,9 @@ export const actions: Actions = {
 	restore: async ({ request, locals, params }) => {
 		const user = requireUser(locals);
 		const plan = await planStore.getOwnedPlan(user.id, params.id);
-		if (!plan) error(404, 'Plan not found');
+		if (!plan) error(404, MESSAGES.planNotFound);
 		if (plan.status === 'generating') {
-			return fail(409, { message: 'Wait until the plan has finished writing.' });
+			return fail(409, { message: MESSAGES.waitForWriting });
 		}
 		const number = Number((await request.formData()).get('number'));
 		if (!Number.isInteger(number) || number < 1) {
@@ -112,7 +112,7 @@ export const actions: Actions = {
 	model: async ({ request, locals, params }) => {
 		const user = requireUser(locals);
 		const plan = await planStore.getOwnedPlan(user.id, params.id);
-		if (!plan) error(404, 'Plan not found');
+		if (!plan) error(404, MESSAGES.planNotFound);
 		if (plan.status === 'generating') {
 			return fail(409, { message: 'Pause the plan before switching the model.' });
 		}
@@ -125,7 +125,7 @@ export const actions: Actions = {
 		}
 		if (!AI_FAKE && !(await getKey(user.id, provider))) {
 			return fail(400, {
-				message: `Add a ${PROVIDER_INFO[provider].name} key in Settings first.`
+				message: addProviderKey(PROVIDER_INFO[provider].name)
 			});
 		}
 		await planStore.setPlanModel(user.id, plan.id, provider, model);
@@ -136,7 +136,7 @@ export const actions: Actions = {
 		const user = requireUser(locals);
 		await planService.cancelPlan(user.id, params.id);
 		const removed = await planStore.deleteOwnedPlan(user.id, params.id);
-		if (!removed) error(404, 'Plan not found');
+		if (!removed) error(404, MESSAGES.planNotFound);
 		redirect(303, '/plans');
 	}
 };

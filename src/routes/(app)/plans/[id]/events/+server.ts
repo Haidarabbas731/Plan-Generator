@@ -3,11 +3,12 @@ import { SSE_HEARTBEAT_MS } from '#lib/server/config.js';
 import { requireUser } from '#lib/server/require-user.js';
 import { planBus, planStore } from '#lib/server/plans/runtime.js';
 import type { RequestHandler } from './$types';
+import { MESSAGES } from '#lib/messages.js';
 
 export const GET: RequestHandler = async ({ locals, params, request }) => {
 	const user = requireUser(locals);
 	const plan = await planStore.getOwnedPlan(user.id, params.id);
-	if (!plan) error(404, 'Plan not found');
+	if (!plan) error(404, MESSAGES.planNotFound);
 
 	const encoder = new TextEncoder();
 	let cleanup = () => {};

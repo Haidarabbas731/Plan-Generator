@@ -23,6 +23,10 @@
 	import ChatSwitcher from './chat-switcher.svelte';
 	import PlanModelPicker from './plan-model-picker.svelte';
 	import RevisionHistory from './revision-history.svelte';
+	import { LIMITS } from '#lib/limits.js';
+	import { chatSuggestions } from '#lib/chat-suggestions.js';
+
+	const DEFAULT_SUGGESTIONS = chatSuggestions({ daysTotal: 30, blockSize: 5 });
 
 	interface Props {
 		planId: string;
@@ -31,6 +35,7 @@
 		model: string;
 		providers: { id: Provider; name: string }[];
 		aiLeft?: number | null;
+		suggestions?: string[];
 		currentRevision: number;
 		chat: ChatState | null;
 		loadError?: string | null;
@@ -55,6 +60,7 @@
 		model,
 		providers,
 		aiLeft = null,
+		suggestions = DEFAULT_SUGGESTIONS,
 		currentRevision,
 		chat,
 		loadError = null,
@@ -72,8 +78,6 @@
 		onretry
 	}: Props = $props();
 
-	const SUGGESTIONS = ['Make block 2 easier', 'I only have weekends now', 'Explain day 4'];
-
 	const blockedReason = $derived(
 		planStatus === 'generating'
 			? 'The plan is still being written. Chat opens when it is done or paused.'
@@ -81,9 +85,8 @@
 				? 'Add an AI key in Settings to chat about this plan.'
 				: null
 	);
-	const LOW_AI_LEFT = 5;
 	const aiHint = $derived(
-		aiLeft === null || aiLeft > LOW_AI_LEFT
+		aiLeft === null || aiLeft > LIMITS.lowAiLeft
 			? null
 			: aiLeft === 0
 				? 'No AI requests left this hour.'
@@ -243,7 +246,7 @@
 								</div>
 								{#if layout === 'panel'}
 									<div class="flex flex-col gap-2">
-										{#each SUGGESTIONS as suggestion (suggestion)}
+										{#each suggestions as suggestion (suggestion)}
 											<button
 												type="button"
 												class="flex min-h-11 w-full items-center gap-2.5 rounded-xl px-3 text-left text-sm outline-none surface-flat hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50"
@@ -319,7 +322,7 @@
 			{/if}
 			{#if layout === 'sheet' && empty && chat}
 				<div class="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1">
-					{#each SUGGESTIONS as suggestion (suggestion)}
+					{#each suggestions as suggestion (suggestion)}
 						<Button
 							type="button"
 							variant="outline"
